@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600&family=Oswald:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 /* ═══════════════ DESIGN TOKENS ═══════════════ */
 :root{
@@ -2858,12 +2859,14 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
 </button>
 
 <script>
-/* ═══ Live queue data (simuloitu — tuotannossa Supabase Realtime) ═══ */
-const CITIES = [
-  {name:"Tampere",   addr:"Hatanpään valtatie 1, 33100 Tampere", q30:0, q60:0, docs:2},
-  {name:"Oulu",      addr:"Rautatienkatu 1, 90100 Oulu",         q30:0, q60:0, docs:2},
-  {name:"Seinäjoki", addr:"Kauppakatu 1, 60100 Seinäjoki",       q30:0, q60:0, docs:1},
-];
+/* ═══ Live queue data (oikea Supabase-tietokanta, ei enää simuloitu) ═══ */
+const SUPABASE_URL = "https://ruesbriqeecwyacnfqry.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_4C1Jld_P2Cat7yyyJs6Iyw_IMrHUcOJ";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let CITIES = [];
+let OPEN = {};
+let HOURS = {};
 /* Jonotusaika lasketaan tarkasti käyntien todellisesta kestosta (30/60 min), ei arviosta —
    ei siis satunnaista heittoa niin kuin ennen. */
 function queueMinutes(c){
@@ -3006,37 +3009,69 @@ if(sel&&menu){
   document.addEventListener("keydown",e=>{if(e.key==="Escape")toggleMenu(false)});
 }
 
-/* Live drift — jonot elävät hitaasti, kuten oikeassa palvelussa.
-   Muutetaan yksittäisten lääkäreiden henkilömääriä (30/60 min -kategorioissa) — clinic-tason
-   luvut johdetaan niistä syncCity():llä, joten minuuttiarvio on aina tarkka, ei satunnainen. */
-setInterval(()=>{
-  CITIES.forEach(c=>{
-    const onDuty = doctorsForCity(c.name, true);
-    if(!onDuty.length) return;
-    if(Math.random()<.4){
-      const d = onDuty[Math.floor(Math.random()*onDuty.length)];
-      const leaving = Math.random()<.5;
-      const is60 = Math.random()<.35; // 60 min -käynnit harvinaisempia kuin 30 min
-      if(leaving){
-        if(is60 && d.q60>0) d.q60-=1;
-        else if(d.q30>0) d.q30-=1;
-        else if(d.q60>0) d.q60-=1;
-      } else {
-        if(is60) d.q60+=1; else d.q30+=1;
-      }
-      syncCity(c);
-    }
+/* ═══ Ladataan toimipisteet ja lääkärit oikeasti Supabasesta ═══ */
+async function loadClinicsAndDoctors(){
+  const [{data: clinics, error: cErr}, {data: doctors, error: dErr}] = await Promise.all([
+    sb.from("clinics").select("*").order("created_at"),
+    sb.from("doctors").select("*").order("created_at"),
+  ]);
+  if (cErr) console.error("clinics fetch failed", cErr);
+  if (dErr) console.error("doctors fetch failed", dErr);
+
+  CITIES = (clinics||[]).map(c=>({ id:c.id, name:c.name, addr:c.address, q30:0, q60:0, docs:0 }));
+  OPEN = {}; HOURS = {};
+  (clinics||[]).forEach(c=>{ OPEN[c.name]=c.is_open; HOURS[c.name]=c.hours; });
+
+  const cityById = Object.fromEntries(CITIES.map(c=>[c.id,c]));
+  DOCS = (doctors||[]).map(d=>{
+    const parts = d.full_name.trim().split(/\s+/);
+    const shortName = parts.length>1 ? parts[0]+" "+parts[parts.length-1][0]+"." : parts[0];
+    return {
+      id:d.id, n:shortName, full:d.full_name, init:d.initials,
+      city:(cityById[d.clinic_id]||{}).name, on:d.on_duty,
+      role:d.role, bio:d.bio, q30:0, q60:0,
+    };
   });
+  CITIES.forEach(c=>{ c.docs = DOCS.filter(d=>d.city===c.name).length; });
+
+  await refreshQueueCounts();
+}
+
+/* Jonolaskurit ja odotusajat lasketaan aina oikeista tikettiriveistä (queue_public-näkymä),
+   ei enää satunnaiskävelystä. Sama funktio ajetaan sekä ajastimella että heti jonotoiminnon
+   (liittyminen/poistuminen) jälkeen, jotta näkymä päivittyy välittömästi. */
+async function refreshQueueCounts(){
+  const [{data, error}, {data: docRows, error: docErr}] = await Promise.all([
+    sb.from("queue_public").select("doctor_id,duration_min,status").in("status", ["waiting","called"]),
+    sb.from("doctors").select("id,on_duty"),
+  ]);
+  if (error) { console.error("queue_public fetch failed", error); return; }
+  if (!docErr && docRows) {
+    const onDutyById = Object.fromEntries(docRows.map(r=>[r.id, r.on_duty]));
+    DOCS.forEach(d=>{ if(d.id in onDutyById) d.on = onDutyById[d.id]; });
+  }
+
+  DOCS.forEach(d=>{ d.q30=0; d.q60=0; });
+  const docById = Object.fromEntries(DOCS.map(d=>[d.id,d]));
+  (data||[]).forEach(row=>{
+    const d = docById[row.doctor_id];
+    if(!d) return;
+    if(row.duration_min>=60) d.q60+=1; else d.q30+=1;
+  });
+  CITIES.forEach(syncCity);
+
   renderStatus();
   document.querySelectorAll(".city").forEach((el,i)=>{
     const c=CITIES[i];
+    if(!c) return;
     el.querySelector(".cw").innerHTML = c.wait+" <small>min</small>";
     el.querySelector(".cq").textContent = "Jonossa "+c.q+" asiakasta";
   });
   buildMenu();
   if (typeof renderHfList === "function") renderHfList(undefined);
   if(typeof curScr!=="undefined" && backdrop.classList.contains("open") && curScr==="liikkeet") renderShopScreen(shopSearchEl?shopSearchEl.value:"");
-}, 6000);
+}
+setInterval(refreshQueueCounts, 5000);
 
 /* Reveal on scroll */
 let io;
@@ -3056,10 +3091,14 @@ const Q = {
   duration:30,            // asiakkaan valitsema käynnin kesto: 30 tai 60 min
   myClockText:"",         // laskettu liittymishetkellä — pysyy samana koko odotuksen ajan
   myClockTimestamp:null,  // sama arvio Unix-ajastimena — tästä lasketaan elävä jäljelläoleva aika
+  aheadCount:0,           // montako muuta odottaa samalla lääkärillä ennen minua (oikeasta datasta)
   profileDocIdx:null,     // avoinna oleva lääkäriprofiili (DOCS-indeksi)
   doctorIdx:null,         // jonoon liittyessä valittu lääkäri (DOCS-indeksi)
   reasonIdx:null,         // jonoon liittyessä valittu käynnin syy (REASONS-indeksi)
-  _timer:null, _graceTimer:null,
+  entryId:null,           // queue_entries.id Supabasessa
+  accessToken:null,       // vain tämän selaimen tietämä avain oman tiketin muokkaamiseen
+  _lastStatus:null,       // viimeksi nähty status — tunnistaa muutokset pollauksessa
+  _timer:null, _graceTimer:null, _watchTimer:null,
 };
 const backdrop=$("qBackdrop"), qmBody=$("qmBody"), pill=$("qPill");
 /* Jäljellä oleva aika minuutteina omaan arvioituun vuoroon — laskettu joka kerta tuoreena
@@ -3286,9 +3325,7 @@ $("qClose").onclick=()=>{
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&backdrop.classList.contains("open"))closeModal()});
 pill.onclick=openModal;
 
-/* ── Toimipistelista (M Room -tyyliin) ── */
-const HOURS={Tampere:"10:00–15:00",Oulu:"9:00–14:00","Seinäjoki":"Avautuu pian"};
-const OPEN={Tampere:true,Oulu:true,"Seinäjoki":false};
+/* ── Toimipistelista (M Room -tyyliin) — HOURS/OPEN täytetään loadClinicsAndDoctors():ssa ── */
 function renderShops(filter=""){
   const f=filter.trim().toLowerCase();
   $("shopList").innerHTML=CITIES
@@ -3369,27 +3406,8 @@ if(shopSearchEl) shopSearchEl.addEventListener("input",e=>{
   renderShops(e.target.value);
 });
 
-/* ── Lääkärilista ── */
-const DOCS=[
-  {n:"Aleksi L.",full:"Aleksi Lammi",init:"AL",city:"Oulu",on:true,role:"Lääkäri",
-   bio:"Yleislääketieteen ammattilainen, jolle jatkuvuus ei ole korulause — sama lääkäri, joka tuntee historiasi, tekee parempia päätöksiä.",
-   q30:2,q60:0},
-  {n:"Eero Y.",full:"Eero Ylipulli",init:"EY",city:"Oulu",on:true,role:"Lääkäri",
-   bio:"Suoraa puhetta ja näyttöön perustuvaa hoitoa. Vastaanotolla on aikaa kysyä myös se kysymys, jota olet lykännyt vuosia.",
-   q30:1,q60:1},
-  {n:"Toni H.",full:"Toni Herva",init:"TH",city:"Tampere",on:true,role:"Perustaja · Lääkäri",
-   bio:"Päivystyksestä, psykiatriasta ja työterveydestä kertynyt näkemys yhdistyy yhteen kysymykseen: miksi moni jättää oman terveytensä viimeiseksi?",
-   q30:2,q60:1},
-  {n:"Sara R.",full:"Sara R.",init:"SR",city:"Tampere",on:true,role:"Lääkäri",
-   bio:"Yleislääkäri, joka keskittyy erityisesti naisten terveyteen ja hormonitasapainoon.",
-   q30:1,q60:1},
-  {n:"Juha P.",full:"Juha P.",init:"JP",city:"Seinäjoki",on:false,role:"Lääkäri",
-   bio:"Yleislääkäri, aloittaa Aatami Seinäjoella toimipisteen avautuessa.",
-   q30:0,q60:0},
-  {n:"Laura J.",full:"Laura J.",init:"LJ",city:"Tampere",on:false,role:"Lääkäri",
-   bio:"Yleislääkäri Aatami Tampereella.",
-   q30:0,q60:0},
-];
+/* ── Lääkärilista (haetaan Supabasesta, ks. loadClinicsAndDoctors) ── */
+let DOCS = [];
 /* Yhden lääkärin oma jonotusaika minuutteina — ei jaeta muiden kesken, koska tämä on
    nimenomaan HÄNEN oma jononsa. */
 function docQueueMinutes(doc){
@@ -3439,7 +3457,6 @@ const REASONS=[
    icon:'<path d="M9 3h6l1 3h3v15H5V6h3z"/><path d="M9 13l2 2 4-4"/>',
    duration:60, price:110, net:102},
 ];
-CITIES.forEach(syncCity);
 function renderDocs(filter=""){
   const f=filter.trim().toLowerCase();
   $("docList").innerHTML=DOCS
@@ -3596,8 +3613,7 @@ function renderQ(){
     return;
   }
   if(Q.state==="waiting"){
-    const total=Math.max(Q.pos,CITIES[Q.cityIdx].q);
-    const frac=Math.max(.08,1-(Q.pos/(total+1)));
+    const frac=Math.max(.08,1-(Q.aheadCount/6));
     const C=2*Math.PI*72;
     const rem=remainingMinutes();
     qmBody.innerHTML=`
@@ -3705,87 +3721,180 @@ window.qSendCode=function(){
   renderQ();
   setTimeout(()=>{const i=qmBody.querySelector("input");if(i)i.focus()},60);
 };
-window.qConfirm=function(){
-  Q.cityIdx=current;
+window.qConfirm=async function(){
+  const codeInput=(qmBody.querySelector("#qCode")||{}).value||"";
+  if(codeInput.trim()!==Q.code){
+    toast("Väärä koodi — tarkista ja yritä uudelleen.");
+    return;
+  }
   const c=CITIES[current];
   const d=DOCS[Q.doctorIdx];
-  Q.ticket=rndi(180,260);
-  Q.pos=Math.max(2,c.q);
-  // Oma arvio lasketaan NYKYISESTÄ jonosta, ennen kuin itsensä lisää siihen mukaan
-  const myMinutes = d ? docQueueMinutes(d) : (c.wait||0);
-  Q.myClockTimestamp = Date.now()+myMinutes*60000;
-  Q.myClockText = fmtClock(new Date(Q.myClockTimestamp));
-  if(d){
-    if(Q.duration===60) d.q60=(d.q60||0)+1; else d.q30=(d.q30||0)+1;
+  const r=REASONS[Q.reasonIdx];
+  if(!c || !d || !r){ toast("Jokin meni pieleen — yritä uudelleen."); return; }
+
+  const {data, error} = await sb.rpc("join_queue", {
+    p_clinic_id: c.id,
+    p_doctor_id: d.id,
+    p_reason_id: r.id,
+    p_reason_label: r.n,
+    p_duration_min: r.duration,
+    p_price_eur: r.price,
+    p_price_net_eur: r.net,
+    p_patient_phone: Q.phone,
+  });
+  if(error || !data || !data[0]){
+    console.error("join_queue failed", error);
+    toast("Jonoon liittyminen epäonnistui — yritä hetken kuluttua uudelleen.");
+    return;
   }
-  syncCity(c);
+  const row=data[0];
+  Q.cityIdx=current;
+  Q.entryId=row.id;
+  Q.accessToken=row.access_token;
+  Q.ticket=row.ticket_number;
+  Q._lastStatus="waiting";
+  Q.myClockTimestamp=Date.now()+docQueueMinutes(d)*60000;
+  Q.myClockText=fmtClock(new Date(Q.myClockTimestamp));
+
+  saveQueueEntryToStorage();
   Q.state="waiting";
   toast(`Olet jonossa. Tikettisi #${Q.ticket} — Aatami ${c.name}.`);
-  renderStatus(); renderQ(); updatePill();
-  qProgress();
+  renderQ(); updatePill();
+  await refreshQueueCounts();
+  qWatchStatus();
 };
-window.qLeave=function(){
-  clearTimeout(Q._timer); clearInterval(Q._graceTimer);
-  const c=CITIES[Q.cityIdx];
-  const d=DOCS[Q.doctorIdx];
-  if(d){
-    if(Q.duration===60) d.q60=Math.max(0,(d.q60||0)-1); else d.q30=Math.max(0,(d.q30||0)-1);
+window.qLeave=async function(){
+  clearInterval(Q._watchTimer); clearInterval(Q._graceTimer);
+  if(Q.entryId && Q.accessToken){
+    const {error}=await sb.rpc("patient_leave_queue",{p_id:Q.entryId,p_access_token:Q.accessToken});
+    if(error) console.error("patient_leave_queue failed", error);
   }
-  syncCity(c);
-  qReset(); renderStatus();
+  clearQueueEntryFromStorage();
+  qReset();
+  await refreshQueueCounts();
   if(backdrop.classList.contains("open")) showScr("liikkeet"); else renderQ();
 };
-window.qArrive=function(){
-  clearInterval(Q._graceTimer);
-  Q.state="arrived"; renderQ(); updatePill();
-  setTimeout(()=>{
-    Q.state="done";
-    const c=CITIES[Q.cityIdx];
-    const d=DOCS[Q.doctorIdx];
-    if(d){
-      if(Q.duration===60) d.q60=Math.max(0,(d.q60||0)-1); else d.q30=Math.max(0,(d.q30||0)-1);
-    }
-    syncCity(c);
-    toast("Kiitos käynnistä. Yhteenveto löytyy viestistäsi.");
-    renderStatus();
-    if(backdrop.classList.contains("open")) renderQ();
-    pill.classList.remove("show");
-  },6500);
-};
-function qReset(){
-  clearTimeout(Q._timer); clearInterval(Q._graceTimer);
-  Object.assign(Q,{state:"join",pos:0,ticket:0,grace:6,duration:30,myClockText:"",myClockTimestamp:null,doctorIdx:null,reasonIdx:null});
-  pill.classList.remove("show");
-}
-function qProgress(){
-  clearTimeout(Q._timer);
-  function step(){
-    if(Q.state!=="waiting")return;
-    Q.pos-=1;
-    if(Q.pos<=0){
-      Q.state="called"; Q.grace=6;
-      toast("Nyt on vuorosi! Ilmoittaudu loungen ovella tai tästä.");
-      if(backdrop.classList.contains("open")) renderQ(); else updatePill(true);
-      updatePill();
-      Q._graceTimer=setInterval(()=>{
-        Q.grace-=1;
-        const g=$("qGrace"); if(g)g.textContent=Math.max(0,Q.grace)+" min";
-        if(Q.grace<=0){
-          clearInterval(Q._graceTimer);
-          Q.pos=2; Q.state="waiting";
-          toast("Emme saaneet kuittausta — paikkasi siirtyi hieman taaksepäin.");
-          if(backdrop.classList.contains("open")) renderQ();
-          updatePill(); qProgress();
-        }
-      },1400);
+window.qArrive=async function(){
+  if(Q.entryId && Q.accessToken){
+    const {data, error}=await sb.rpc("patient_mark_arrived",{p_id:Q.entryId,p_access_token:Q.accessToken});
+    if(error || !data){
+      toast("Kuittaus ei onnistunut — yritä hetken kuluttua uudelleen.");
       return;
     }
-    if(Q.pos===2) toast("Olet kohta vuorossa — kannattaa lähteä liikkeelle.");
-    if(backdrop.classList.contains("open")) renderQ();
-    updatePill();
-    Q._timer=setTimeout(step, rndi(2400,3600));
   }
-  Q._timer=setTimeout(step, 2800);
+  clearInterval(Q._graceTimer);
+  Q.state="arrived"; Q._lastStatus="arrived";
+  renderQ(); updatePill();
+};
+function qReset(){
+  clearInterval(Q._watchTimer); clearInterval(Q._graceTimer);
+  Object.assign(Q,{state:"join",pos:0,ticket:0,grace:6,duration:30,myClockText:"",myClockTimestamp:null,
+    aheadCount:0,doctorIdx:null,reasonIdx:null,entryId:null,accessToken:null,_lastStatus:null});
+  pill.classList.remove("show");
+}
+/* Seurataan omaa tikettiä pollaamalla queue_public-näkymää (ei Realtimea anon-puolella,
+   ettei puhelinnumero/access_token voisi koskaan vuotaa muille kuuntelijoille) — tilan
+   muutokset (called/arrived/done/no_show) tulevat nyt oikeasti henkilökunnan jononhallinnasta. */
+function qWatchStatus(){
+  clearInterval(Q._watchTimer);
+  Q._watchTimer=setInterval(async ()=>{
+    if(!Q.entryId){ clearInterval(Q._watchTimer); return; }
+    const {data, error}=await sb.from("queue_public").select("*").eq("id",Q.entryId).maybeSingle();
+    if(error || !data) return;
+
+    if(data.status!==Q._lastStatus){
+      Q._lastStatus=data.status;
+      if(data.status==="called"){
+        Q.state="called"; Q.grace=6;
+        toast("Nyt on vuorosi! Ilmoittaudu loungen ovella tai tästä.");
+        if(backdrop.classList.contains("open")) renderQ(); else updatePill(true);
+        updatePill();
+        qStartGraceCountdown();
+      } else if(data.status==="arrived"){
+        Q.state="arrived";
+        if(backdrop.classList.contains("open")) renderQ();
+        updatePill();
+      } else if(data.status==="done"){
+        Q.state="done";
+        clearInterval(Q._graceTimer);
+        if(backdrop.classList.contains("open")) renderQ();
+        toast("Kiitos käynnistä. Yhteenveto löytyy viestistäsi.");
+        pill.classList.remove("show");
+        clearQueueEntryFromStorage();
+        clearInterval(Q._watchTimer);
+        refreshQueueCounts();
+      } else if(data.status==="no_show" || data.status==="left"){
+        clearInterval(Q._watchTimer);
+        clearQueueEntryFromStorage();
+        qReset();
+        if(backdrop.classList.contains("open")) showScr("liikkeet");
+        refreshQueueCounts();
+      }
+    } else if(data.status==="waiting"){
+      await refreshMyEstimate();
+      if(backdrop.classList.contains("open")) renderQ();
+      updatePill();
+    }
+  }, 4000);
+}
+/* Pelkkä visuaalinen lasku — henkilökunta merkitsee oikean ei-saapumisen, tämä ei enää
+   siirrä ketään automaattisesti takaisin jonoon niin kuin vanha simulaatio teki. */
+function qStartGraceCountdown(){
+  clearInterval(Q._graceTimer);
+  Q._graceTimer=setInterval(()=>{
+    Q.grace=Math.max(0,Q.grace-1);
+    const g=$("qGrace"); if(g)g.textContent=Q.grace+" min";
+    if(Q.grace<=0) clearInterval(Q._graceTimer);
+  },60000);
+}
+/* Päivittää oman arvion: kuinka moni odottaa samalla lääkärillä ennen minua, oikeasta datasta. */
+async function refreshMyEstimate(){
+  const d=DOCS[Q.doctorIdx];
+  if(!d || !Q.entryId) return;
+  const {data, error}=await sb
+    .from("queue_public")
+    .select("id,duration_min,joined_at")
+    .eq("doctor_id", d.id)
+    .eq("status","waiting")
+    .order("joined_at",{ascending:true});
+  if(error || !data) return;
+  const myIdx=data.findIndex(row=>row.id===Q.entryId);
+  const ahead=myIdx>=0 ? data.slice(0,myIdx) : [];
+  Q.aheadCount=ahead.length;
+  const minutes=ahead.reduce((s,row)=>s+(row.duration_min||0), 10);
+  Q.myClockTimestamp=Date.now()+minutes*60000;
+  Q.myClockText=fmtClock(new Date(Q.myClockTimestamp));
+}
+function saveQueueEntryToStorage(){
+  try{
+    localStorage.setItem("aatamiQueueEntry", JSON.stringify({
+      entryId:Q.entryId, accessToken:Q.accessToken, ticket:Q.ticket,
+      cityIdx:Q.cityIdx, doctorIdx:Q.doctorIdx, reasonIdx:Q.reasonIdx, duration:Q.duration, phone:Q.phone,
+    }));
+  }catch(_){}
+}
+function clearQueueEntryFromStorage(){
+  try{ localStorage.removeItem("aatamiQueueEntry"); }catch(_){}
+}
+async function restoreQueueEntryFromStorage(){
+  let saved;
+  try{ saved=JSON.parse(localStorage.getItem("aatamiQueueEntry")||"null"); }catch(_){ saved=null; }
+  if(!saved || !saved.entryId) return;
+  const {data, error}=await sb.from("queue_public").select("*").eq("id",saved.entryId).maybeSingle();
+  if(error || !data || !["waiting","called","arrived"].includes(data.status)){
+    clearQueueEntryFromStorage();
+    return;
+  }
+  Object.assign(Q,{
+    entryId:saved.entryId, accessToken:saved.accessToken, ticket:saved.ticket,
+    cityIdx:saved.cityIdx, doctorIdx:saved.doctorIdx, reasonIdx:saved.reasonIdx,
+    duration:saved.duration, phone:saved.phone, state:data.status, _lastStatus:data.status,
+  });
+  current=saved.cityIdx;
+  await refreshMyEstimate();
+  updatePill(true);
+  if(data.status==="called") qStartGraceCountdown();
+  qWatchStatus();
 }
 
 /* ═══════════ LIITY JONOON (suora, ei valikkoa) ═══════════ */
@@ -4109,10 +4218,6 @@ if (hamburgerBtn && mobileMenu) {
   document.addEventListener("keydown", e=>{ if (e.key === "Escape") closeMobileMenu(); });
 }
 
-syncPinStates();
-renderHfList();
-renderDemandList();
-
 /* ═══════════ VERKKOKAUPPA — ilmoita minulle ═══════════ */
 const shopBtn = $("shopSignupBtn");
 if (shopBtn) {
@@ -4204,10 +4309,17 @@ function wireDoctorBioCards(){
 }
 
 /* ═══════════ INIT — ajetaan vasta kun kaikki on määritelty ═══════════ */
-renderStatus();
-renderCities();
-buildMenu();
-wireDoctorBioCards();
-observeReveals();
-navigateTo(location.hash, { instant:true });
+(async function initApp(){
+  await loadClinicsAndDoctors();
+  renderStatus();
+  renderCities();
+  buildMenu();
+  wireDoctorBioCards();
+  syncPinStates();
+  renderHfList();
+  renderDemandList();
+  observeReveals();
+  navigateTo(location.hash, { instant:true });
+  await restoreQueueEntryFromStorage();
+})();
 </script>

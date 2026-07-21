@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aatami — Henkilökunta</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,500&family=Inter:wght@400;500;600&family=Oswald:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --black:#0b0a09;
+  --black-2:#12100e;
+  --panel:#171411;
+  --oak:#2a221a;
+  --brass:#c9a35c;
+  --brass-soft:#dcbf85;
+  --brass-hi:#efd6a0;
+  --brass-dim:rgba(201,163,92,.16);
+  --stone:#efe9df;
+  --stone-2:#e7e0d1;
+  --ink:#1c1914;
+  --ink-soft:#57503f;
+  --muted:#8d857a;
+  --muted-d:#b7ae9f;
+  --forest:#26372c;
+  --ok:#5c8a6b;
+  --warn:#b8763f;
+  --font-display:'Playfair Display',serif;
+  --font-body:'Inter',sans-serif;
+  --font-label:'Oswald',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:var(--font-body);background:var(--black);color:var(--stone);
+  font-size:16px;line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+header.top{
+  border-bottom:1px solid rgba(255,255,255,.08);
+  padding:22px 0;position:sticky;top:0;background:rgba(11,10,9,.92);backdrop-filter:blur(8px);z-index:5;
+}
+header.top .row{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-family:var(--font-display);font-weight:600;font-size:22px;letter-spacing:.02em;color:var(--stone)}
+.brand small{display:block;font-family:var(--font-label);font-size:11px;letter-spacing:.14em;color:var(--brass);text-transform:uppercase;margin-top:2px}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  font-family:var(--font-body);font-weight:600;font-size:14px;
+  border:none;border-radius:999px;padding:11px 22px;cursor:pointer;transition:transform .15s,opacity .15s;
+}
+.btn:active{transform:scale(.97)}
+.btn-gold{background:linear-gradient(180deg,var(--brass-hi),var(--brass));color:#211a0e}
+.btn-line{background:transparent;border:1px solid rgba(255,255,255,.18);color:var(--stone)}
+.btn-sm{padding:8px 16px;font-size:13px}
+.btn[disabled]{opacity:.45;cursor:default}
+
+/* ── Kirjautuminen ── */
+.login-shell{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.login-box{width:100%;max-width:360px;text-align:center}
+.login-box .mono-big{
+  width:56px;height:56px;border-radius:50%;border:1px solid var(--brass);color:var(--brass-hi);
+  font-family:var(--font-display);font-size:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;
+}
+.login-box h1{font-family:var(--font-display);font-weight:600;font-size:26px;margin-bottom:8px}
+.login-box p{color:var(--muted-d);font-size:14px;margin-bottom:24px}
+.field{text-align:left;margin-bottom:14px}
+.field label{display:block;font-size:12px;color:var(--muted-d);margin-bottom:6px;font-family:var(--font-label);letter-spacing:.06em;text-transform:uppercase}
+.field input{
+  width:100%;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.14);
+  background:var(--panel);color:var(--stone);font-size:15px;font-family:var(--font-body);
+}
+.field input:focus{outline:none;border-color:var(--brass)}
+.login-box .btn{width:100%;margin-top:6px}
+.error-msg{color:#e2897a;font-size:13px;margin-top:12px;min-height:16px}
+
+/* ── Dashboard ── */
+.dash-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 0 8px}
+.dash-head h2{font-family:var(--font-display);font-weight:600;font-size:20px}
+.dash-head .sub{color:var(--muted-d);font-size:13px;margin-top:2px}
+.duty-toggle{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted-d)}
+.switch{position:relative;width:44px;height:26px;border-radius:999px;background:rgba(255,255,255,.14);cursor:pointer;transition:background .2s}
+.switch.on{background:var(--ok)}
+.switch .knob{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--stone);transition:left .2s}
+.switch.on .knob{left:21px}
+
+.section-label{font-family:var(--font-label);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-d);margin:26px 0 10px}
+.empty{color:var(--muted-d);font-size:14px;padding:24px 0;text-align:center}
+
+.q-card{
+  background:var(--panel);border:1px solid rgba(255,255,255,.08);border-radius:14px;
+  padding:16px 18px;margin-bottom:12px;display:flex;flex-direction:column;gap:10px;
+}
+.q-card.called{border-color:var(--brass)}
+.q-card.arrived{border-color:var(--ok)}
+.q-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.q-ticket{font-family:var(--font-display);font-size:20px;font-weight:600}
+.q-status-chip{
+  font-family:var(--font-label);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+  padding:4px 10px;border-radius:999px;background:var(--brass-dim);color:var(--brass-soft);white-space:nowrap;
+}
+.q-status-chip.arrived{background:rgba(92,138,107,.18);color:#8fc79f}
+.q-reason{font-size:15px;font-weight:600}
+.q-meta{font-size:13px;color:var(--muted-d);display:flex;flex-wrap:wrap;gap:6px 14px}
+.q-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+
+.toast-stack{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:50}
+.toast{background:var(--panel);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px 14px;font-size:13px;max-width:280px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+
+.hidden{display:none !important}
+</style>
+</head>
+<body>
+
+<div id="loginShell" class="login-shell">
+  <div class="login-box">
+    <div class="mono-big">A</div>
+    <h1>Henkilökunnan kirjautuminen</h1>
+    <p>Kirjaudu sisään hallitaksesi oman toimipisteesi jonoa.</p>
+    <div class="field">
+      <label for="staffEmail">Sähköposti</label>
+      <input id="staffEmail" type="email" inputmode="email" autocomplete="username" placeholder="etunimi@aatamiterveys.fi">
+    </div>
+    <div class="field">
+      <label for="staffPassword">Salasana</label>
+      <input id="staffPassword" type="password" autocomplete="current-password">
+    </div>
+    <button class="btn btn-gold" id="loginBtn">Kirjaudu</button>
+    <div class="error-msg" id="loginError"></div>
+  </div>
+</div>
+
+<div id="dashShell" class="hidden">
+  <header class="top">
+    <div class="wrap row">
+      <div class="brand">AATAMI<small>Henkilökunta</small></div>
+      <button class="btn btn-line btn-sm" id="logoutBtn">Kirjaudu ulos</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="dash-head">
+      <div>
+        <h2 id="dashDocName">—</h2>
+        <div class="sub" id="dashClinicName">—</div>
+      </div>
+      <div class="duty-toggle">
+        <span id="dutyLabel">Ei vuorossa</span>
+        <div class="switch" id="dutySwitch"><div class="knob"></div></div>
+      </div>
+    </div>
+
+    <div class="section-label">Kutsuttavana</div>
+    <div id="waitingList"></div>
+
+    <div class="section-label">Kutsuttu / paikalla</div>
+    <div id="activeList"></div>
+  </div>
+</div>
+
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+<script>
+const SUPABASE_URL = "https://ruesbriqeecwyacnfqry.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_4C1Jld_P2Cat7yyyJs6Iyw_IMrHUcOJ";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const $ = id => document.getElementById(id);
+
+let me = null;        // oma doctors-rivi
+let entries = [];      // clinic_id:n queue_entries (waiting/called/arrived)
+let channel = null;
+
+function toast(text){
+  const d=document.createElement("div");
+  d.className="toast";
+  d.textContent=text;
+  $("toastStack").appendChild(d);
+  setTimeout(()=>{ d.remove(); }, 5000);
+}
+function fmtClock(iso){
+  const d=new Date(iso);
+  return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+}
+
+async function boot(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(session){ await enterDashboard(); }
+  else { showLogin(); }
+}
+
+function showLogin(){
+  $("loginShell").classList.remove("hidden");
+  $("dashShell").classList.add("hidden");
+}
+
+$("loginBtn").onclick = async ()=>{
+  const email = $("staffEmail").value.trim();
+  const password = $("staffPassword").value;
+  $("loginError").textContent = "";
+  if(!email || !password){ $("loginError").textContent="Täytä molemmat kentät."; return; }
+  const {error} = await sb.auth.signInWithPassword({email, password});
+  if(error){ $("loginError").textContent = "Kirjautuminen epäonnistui — tarkista sähköposti ja salasana."; return; }
+  await enterDashboard();
+};
+$("staffPassword").addEventListener("keydown", e=>{ if(e.key==="Enter") $("loginBtn").click(); });
+
+$("logoutBtn").onclick = async ()=>{
+  if(channel) sb.removeChannel(channel);
+  await sb.auth.signOut();
+  me = null; entries = [];
+  showLogin();
+};
+
+async function enterDashboard(){
+  const {data:{user}} = await sb.auth.getUser();
+  if(!user){ showLogin(); return; }
+
+  const {data: doctorRow, error} = await sb
+    .from("doctors")
+    .select("*, clinics(name)")
+    .eq("auth_user_id", user.id)
+    .maybeSingle();
+
+  if(error || !doctorRow){
+    $("loginError").textContent = "Tätä tunnusta ei ole liitetty mihinkään lääkäriprofiiliin.";
+    await sb.auth.signOut();
+    showLogin();
+    return;
+  }
+
+  me = doctorRow;
+  $("loginShell").classList.add("hidden");
+  $("dashShell").classList.remove("hidden");
+  $("dashDocName").textContent = me.full_name;
+  $("dashClinicName").textContent = "Aatami " + (me.clinics ? me.clinics.name : "");
+  renderDuty();
+  await loadQueue();
+  subscribeRealtime();
+}
+
+function renderDuty(){
+  $("dutySwitch").classList.toggle("on", !!me.on_duty);
+  $("dutyLabel").textContent = me.on_duty ? "Vuorossa" : "Ei vuorossa";
+}
+$("dutySwitch").onclick = async ()=>{
+  if(!me) return;
+  const next = !me.on_duty;
+  const {error} = await sb.from("doctors").update({on_duty: next}).eq("id", me.id);
+  if(error){ toast("Tilan päivitys epäonnistui."); return; }
+  me.on_duty = next;
+  renderDuty();
+};
+
+async function loadQueue(){
+  const {data, error} = await sb
+    .from("queue_entries")
+    .select("*")
+    .eq("clinic_id", me.clinic_id)
+    .in("status", ["waiting","called","arrived"])
+    .order("joined_at", {ascending:true});
+  if(error){ console.error(error); toast("Jonon lataus epäonnistui."); return; }
+  entries = data || [];
+  renderQueue();
+}
+
+function subscribeRealtime(){
+  if(channel) sb.removeChannel(channel);
+  channel = sb
+    .channel("staff-queue-"+me.clinic_id)
+    .on("postgres_changes",
+      { event:"*", schema:"public", table:"queue_entries", filter:`clinic_id=eq.${me.clinic_id}` },
+      () => { loadQueue(); }
+    )
+    .subscribe();
+}
+
+function renderQueue(){
+  const mine = entries.filter(e=>e.doctor_id===me.id);
+  const waiting = mine.filter(e=>e.status==="waiting");
+  const active = mine.filter(e=>e.status==="called" || e.status==="arrived");
+
+  $("waitingList").innerHTML = waiting.length
+    ? waiting.map(cardHtml).join("")
+    : `<div class="empty">Ei odottavia jonossa juuri nyt.</div>`;
+  $("activeList").innerHTML = active.length
+    ? active.map(cardHtml).join("")
+    : `<div class="empty">Ei kutsuttuja tai paikalla olevia.</div>`;
+
+  document.querySelectorAll("[data-action]").forEach(btn=>{
+    btn.addEventListener("click", onActionClick);
+  });
+}
+
+function cardHtml(e){
+  return `
+  <div class="q-card ${e.status}">
+    <div class="q-top">
+      <div>
+        <div class="q-ticket">#${e.ticket_number}</div>
+        <div class="q-reason">${e.reason_label}</div>
+      </div>
+      <span class="q-status-chip ${e.status}">${statusLabel(e.status)}</span>
+    </div>
+    <div class="q-meta">
+      <span>${e.patient_phone}</span>
+      <span>${e.duration_min} min · ${e.price_eur} €</span>
+      <span>Liittyi klo ${fmtClock(e.joined_at)}</span>
+    </div>
+    <div class="q-actions">
+      ${actionButtons(e)}
+    </div>
+  </div>`;
+}
+function statusLabel(s){
+  return {waiting:"Odottaa", called:"Kutsuttu", arrived:"Paikalla"}[s] || s;
+}
+function actionButtons(e){
+  if(e.status==="waiting"){
+    return `<button class="btn btn-gold btn-sm" data-action="call" data-id="${e.id}">Kutsu sisään</button>`;
+  }
+  if(e.status==="called"){
+    return `
+      <button class="btn btn-gold btn-sm" data-action="arrive" data-id="${e.id}">Merkitse saapuneeksi</button>
+      <button class="btn btn-line btn-sm" data-action="noshow" data-id="${e.id}">Ei saapunut</button>`;
+  }
+  if(e.status==="arrived"){
+    return `<button class="btn btn-gold btn-sm" data-action="done" data-id="${e.id}">Käynti valmis</button>`;
+  }
+  return "";
+}
+
+async function onActionClick(ev){
+  const btn = ev.currentTarget;
+  const id = btn.dataset.id;
+  const action = btn.dataset.action;
+  btn.disabled = true;
+
+  const updates = {
+    call:   { status:"called",  called_at: new Date().toISOString() },
+    arrive: { status:"arrived", arrived_at: new Date().toISOString() },
+    done:   { status:"done",    done_at: new Date().toISOString() },
+    noshow: { status:"no_show" },
+  }[action];
+
+  const {error} = await sb.from("queue_entries").update(updates).eq("id", id);
+  if(error){ toast("Päivitys epäonnistui — yritä uudelleen."); btn.disabled=false; return; }
+  await loadQueue();
+}
+
+boot();
+</script>
+</body>
+</html>
