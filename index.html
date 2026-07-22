@@ -3285,13 +3285,12 @@ function openModal(){
   document.body.style.overflow="hidden";
   pill.classList.remove("show");
   if(["waiting","called","arrived","done"].includes(Q.state)){
+    // Aktiivinen jono — näytetään jonotila suoraan.
     showScr("jono"); renderQ();
-  } else if(LOGIN.state!=="in"){
-    // Yläpalkin "Liity jonoon" vaatii kirjautumisen ensin — jonoon liittyminen jatkuu
-    // automaattisesti heti kirjautumisen jälkeen (katso qLoginVerify).
-    LOGIN.pendingAction="joinQueue";
-    showScr("kirjaudu");
   } else {
+    // Yläpalkin "Liity jonoon" vie suoraan toimipistevalintaan — sama polku kuin
+    // toimipisteen klikkaus. Puhelinnumero vahvistetaan kerran itse jonoon liittyessä,
+    // ei erikseen etukäteen (ei kaksinkertaista tunnistautumista).
     showScr("liikkeet");
   }
 }
