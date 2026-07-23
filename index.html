@@ -1014,9 +1014,22 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
 .pin-name{color:var(--ink);font-weight:500}
 .pin-dose{color:#8a8172;font-variant-numeric:tabular-nums;white-space:nowrap}
 .pcard .pbuy{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;padding-top:16px;border-top:1px solid rgba(28,25,20,.1);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding-top:16px;border-top:1px solid rgba(28,25,20,.1);
 }
 .pcard .pbuy .pprice{margin-top:0}
+.plan-toggle{display:flex;gap:6px;margin-top:16px;background:var(--stone-2);border-radius:999px;padding:4px}
+.plan-opt{
+  flex:1;border:none;background:none;cursor:pointer;border-radius:999px;padding:8px 10px;
+  font-family:var(--font-body);font-size:12.5px;font-weight:600;color:var(--ink-soft);transition:background .2s,color .2s;
+}
+.plan-opt span{color:var(--ok);font-weight:700}
+.plan-opt.on{background:var(--ink);color:var(--stone)}
+.plan-opt.on span{color:#8fd19e}
+.plan-note{font-size:11.5px;color:#8a8172;text-align:center;margin-top:8px;line-height:1.5}
+.cart-plan-badge{
+  display:inline-block;font-family:var(--font-label);font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+  background:rgba(92,138,107,.16);color:#3d7a54;padding:2px 8px;border-radius:20px;vertical-align:middle;margin-left:4px;
+}
 .btn-buy{
   border:none;cursor:pointer;border-radius:999px;padding:10px 18px;font-family:var(--font-body);
   font-weight:600;font-size:13px;background:var(--ink);color:var(--stone);transition:background .2s,transform .15s;
@@ -4320,13 +4333,23 @@ if (hamburgerBtn && mobileMenu) {
 
 /* ═══════════ VERKKOKAUPPA — tuotteet, ostoskori, kassa ═══════════ */
 const PILL_ICO = '<svg viewBox="0 0 24 24"><path d="M9 2h6M10 2v4l-3 4v10a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V10l-3-4V2"/></svg>';
-const SHOP = { products: [], byId: {} };
-const CART = { items: [], view: "cart", submitting: false, error: "", lastOrder: null }; // items: [{id, qty}]
+const SHOP = { products: [], byId: {}, selectedPlan: {} }; // selectedPlan: productId -> "one_time"|"annual" (kortin valinta ennen ostoskoriin lisäystä)
+const CART = { items: [], view: "cart", submitting: false, error: "", lastOrder: null }; // items: [{id, qty, plan}]
 const FREE_SHIP_LIMIT = 49, SHIP_FEE = 4.90;
+const ANNUAL_DISCOUNT = 0.20; // vuositilaus 20 % edullisempi, maksetaan kerralla
 const eur = n => (Math.round(n*100)/100).toFixed(2).replace(".", ",") + " €";
+/* Yksikköhinta valitulla suunnitelmalla — sama kaava kuin place_order-funktiossa
+   palvelimella, jotta näytetty hinta ja veloitettu hinta täsmäävät aina. */
+function planUnitPrice(product, plan){
+  if(plan==="annual") return Math.round(product.price_eur*12*(1-ANNUAL_DISCOUNT)*100)/100;
+  return product.price_eur;
+}
 
 function loadCartFromStorage(){
-  try{ const s=JSON.parse(localStorage.getItem("aatamiCart")||"null"); if(s&&Array.isArray(s.items)) CART.items=s.items; }catch(_){}
+  try{
+    const s=JSON.parse(localStorage.getItem("aatamiCart")||"null");
+    if(s&&Array.isArray(s.items)) CART.items=s.items.map(i=>({id:i.id, qty:i.qty, plan:i.plan==="annual"?"annual":"one_time"}));
+  }catch(_){}
 }
 function saveCart(){ try{ localStorage.setItem("aatamiCart", JSON.stringify({items:CART.items})); }catch(_){} }
 
@@ -4348,6 +4371,10 @@ function renderShopGrid(){
   if(!SHOP.products.length){ grid.innerHTML=`<div class="shop-loading">Tuotteet päivittyvät pian.</div>`; return; }
   grid.innerHTML = SHOP.products.map((p,i)=>{
     const ing = Array.isArray(p.ingredients) ? p.ingredients : [];
+    const plan = SHOP.selectedPlan[p.id] || "one_time";
+    const annualUnit = planUnitPrice(p, "annual");
+    const annualMonthly = Math.round(annualUnit/12*100)/100;
+    const shownPrice = plan==="annual" ? annualUnit : p.price_eur;
     return `
     <div class="pcard reveal" data-delay="${(i%3)+1}">
       ${p.badge?`<span class="p-badge">${esc(p.badge)}</span>`:""}
@@ -4356,41 +4383,56 @@ function renderShopGrid(){
       <h3>${esc(p.name)}</h3>
       <p class="pdesc">${esc(p.description)}</p>
       ${ing.length?`<ul class="ping">${ing.map(x=>`<li><span class="pin-name">${esc(x.name)}</span><span class="pin-dose">${esc(x.dose||"")}</span></li>`).join("")}</ul>`:""}
+      <div class="plan-toggle" data-plan-for="${p.id}">
+        <button type="button" class="plan-opt ${plan==="one_time"?"on":""}" data-plan="one_time">Kertaosto</button>
+        <button type="button" class="plan-opt ${plan==="annual"?"on":""}" data-plan="annual">Vuositilaus <span>−20 %</span></button>
+      </div>
+      ${plan==="annual"?`<div class="plan-note">${eur(annualUnit)} kerralla (${eur(annualMonthly)} / kk) — 12 kk toimitus, maksetaan heti</div>`:`<div class="plan-note">30 päivän annos, kertaostos</div>`}
       <div class="pbuy">
-        <span class="pprice">${eur(p.price_eur)}</span>
+        <span class="pprice">${eur(shownPrice)}</span>
         <button type="button" class="btn-buy" data-add="${p.id}">Lisää koriin</button>
       </div>
     </div>`;
   }).join("");
+  grid.querySelectorAll(".plan-opt").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      const id=b.closest("[data-plan-for]").dataset.planFor;
+      SHOP.selectedPlan[id]=b.dataset.plan;
+      renderShopGrid();
+    });
+  });
   grid.querySelectorAll("[data-add]").forEach(b=>{
-    b.addEventListener("click", ()=>addToCart(b.dataset.add, b));
+    b.addEventListener("click", ()=>addToCart(b.dataset.add, SHOP.selectedPlan[b.dataset.add]||"one_time", b));
   });
   observeReveals();
 }
 
 function cartCount(){ return CART.items.reduce((s,i)=>s+i.qty,0); }
-function cartSubtotal(){ return CART.items.reduce((s,i)=>{ const p=SHOP.byId[i.id]; return s+(p?p.price_eur*i.qty:0); },0); }
+function cartSubtotal(){
+  return CART.items.reduce((s,i)=>{ const p=SHOP.byId[i.id]; return s+(p?planUnitPrice(p,i.plan)*i.qty:0); },0);
+}
 function updateCartCount(){
   const n=cartCount(), el=$("navCartCount");
   if(!el) return;
   el.textContent=n; el.hidden = n===0;
 }
-function addToCart(id, btn){
-  const line=CART.items.find(i=>i.id===id);
-  if(line) line.qty++; else CART.items.push({id, qty:1});
+function addToCart(id, plan, btn){
+  plan = plan==="annual" ? "annual" : "one_time";
+  const line=CART.items.find(i=>i.id===id && i.plan===plan);
+  if(line) line.qty++; else CART.items.push({id, qty:1, plan});
   saveCart(); updateCartCount();
   if(btn){ btn.classList.add("added"); btn.textContent="Lisätty ✓"; setTimeout(()=>{btn.classList.remove("added"); btn.textContent="Lisää koriin";},1100); }
   if($("cartOverlay").classList.contains("open")){ CART.view="cart"; renderCart(); }
 }
-function changeQty(id, delta){
-  const line=CART.items.find(i=>i.id===id);
+function changeQty(id, plan, delta){
+  const line=CART.items.find(i=>i.id===id && i.plan===plan);
   if(!line) return;
   line.qty+=delta;
-  if(line.qty<=0) CART.items=CART.items.filter(i=>i.id!==id);
+  if(line.qty<=0) CART.items=CART.items.filter(i=>!(i.id===id && i.plan===plan));
   saveCart(); updateCartCount(); renderCart();
 }
-function removeFromCart(id){
-  CART.items=CART.items.filter(i=>i.id!==id);
+function removeFromCart(id, plan){
+  CART.items=CART.items.filter(i=>!(i.id===id && i.plan===plan));
   saveCart(); updateCartCount(); renderCart();
 }
 function openCart(){
@@ -4468,20 +4510,22 @@ function renderCart(){
   body.innerHTML = `
     ${CART.items.map(i=>{
       const p=SHOP.byId[i.id]; if(!p) return "";
+      const unit=planUnitPrice(p,i.plan);
+      const isAnnual=i.plan==="annual";
       return `
       <div class="cart-line">
         <div class="cart-line-ico">${PILL_ICO}</div>
         <div class="cart-line-mid">
-          <div class="cln">${esc(p.name)}</div>
-          <div class="clp">${eur(p.price_eur)}</div>
+          <div class="cln">${esc(p.name)}${isAnnual?` <span class="cart-plan-badge">Vuositilaus</span>`:""}</div>
+          <div class="clp">${eur(unit)}${isAnnual?` (${eur(Math.round(unit/12*100)/100)} / kk)`:""}</div>
           <div class="qty-step">
-            <button type="button" data-dec="${i.id}" aria-label="Vähennä">−</button>
+            <button type="button" data-dec="${i.id}" data-plan="${i.plan}" aria-label="Vähennä">−</button>
             <span>${i.qty}</span>
-            <button type="button" data-inc="${i.id}" aria-label="Lisää">+</button>
+            <button type="button" data-inc="${i.id}" data-plan="${i.plan}" aria-label="Lisää">+</button>
           </div>
-          <button class="cart-line-remove" data-rem="${i.id}">Poista</button>
+          <button class="cart-line-remove" data-rem="${i.id}" data-plan="${i.plan}">Poista</button>
         </div>
-        <div class="cart-line-total">${eur(p.price_eur*i.qty)}</div>
+        <div class="cart-line-total">${eur(unit*i.qty)}</div>
       </div>`;
     }).join("")}
     <div class="cart-summary">
@@ -4492,9 +4536,9 @@ function renderCart(){
     </div>
     <button class="cart-cta" id="cartCheckout">Siirry kassalle</button>
     <button class="cart-ghost" id="cartKeep">Jatka ostoksia</button>`;
-  body.querySelectorAll("[data-inc]").forEach(b=>b.onclick=()=>changeQty(b.dataset.inc,1));
-  body.querySelectorAll("[data-dec]").forEach(b=>b.onclick=()=>changeQty(b.dataset.dec,-1));
-  body.querySelectorAll("[data-rem]").forEach(b=>b.onclick=()=>removeFromCart(b.dataset.rem));
+  body.querySelectorAll("[data-inc]").forEach(b=>b.onclick=()=>changeQty(b.dataset.inc,b.dataset.plan,1));
+  body.querySelectorAll("[data-dec]").forEach(b=>b.onclick=()=>changeQty(b.dataset.dec,b.dataset.plan,-1));
+  body.querySelectorAll("[data-rem]").forEach(b=>b.onclick=()=>removeFromCart(b.dataset.rem,b.dataset.plan));
   $("cartCheckout").onclick=()=>{ CART.view="checkout"; CART.error=""; renderCart(); };
   $("cartKeep").onclick=closeCart;
 }
@@ -4507,7 +4551,7 @@ async function submitOrder(){
 
   CART.submitting=true; CART.error=""; renderCart();
   const {data, error} = await sb.rpc("place_order", {
-    p_items: CART.items.map(i=>({product_id:i.id, quantity:i.qty})),
+    p_items: CART.items.map(i=>({product_id:i.id, quantity:i.qty, plan:i.plan})),
     p_customer_name:name, p_email:email, p_phone:phone,
     p_address:address, p_postal_code:postal, p_city:city,
   });
