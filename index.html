@@ -1008,9 +1008,13 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
   letter-spacing:.12em;text-transform:uppercase;color:#fff;background:var(--brass);
   padding:4px 10px;border-radius:20px;
 }
-.pcard .pdesc{font-size:12.5px;color:#6d6558;line-height:1.65;min-height:56px;flex:1}
+.pcard .pdesc{font-size:12.5px;color:#6d6558;line-height:1.65}
+.pcard .ping{list-style:none;margin:16px 0 0;padding:14px 0 2px;border-top:1px solid rgba(28,25,20,.1);text-align:left;flex:1}
+.pcard .ping li{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:4px 0;font-size:12.5px}
+.pin-name{color:var(--ink);font-weight:500}
+.pin-dose{color:#8a8172;font-variant-numeric:tabular-nums;white-space:nowrap}
 .pcard .pbuy{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;padding-top:16px;border-top:1px solid rgba(28,25,20,.1);
 }
 .pcard .pbuy .pprice{margin-top:0}
 .btn-buy{
@@ -2664,11 +2668,12 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
   <div class="wrap">
     <div class="sect-head center">
       <span class="eyebrow reveal">Verkkokauppa</span>
-      <h2 class="reveal" style="margin-top:16px">Lääkärin valitsemat lisäravinteet.</h2>
+      <h2 class="reveal" style="margin-top:16px">Kolme pakettia, kolme tavoitetta.</h2>
       <span class="gold-line reveal" style="margin-left:auto;margin-right:auto"></span>
       <p class="shop-sub reveal">
-        Ei hypeä eikä täytettä — vain se mikä on tutkittu ja tarpeellista.
-        Sama laatuajattelu kuin vastaanotolla, kotiovellesi toimitettuna.
+        Ei kymmentä purkkia joista arvata — kolme lääkärin muotoilemaa pakettia
+        yleisimpiin tarpeisiin: uni, suoritus ja palautuminen. Vain tutkitut aineet,
+        oikeina annoksina, kotiovellesi toimitettuna.
       </p>
     </div>
 
@@ -4337,18 +4342,22 @@ function renderShopGrid(){
   const grid=$("shopGrid");
   if(!grid) return;
   if(!SHOP.products.length){ grid.innerHTML=`<div class="shop-loading">Tuotteet päivittyvät pian.</div>`; return; }
-  grid.innerHTML = SHOP.products.map((p,i)=>`
-    <div class="pcard reveal" data-delay="${(i%4)+1}">
+  grid.innerHTML = SHOP.products.map((p,i)=>{
+    const ing = Array.isArray(p.ingredients) ? p.ingredients : [];
+    return `
+    <div class="pcard reveal" data-delay="${(i%3)+1}">
       ${p.badge?`<span class="p-badge">${esc(p.badge)}</span>`:""}
       <div class="p-ico">${PILL_ICO}</div>
       <div class="pcat">${esc(p.category)}</div>
       <h3>${esc(p.name)}</h3>
       <p class="pdesc">${esc(p.description)}</p>
+      ${ing.length?`<ul class="ping">${ing.map(x=>`<li><span class="pin-name">${esc(x.name)}</span><span class="pin-dose">${esc(x.dose||"")}</span></li>`).join("")}</ul>`:""}
       <div class="pbuy">
         <span class="pprice">${eur(p.price_eur)}</span>
         <button type="button" class="btn-buy" data-add="${p.id}">Lisää koriin</button>
       </div>
-    </div>`).join("");
+    </div>`;
+  }).join("");
   grid.querySelectorAll("[data-add]").forEach(b=>{
     b.addEventListener("click", ()=>addToCart(b.dataset.add, b));
   });
