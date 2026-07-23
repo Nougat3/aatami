@@ -951,7 +951,8 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
   padding:7px 16px;border-radius:20px;
 }
 .shop-badge i{width:6px;height:6px;border-radius:50%;background:#c9a35c}
-.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:48px}
+.pgrid{display:flex;flex-wrap:wrap;justify-content:center;gap:22px;margin-top:48px}
+.pgrid .pcard{flex:1 1 320px;max-width:380px}
 .pcard{
   position:relative;background:#fff;border:1px solid rgba(28,25,20,.1);border-radius:16px;
   padding:26px 22px 24px;text-align:center;overflow:hidden;
@@ -987,9 +988,8 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
 }
 .shop-signed svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
 
-@media(max-width:1060px){ .pgrid{grid-template-columns:repeat(2,1fr)} }
 @media(max-width:640px){
-  .pgrid{grid-template-columns:1fr}
+  .pgrid .pcard{flex-basis:100%}
   .shop-signup{flex-direction:column}
   .shop-signup .btn{width:100%}
 }
@@ -2668,12 +2668,12 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
   <div class="wrap">
     <div class="sect-head center">
       <span class="eyebrow reveal">Verkkokauppa</span>
-      <h2 class="reveal" style="margin-top:16px">Kolme pakettia, kolme tavoitetta.</h2>
+      <h2 class="reveal" style="margin-top:16px">Aloita perustasta. Lisää tarvittaessa.</h2>
       <span class="gold-line reveal" style="margin-left:auto;margin-right:auto"></span>
       <p class="shop-sub reveal">
-        Ei kymmentä purkkia joista arvata — kolme lääkärin muotoilemaa pakettia
-        yleisimpiin tarpeisiin: uni, suoritus ja palautuminen. Vain tutkitut aineet,
-        oikeina annoksina, kotiovellesi toimitettuna.
+        Ei kymmentä purkkia joista arvata — yksi lääkärin muotoilema perusta
+        jokapäiväiseen hyvinvointiin, ja tarvittaessa Uni-lisä, jos ilta menee valvoessa.
+        Vain tutkitut aineet, oikeina annoksina, kotiovellesi toimitettuna.
       </p>
     </div>
 
@@ -4335,6 +4335,10 @@ async function loadShopProducts(){
   if(error){ console.error("products load failed", error); return; }
   SHOP.products = data||[];
   SHOP.byId = Object.fromEntries(SHOP.products.map(p=>[p.id,p]));
+  // Siivotaan korista rivit joiden tuote ei enää ole olemassa (esim. valikoima vaihtui).
+  const before=CART.items.length;
+  CART.items = CART.items.filter(i=>SHOP.byId[i.id]);
+  if(CART.items.length!==before) saveCart();
   renderShopGrid();
   updateCartCount();
 }
