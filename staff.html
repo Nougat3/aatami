@@ -105,6 +105,14 @@ header.top .row{display:flex;align-items:center;justify-content:space-between;ga
 .q-meta{font-size:13px;color:var(--muted-d);display:flex;flex-wrap:wrap;gap:6px 14px}
 .q-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
 
+.q-profile{border-top:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(201,163,92,.06);padding:12px 14px;margin-top:2px}
+.q-profile-tag{font-family:var(--font-label);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--brass-soft);margin-bottom:6px}
+.q-profile-name{font-size:14px;font-weight:600;margin-bottom:8px}
+.q-profile-block{margin-top:8px}
+.q-profile-block h5{font-size:11.5px;font-weight:600;color:var(--muted-d);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.q-profile-item{font-size:13.5px;display:flex;gap:8px;flex-wrap:wrap;padding:1px 0}
+.q-profile-item span{color:var(--muted-d)}
+
 .toast-stack{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:50}
 .toast{background:var(--panel);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px 14px;font-size:13px;max-width:280px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
 
@@ -164,7 +172,10 @@ header.top .row{display:flex;align-items:center;justify-content:space-between;ga
 <script>
 const SUPABASE_URL = "https://ruesbriqeecwyacnfqry.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_4C1Jld_P2Cat7yyyJs6Iyw_IMrHUcOJ";
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Oma istuntoavain henkilökuntasovellukselle, erillään potilassovelluksesta.
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { storageKey: "aatami-staff-auth" }
+});
 const $ = id => document.getElementById(id);
 
 let me = null;        // oma doctors-rivi
@@ -261,6 +272,16 @@ async function loadQueue(){
     .order("joined_at", {ascending:true});
   if(error){ console.error(error); toast("Jonon lataus epäonnistui."); return; }
   entries = data || [];
+
+  // Haetaan omien jonottajien tallentamat tiedot (lääkkeet + mittaukset).
+  // staff_get_patient_profile palauttaa tiedot vain jos potilas on kirjautunut ja
+  // liittynyt jonoon tililtään; muuten profiili jää tyhjäksi.
+  const mine = entries.filter(e=>e.doctor_id===me.id);
+  await Promise.all(mine.map(async e=>{
+    const {data:prof} = await sb.rpc("staff_get_patient_profile", {p_queue_entry_id:e.id});
+    e._profile = (prof && prof[0]) || null;
+  }));
+
   renderQueue();
 }
 
@@ -292,21 +313,38 @@ function renderQueue(){
   });
 }
 
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+function profileHtml(p){
+  if(!p) return "";
+  const meds = Array.isArray(p.medications) ? p.medications : [];
+  const meas = Array.isArray(p.measurements) ? p.measurements : [];
+  if(!p.full_name && !meds.length && !meas.length) return "";
+  return `
+    <div class="q-profile">
+      <div class="q-profile-tag">Potilaan omat tiedot</div>
+      ${p.full_name ? `<div class="q-profile-name">${esc(p.full_name)}</div>` : ""}
+      ${meds.length ? `<div class="q-profile-block"><h5>Lääkitys</h5>${meds.map(m=>`<div class="q-profile-item"><b>${esc(m.name)}</b> <span>${esc(m.dose)}</span></div>`).join("")}</div>` : ""}
+      ${meas.length ? `<div class="q-profile-block"><h5>Mittaukset</h5>${meas.map(m=>`<div class="q-profile-item"><b>${esc(m.type)}</b> <span>${esc(m.value)} · ${esc(m.date)}</span></div>`).join("")}</div>` : ""}
+    </div>`;
+}
+
 function cardHtml(e){
   return `
   <div class="q-card ${e.status}">
     <div class="q-top">
       <div>
         <div class="q-ticket">#${e.ticket_number}</div>
-        <div class="q-reason">${e.reason_label}</div>
+        <div class="q-reason">${esc(e.reason_label)}</div>
       </div>
       <span class="q-status-chip ${e.status}">${statusLabel(e.status)}</span>
     </div>
     <div class="q-meta">
-      <span>${e.patient_phone}</span>
+      <span>${esc(e.patient_phone)}</span>
       <span>${e.duration_min} min · ${e.price_eur} €</span>
       <span>Liittyi klo ${fmtClock(e.joined_at)}</span>
     </div>
+    ${profileHtml(e._profile)}
     <div class="q-actions">
       ${actionButtons(e)}
     </div>

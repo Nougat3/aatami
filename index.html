@@ -2862,7 +2862,11 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
 /* ═══ Live queue data (oikea Supabase-tietokanta, ei enää simuloitu) ═══ */
 const SUPABASE_URL = "https://ruesbriqeecwyacnfqry.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_4C1Jld_P2Cat7yyyJs6Iyw_IMrHUcOJ";
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Oma istuntoavain potilassovellukselle, jotta se ei sekoitu henkilökunnan
+// (staff.html) kirjautumiseen samassa selaimessa/originissa.
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { storageKey: "aatami-patient-auth" }
+});
 
 let CITIES = [];
 let OPEN = {};
@@ -3109,51 +3113,40 @@ function remainingMinutes(){
 }
 const rndi=(a,b)=>Math.floor(a+Math.random()*(b-a+1));
 
-/* ═══ Kirjaudu / Omat tiedot (demo) ═══ */
+/* ═══ Kirjaudu / Omat tiedot (oikea Supabase-tili) ═══
+   Potilas luo sähköposti+salasana-tilin. Lääkelista ja mittaukset tallentuvat
+   patient_profiles-tauluun (vain omistaja näkee, RLS). Kun kirjautunut potilas
+   liittyy jonoon, join_queue linkittää tiketin hänen tiliinsä, jolloin lääkäri
+   näkee nämä tiedot henkilökuntanäkymässä. */
 const LOGIN={
-  state:"phone",   // phone|code|in
-  phone:"", code:"",
-  pendingAction:null, // esim. "joinQueue" — mihin jatketaan heti onnistuneen kirjautumisen jälkeen
-  meds:[
-    {name:"Ramipril 5mg", dose:"1×/pv, aamuisin"},
-    {name:"Atorvastatiini 20mg", dose:"1×/pv, illalla"},
-  ],
-  measurements:[
-    {type:"Verenpaine", value:"132/84", date:"14.07."},
-    {type:"Paino", value:"78,4 kg", date:"10.07."},
-    {type:"Verensokeri", value:"5,6 mmol/l", date:"08.07."},
-  ],
+  state:"auth",        // auth | in
+  authMode:"signin",   // signin | signup
+  email:"", fullName:"",
+  loading:false, error:"",
+  meds:[],
+  measurements:[],
 };
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
 function renderLogin(){
   const box=$("loginBody");
   if(!box) return;
 
-  if(LOGIN.state==="phone"){
+  if(LOGIN.state==="auth"){
+    const signup = LOGIN.authMode==="signup";
     box.style.textAlign="center";
     box.innerHTML=`
       <div class="mono-big">A</div>
-      <h3>Kirjaudu Aatamiin</h3>
-      <p>${LOGIN.pendingAction==="joinQueue"
-        ? "Kirjaudu jatkaaksesi jonoon liittymistä — näin lääkärisi näkee tietosi jo etukäteen."
-        : "Näet käyntihistoriasi, jatkohoitosi ja voit täyttää tietosi valmiiksi ennen käyntiä — yhdellä puhelinnumerolla."}</p>
-      <div class="qm-field"><label for="loginPhone">Puhelinnumero</label>
-      <input id="loginPhone" type="tel" inputmode="tel" placeholder="+358 40 123 4567" value="${LOGIN.phone}"></div>
-      <button class="btn btn-gold qm-btn" onclick="qLoginSendCode()">Lähetä kirjautumiskoodi</button>
-      <div class="qm-hint">Demo — ei oikeaa tekstiviestiä, koodi näytetään seuraavalla ruudulla.</div>`;
-    return;
-  }
-  if(LOGIN.state==="code"){
-    box.style.textAlign="center";
-    box.innerHTML=`
-      <div class="mono-big">A</div>
-      <h3>Syötä koodi</h3>
-      <p>Lähetimme nelinumeroisen koodin numeroon ${LOGIN.phone}.</p>
-      <div class="qm-field"><label for="loginCode">Vahvistuskoodi</label>
-      <input id="loginCode" type="text" inputmode="numeric" maxlength="4" placeholder="••••" style="letter-spacing:.5em;text-align:center;font-size:22px"></div>
-      <button class="btn btn-gold qm-btn" onclick="qLoginVerify()">Kirjaudu sisään</button>
-      <div class="qm-hint">Demo: koodi on <b>${LOGIN.code}</b> — se saapui juuri "tekstiviestinä".</div>
-      <button class="qm-ghost" onclick="LOGIN.state='phone';renderLogin()">← Muuta numeroa</button>`;
-    setTimeout(()=>{const i=box.querySelector("input");if(i)i.focus()},60);
+      <h3>${signup ? "Luo Aatami-tili" : "Kirjaudu Aatamiin"}</h3>
+      <p>Tallenna lääkelistasi ja mittauksesi turvallisesti — <b>lääkärisi näkee nämä ennen käyntiäsi</b>, kun liityt jonoon kirjautuneena.</p>
+      <div class="qm-field"><label for="authEmail">Sähköposti</label>
+      <input id="authEmail" type="email" inputmode="email" autocomplete="username" placeholder="sinun@sahkoposti.fi" value="${esc(LOGIN.email)}"></div>
+      <div class="qm-field"><label for="authPassword">Salasana</label>
+      <input id="authPassword" type="password" autocomplete="${signup?'new-password':'current-password'}" placeholder="${signup?'Väh. 6 merkkiä':'Salasanasi'}"></div>
+      <button class="btn btn-gold qm-btn" onclick="qAuthSubmit()" ${LOGIN.loading?'disabled':''}>${LOGIN.loading?"Hetki…":(signup?"Luo tili":"Kirjaudu sisään")}</button>
+      ${LOGIN.error?`<div style="color:#e2897a;font-size:13px;margin-top:10px">${esc(LOGIN.error)}</div>`:""}
+      <button class="qm-ghost" onclick="qToggleAuthMode()">${signup?"Onko sinulla jo tili? Kirjaudu":"Ei vielä tiliä? Luo tili"}</button>`;
+    setTimeout(()=>{const i=box.querySelector("input");if(i&&!i.value)i.focus()},60);
     return;
   }
 
@@ -3161,9 +3154,16 @@ function renderLogin(){
   box.style.textAlign="left";
   box.innerHTML=`
     <div class="omat-head">
-      <span class="qm-eyebrow">Kirjautuneena · ${LOGIN.phone}</span>
+      <span class="qm-eyebrow">Kirjautuneena · ${esc(LOGIN.email)}</span>
       <h3 class="qm-h">Omat tiedot</h3>
-      <p class="qm-sub">Täytä lääkelistasi ja viimeisimmät mittauksesi valmiiksi — <b>lääkärisi näkee nämä ennen käyntiäsi</b>, mikä nopeuttaa asiointia eikä aikaa kulu perustietojen läpikäyntiin vastaanotolla.</p>
+      <p class="qm-sub">Täytä lääkelistasi ja viimeisimmät mittauksesi valmiiksi — <b>lääkärisi näkee nämä ennen käyntiäsi</b>, mikä nopeuttaa asiointia eikä aikaa kulu perustietojen läpikäyntiin vastaanotolla. Muutokset tallentuvat automaattisesti.</p>
+    </div>
+
+    <div class="omat-section">
+      <h4>Nimi</h4>
+      <div class="omat-add-row">
+        <input id="omatName" placeholder="Etunimi Sukunimi" value="${esc(LOGIN.fullName)}" onchange="qSaveName()">
+      </div>
     </div>
 
     <div class="omat-section">
@@ -3171,7 +3171,7 @@ function renderLogin(){
       <div class="omat-list" id="medList">
         ${LOGIN.meds.length ? LOGIN.meds.map((m,i)=>`
           <div class="omat-row">
-            <span class="omat-row-main"><b>${m.name}</b><span>${m.dose}</span></span>
+            <span class="omat-row-main"><b>${esc(m.name)}</b><span>${esc(m.dose)}</span></span>
             <button type="button" class="omat-remove" onclick="qRemoveMed(${i})" aria-label="Poista">×</button>
           </div>`).join("") : `<p class="omat-empty">Ei vielä lisättyjä lääkkeitä.</p>`}
       </div>
@@ -3187,7 +3187,7 @@ function renderLogin(){
       <div class="omat-list" id="measureList">
         ${LOGIN.measurements.length ? LOGIN.measurements.map((m,i)=>`
           <div class="omat-row">
-            <span class="omat-row-main"><b>${m.type}</b><span>${m.value} · ${m.date}</span></span>
+            <span class="omat-row-main"><b>${esc(m.type)}</b><span>${esc(m.value)} · ${esc(m.date)}</span></span>
             <button type="button" class="omat-remove" onclick="qRemoveMeasurement(${i})" aria-label="Poista">×</button>
           </div>`).join("") : `<p class="omat-empty">Ei vielä lisättyjä mittauksia.</p>`}
       </div>
@@ -3203,49 +3203,96 @@ function renderLogin(){
       </div>
     </div>
 
-    <button class="qm-ghost" onclick="qLogout()">Kirjaudu ulos (demo)</button>`;
+    <button class="qm-ghost" onclick="qLogout()">Kirjaudu ulos</button>`;
 }
-window.qLoginSendCode=function(){
-  const v=($("loginPhone")||{}).value||"";
-  LOGIN.phone=v.trim()||"+358 40 123 4567";
-  LOGIN.code=String(rndi(1000,9999));
-  LOGIN.state="code";
-  toast("Kirjautumiskoodisi: "+LOGIN.code);
+
+window.qToggleAuthMode=function(){
+  LOGIN.authMode = LOGIN.authMode==="signup" ? "signin" : "signup";
+  LOGIN.error="";
   renderLogin();
 };
-window.qLoginVerify=function(){
-  LOGIN.state="in";
-  updateLoginTabLabel();
-  if(LOGIN.pendingAction==="joinQueue"){
-    LOGIN.pendingAction=null;
-    toast("Kirjauduttu sisään — jatketaan jonoon liittymistä.");
-    showScr("liikkeet");
+window.qAuthSubmit=async function(){
+  const email=(($("authEmail")||{}).value||"").trim();
+  const password=($("authPassword")||{}).value||"";
+  if(!email || !password){ LOGIN.error="Täytä sähköposti ja salasana."; renderLogin(); return; }
+  LOGIN.email=email; LOGIN.error=""; LOGIN.loading=true; renderLogin();
+
+  let res;
+  if(LOGIN.authMode==="signup"){
+    res=await sb.auth.signUp({email, password});
+  } else {
+    res=await sb.auth.signInWithPassword({email, password});
+  }
+  LOGIN.loading=false;
+  if(res.error){
+    LOGIN.error = LOGIN.authMode==="signup"
+      ? "Rekisteröinti epäonnistui — tarkista sähköposti ja että salasana on vähintään 6 merkkiä. (Sähköposti voi olla jo käytössä.)"
+      : "Kirjautuminen epäonnistui — tarkista sähköposti ja salasana.";
+    renderLogin();
     return;
   }
-  renderLogin();
+  await loadPatientProfile();
 };
-window.qLogout=function(){
-  Object.assign(LOGIN,{state:"phone",phone:"",code:"",pendingAction:null});
+async function loadPatientProfile(){
+  const {data:{user}} = await sb.auth.getUser();
+  if(!user){ LOGIN.state="auth"; updateLoginTabLabel(); renderLogin(); return; }
+  LOGIN.email=user.email||LOGIN.email;
+  const {data, error}=await sb.from("patient_profiles").select("*").eq("user_id",user.id).maybeSingle();
+  if(error) console.error("profile load failed", error);
+  LOGIN.fullName=(data&&data.full_name)||"";
+  LOGIN.meds=(data&&data.medications)||[];
+  LOGIN.measurements=(data&&data.measurements)||[];
+  LOGIN.state="in";
   updateLoginTabLabel();
   renderLogin();
+}
+async function savePatientProfile(){
+  const {data:{user}} = await sb.auth.getUser();
+  if(!user) return;
+  const {error}=await sb.from("patient_profiles").upsert({
+    user_id:user.id,
+    full_name:LOGIN.fullName||"",
+    medications:LOGIN.meds,
+    measurements:LOGIN.measurements,
+    updated_at:new Date().toISOString(),
+  });
+  if(error){ console.error("profile save failed", error); toast("Tallennus epäonnistui — yritä uudelleen."); }
+}
+/* Palauttaa aiemman istunnon (Supabase säilyttää sen selaimessa) sivun latautuessa. */
+async function restoreLoginSession(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(session){ await loadPatientProfile(); }
+  else { updateLoginTabLabel(); }
+}
+window.qLogout=async function(){
+  await sb.auth.signOut();
+  Object.assign(LOGIN,{state:"auth",authMode:"signin",email:"",fullName:"",error:"",loading:false,meds:[],measurements:[]});
+  updateLoginTabLabel();
+  showScr("kirjaudu"); // päivittää myös yläotsikon ("Omat tiedot" → "Kirjaudu")
 };
 function updateLoginTabLabel(){
   const tab=document.querySelector('.app-tab[data-scr="kirjaudu"] .tab-label');
   if(tab) tab.textContent = LOGIN.state==="in" ? "Omat tiedot" : "Kirjaudu";
 }
-window.qAddMed=function(){
+window.qSaveName=async function(){
+  LOGIN.fullName=(($("omatName")||{}).value||"").trim();
+  await savePatientProfile();
+};
+window.qAddMed=async function(){
   const name=($("medName")||{}).value||"";
   const dose=($("medDose")||{}).value||"";
   if(!name.trim()) return;
   LOGIN.meds.push({name:name.trim(), dose:dose.trim()||"—"});
   renderLogin();
+  await savePatientProfile();
   setTimeout(()=>{const i=$("medName");if(i)i.focus()},60);
 };
-window.qRemoveMed=function(i){
+window.qRemoveMed=async function(i){
   LOGIN.meds.splice(i,1);
   renderLogin();
+  await savePatientProfile();
 };
-window.qAddMeasurement=function(){
+window.qAddMeasurement=async function(){
   const type=($("measureType")||{}).value||"Muu";
   const value=($("measureValue")||{}).value||"";
   if(!value.trim()) return;
@@ -3253,11 +3300,13 @@ window.qAddMeasurement=function(){
   const date=String(today.getDate()).padStart(2,"0")+"."+String(today.getMonth()+1).padStart(2,"0")+".";
   LOGIN.measurements.push({type, value:value.trim(), date});
   renderLogin();
+  await savePatientProfile();
   setTimeout(()=>{const i=$("measureValue");if(i)i.focus()},60);
 };
-window.qRemoveMeasurement=function(i){
+window.qRemoveMeasurement=async function(i){
   LOGIN.measurements.splice(i,1);
   renderLogin();
+  await savePatientProfile();
 };
 
 function toast(text){
@@ -4320,5 +4369,6 @@ function wireDoctorBioCards(){
   observeReveals();
   navigateTo(location.hash, { instant:true });
   await restoreQueueEntryFromStorage();
+  await restoreLoginSession();
 })();
 </script>
