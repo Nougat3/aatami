@@ -994,6 +994,115 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
   .shop-signup .btn{width:100%}
 }
 
+/* ── Kauppa: luottamusrivi, tuotekortin osto, footer ── */
+.shop-trust{
+  display:flex;flex-wrap:wrap;justify-content:center;gap:14px 34px;margin:30px auto 0;max-width:760px;
+}
+.st-item{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-soft);font-weight:500}
+.st-item svg{width:18px;height:18px;stroke:var(--brass);fill:none;stroke-width:1.5;flex:none}
+.shop-loading{grid-column:1/-1;text-align:center;color:#6d6558;font-size:14px;padding:40px 0}
+.shop-foot{max-width:600px;margin:44px auto 0;text-align:center;font-size:12px;color:#8a8172;line-height:1.7}
+.pcard{display:flex;flex-direction:column}
+.p-badge{
+  position:absolute;top:14px;left:14px;font-family:var(--font-label);font-size:9px;
+  letter-spacing:.12em;text-transform:uppercase;color:#fff;background:var(--brass);
+  padding:4px 10px;border-radius:20px;
+}
+.pcard .pdesc{font-size:12.5px;color:#6d6558;line-height:1.65;min-height:56px;flex:1}
+.pcard .pbuy{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;
+}
+.pcard .pbuy .pprice{margin-top:0}
+.btn-buy{
+  border:none;cursor:pointer;border-radius:999px;padding:10px 18px;font-family:var(--font-body);
+  font-weight:600;font-size:13px;background:var(--ink);color:var(--stone);transition:background .2s,transform .15s;
+}
+.btn-buy:hover{background:#2e2820}
+.btn-buy:active{transform:scale(.96)}
+.btn-buy.added{background:var(--ok)}
+
+/* ── Nav-ostoskori ── */
+.nav-cart{
+  position:relative;background:none;border:none;cursor:pointer;color:var(--stone);
+  width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;
+  transition:background .2s;
+}
+.nav-cart:hover{background:rgba(201,163,92,.14)}
+.nav-cart svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.6}
+.nav-cart-count{
+  position:absolute;top:2px;right:2px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;
+  background:var(--brass);color:#211a0e;font-size:10.5px;font-weight:700;line-height:17px;text-align:center;
+}
+
+/* ── Ostoskori-drawer ── */
+.cart-overlay{position:fixed;inset:0;z-index:300;visibility:hidden;pointer-events:none}
+.cart-overlay.open{visibility:visible;pointer-events:auto}
+.cart-backdrop{position:absolute;inset:0;background:rgba(11,10,9,.55);opacity:0;transition:opacity .3s}
+.cart-overlay.open .cart-backdrop{opacity:1}
+.cart-panel{
+  position:absolute;top:0;right:0;height:100%;width:min(420px,100%);
+  background:var(--stone);color:var(--ink);display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform .32s var(--ease-out);box-shadow:-20px 0 60px -20px rgba(0,0,0,.5);
+}
+.cart-overlay.open .cart-panel{transform:translateX(0)}
+.cart-head{
+  display:flex;align-items:center;justify-content:space-between;padding:20px 22px;
+  border-bottom:1px solid rgba(28,25,20,.12);flex:none;
+}
+.cart-head h3{font-family:var(--font-display);font-weight:600;font-size:20px}
+.cart-close{background:none;border:none;cursor:pointer;color:var(--ink-soft);width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.cart-close:hover{background:rgba(28,25,20,.07)}
+.cart-close svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8}
+.cart-body{flex:1;overflow-y:auto;padding:20px 22px 26px}
+
+.cart-empty{text-align:center;color:#6d6558;font-size:14px;padding:50px 10px}
+.cart-empty svg{width:40px;height:40px;stroke:#c4bcae;fill:none;stroke-width:1.3;margin-bottom:14px}
+.cart-line{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid rgba(28,25,20,.09)}
+.cart-line-ico{width:48px;height:48px;border-radius:12px;background:var(--stone-2);flex:none;display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.cart-line-ico svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.3}
+.cart-line-mid{flex:1;min-width:0}
+.cart-line-mid .cln{font-weight:600;font-size:14px}
+.cart-line-mid .clp{font-size:12.5px;color:#6d6558;margin-top:2px}
+.cart-line-remove{background:none;border:none;color:#a99;cursor:pointer;font-size:12px;margin-top:6px;padding:0}
+.cart-line-remove:hover{color:#c0392b;text-decoration:underline}
+.qty-step{display:inline-flex;align-items:center;gap:0;border:1px solid rgba(28,25,20,.18);border-radius:999px;overflow:hidden;margin-top:8px}
+.qty-step button{width:28px;height:28px;background:#fff;border:none;cursor:pointer;font-size:16px;color:var(--ink);line-height:1;display:flex;align-items:center;justify-content:center}
+.qty-step button:hover{background:var(--stone-2)}
+.qty-step span{min-width:30px;text-align:center;font-size:13.5px;font-variant-numeric:tabular-nums}
+.cart-line-total{font-family:var(--font-display);font-size:15px;white-space:nowrap;align-self:flex-start;font-variant-numeric:tabular-nums}
+
+.cart-summary{margin-top:20px;padding-top:16px;border-top:1px solid rgba(28,25,20,.14)}
+.cart-summary .csr{display:flex;justify-content:space-between;font-size:13.5px;color:var(--ink-soft);padding:4px 0}
+.cart-summary .csr.total{font-size:16px;color:var(--ink);font-weight:600;padding-top:8px}
+.cart-summary .csr.total b{font-family:var(--font-display)}
+.cart-ship-hint{font-size:11.5px;color:#8a6a2e;margin-top:8px;text-align:center}
+.cart-cta{width:100%;margin-top:16px;background:linear-gradient(180deg,var(--brass-hi),var(--brass));color:#211a0e;border:none;border-radius:999px;padding:14px;font-weight:600;font-size:15px;cursor:pointer;transition:transform .15s}
+.cart-cta:active{transform:scale(.98)}
+.cart-cta:disabled{opacity:.5;cursor:default}
+.cart-ghost{width:100%;margin-top:10px;background:none;border:none;color:var(--ink-soft);font-size:13px;cursor:pointer;padding:6px}
+.cart-ghost:hover{color:var(--ink)}
+
+/* Kassa-lomake */
+.co-field{margin-bottom:12px}
+.co-field label{display:block;font-size:11px;color:var(--ink-soft);margin-bottom:5px;font-family:var(--font-label);letter-spacing:.06em;text-transform:uppercase}
+.co-field input{width:100%;padding:11px 13px;border-radius:9px;border:1px solid rgba(28,25,20,.18);background:#fff;color:var(--ink);font-size:14.5px;font-family:inherit}
+.co-field input:focus{outline:none;border-color:var(--brass)}
+.co-row{display:flex;gap:10px}
+.co-row .co-field{flex:1}
+.co-error{color:#c0392b;font-size:13px;margin-top:8px}
+.co-back{background:none;border:none;color:var(--ink-soft);font-size:13px;cursor:pointer;margin-bottom:14px;padding:0}
+.co-back:hover{color:var(--ink)}
+
+/* Vahvistus */
+.co-done{text-align:center;padding:30px 6px}
+.co-done .co-check{width:60px;height:60px;border-radius:50%;background:rgba(92,138,107,.16);display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+.co-done .co-check svg{width:30px;height:30px;stroke:var(--ok);fill:none;stroke-width:2}
+.co-done h4{font-family:var(--font-display);font-size:22px;margin-bottom:8px}
+.co-done p{font-size:14px;color:var(--ink-soft);line-height:1.6}
+.co-done .co-order-num{font-family:var(--font-display);font-size:15px;margin:16px 0;color:var(--ink)}
+
+@media(max-width:640px){ .nav-cart{width:38px;height:38px} }
+
 /* ═══════════════ HERO 2: LÖYDÄ LÄHIN VASTAANOTTO ═══════════════ */
 .hero2{min-height:0;padding:48px 0 84px;display:block}
 .hero2-inner{position:relative;z-index:4}
@@ -1252,6 +1361,10 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
       <li><a href="#verkkokauppa">Verkkokauppa</a></li>
     </ul>
     <div class="nav-right">
+      <button type="button" class="nav-cart" id="navCart" aria-label="Ostoskori">
+        <svg viewBox="0 0 24 24"><path d="M5 7h14l-1.4 10.5a2 2 0 0 1-2 1.7H8.4a2 2 0 0 1-2-1.7L5 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+        <span class="nav-cart-count" id="navCartCount" hidden>0</span>
+      </button>
       <button type="button" class="btn btn-gold btn-sm join-btn nav-desktop-only">Liity jonoon</button>
       <button type="button" class="hamburger nav-mobile-only" id="hamburgerBtn" aria-label="Avaa valikko" aria-expanded="false" aria-controls="mobileMenu">
         <span></span><span></span><span></span>
@@ -2551,97 +2664,28 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
   <div class="wrap">
     <div class="sect-head center">
       <span class="eyebrow reveal">Verkkokauppa</span>
-      <h2 class="reveal" style="margin-top:16px">Kotiin toimitettuna, tarpeen mukaan.</h2>
+      <h2 class="reveal" style="margin-top:16px">Lääkärin valitsemat lisäravinteet.</h2>
       <span class="gold-line reveal" style="margin-left:auto;margin-right:auto"></span>
       <p class="shop-sub reveal">
-        Tieteellisesti perustellut lisäravinteet ja valmiit laboratoriopaketit —
-        sama laatuajattelu kuin vastaanotolla, nyt myös ilman käyntiä tilattavissa.
+        Ei hypeä eikä täytettä — vain se mikä on tutkittu ja tarpeellista.
+        Sama laatuajattelu kuin vastaanotolla, kotiovellesi toimitettuna.
       </p>
-      <span class="shop-badge reveal"><i></i>Verkkokauppa avautuu piakkoin</span>
     </div>
 
-    <div class="shop-cat reveal">
-      <h3 class="shop-cat-title">Lisäravinteet</h3>
-      <p class="shop-cat-sub">Valmiiksi koottu, tieteellisesti perusteltu setti — ei täytetuotteita.</p>
-    </div>
-    <div class="pgrid">
-      <div class="pcard reveal" data-delay="1">
-        <span class="p-tag">Tulossa</span>
-        <div class="p-ico"><svg viewBox="0 0 24 24"><path d="M9 2h6M10 2v4l-3 4v10a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V10l-3-4V2"/></svg></div>
-        <div class="pcat">Lisäravinne</div>
-        <h3>Aatami Perusravinteet</h3>
-        <p>D-vitamiini ja Omega-3 yhdessä valmisteessa — perusta, josta muu terveys rakentuu.</p>
-        <div class="pprice">24,90&nbsp;€</div>
-      </div>
-      <div class="pcard reveal" data-delay="2">
-        <span class="p-tag">Tulossa</span>
-        <div class="p-ico"><svg viewBox="0 0 24 24"><path d="M9 2h6M10 2v4l-3 4v10a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V10l-3-4V2"/></svg></div>
-        <div class="pcat">Lisäravinne</div>
-        <h3>Aatami Uni</h3>
-        <p>Magnesium ja melatoniini unenlaadun tueksi — kun uni ei tule itsestään.</p>
-        <div class="pprice">19,90&nbsp;€</div>
-      </div>
-      <div class="pcard reveal" data-delay="3">
-        <span class="p-tag">Tulossa</span>
-        <div class="p-ico"><svg viewBox="0 0 24 24"><path d="M9 2h6M10 2v4l-3 4v10a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V10l-3-4V2"/></svg></div>
-        <div class="pcat">Lisäravinne</div>
-        <h3>Aatami Palautuminen</h3>
-        <p>Sinkki ja magnesium — tukea palautumiseen kun päivät ovat pitkiä.</p>
-        <div class="pprice">22,90&nbsp;€</div>
-      </div>
-      <div class="pcard reveal" data-delay="4">
-        <span class="p-tag">Tulossa</span>
-        <div class="p-ico"><svg viewBox="0 0 24 24"><path d="M9 2h6M10 2v4l-3 4v10a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V10l-3-4V2"/></svg></div>
-        <div class="pcat">Lisäravinne</div>
-        <h3>Aatami Aamu</h3>
-        <p>Monipuolinen multivitamiini aktiiviselle arjelle — yksi tabletti, koko päivä.</p>
-        <div class="pprice">26,90&nbsp;€</div>
-      </div>
+    <div class="shop-trust reveal">
+      <div class="st-item"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>Lääketieteellisesti perusteltu</div>
+      <div class="st-item"><svg viewBox="0 0 24 24"><path d="M3 7h11v8H3zM14 10h4l3 3v2h-7z"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>Ilmainen toimitus yli 49 €</div>
+      <div class="st-item"><svg viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/></svg>Suomessa pakattu ja testattu</div>
     </div>
 
-    <div class="shop-cat reveal" style="margin-top:56px">
-      <h3 class="shop-cat-title">Laboratoriopaketit</h3>
-      <p class="shop-cat-sub">Näyte otetaan Synlab-kumppanilaboratoriossa. Käyt tuloksen läpi lääkärisi kanssa — ei irrallista testiä ilman tulkintaa.</p>
-    </div>
-    <div class="pgrid">
-      <div class="pcard reveal" data-delay="1">
-        <span class="p-tag">Tulossa</span>
-        <div class="p-ico"><svg viewBox="0 0 24 24"><path d="M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M8 3h8"/></svg></div>
-        <div class="pcat">Laboratoriopaketti</div>
-        <h3>Peruslaajaverikoe</h3>
-        <p>Verenkuva, glukoosi, kolesterolit, maksa- ja munuaisarvot sekä kilpirauhanen — kokonaiskuva kuntoon.</p>
-        <div class="pprice">89&nbsp;€</div>
-      </div>
-      <div class="pcard reveal" data-delay="2">
-        <span class="p-tag">Tulossa</span>
-        <div class="p-ico"><svg viewBox="0 0 24 24"><path d="M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M8 3h8"/></svg></div>
-        <div class="pcat">Laboratoriopaketti</div>
-        <h3>Miesten hormonipaketti</h3>
-        <p>Testosteroni, SHBG ja PSA — eturauhasen ja jaksamisen kannalta keskeiset arvot yhdellä käynnillä.</p>
-        <div class="pprice">119&nbsp;€</div>
-      </div>
-      <div class="pcard reveal" data-delay="3">
-        <span class="p-tag">Tulossa</span>
-        <div class="p-ico"><svg viewBox="0 0 24 24"><path d="M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M8 3h8"/></svg></div>
-        <div class="pcat">Laboratoriopaketti</div>
-        <h3>Naisten hormonipaketti</h3>
-        <p>Estradioli, FSH ja TSH — selkeyttä vaihdevuosioireisiin ja hormonitasapainoon.</p>
-        <div class="pprice">109&nbsp;€</div>
-      </div>
-      <div class="pcard reveal" data-delay="4">
-        <span class="p-tag">Tulossa</span>
-        <div class="p-ico"><svg viewBox="0 0 24 24"><path d="M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M8 3h8"/></svg></div>
-        <div class="pcat">Laboratoriopaketti</div>
-        <h3>Palautumispaketti</h3>
-        <p>CRP, ferritiini, D-vitamiini ja sinkki — näet mistä väsymys tai hidas palautuminen johtuu.</p>
-        <div class="pprice">79&nbsp;€</div>
-      </div>
+    <div class="pgrid" id="shopGrid">
+      <div class="shop-loading">Ladataan tuotteita…</div>
     </div>
 
-    <div class="shop-signup reveal" id="shopSignupBox">
-      <input type="text" id="shopContact" placeholder="Sähköposti, niin ilmoitamme kun kauppa avautuu" aria-label="Sähköposti">
-      <button type="button" class="btn btn-dark btn-sm" id="shopSignupBtn">Ilmoita minulle</button>
-    </div>
+    <p class="shop-foot reveal">
+      Lisäravinteet eivät korvaa monipuolista ruokavaliota. Jos jokin oire mietityttää,
+      kysy lääkäriltäsi — esimerkiksi Aatamin vastaanotolla.
+    </p>
   </div>
 </section>
 </div>
@@ -2846,6 +2890,20 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
     <span class="t2" id="qPillT2">–</span>
   </span>
 </button>
+
+<!-- ═══ OSTOSKORI (drawer) ═══ -->
+<div class="cart-overlay" id="cartOverlay" aria-hidden="true">
+  <div class="cart-backdrop" id="cartBackdrop"></div>
+  <aside class="cart-panel" role="dialog" aria-modal="true" aria-label="Ostoskori">
+    <header class="cart-head">
+      <h3 id="cartTitle">Ostoskori</h3>
+      <button class="cart-close" id="cartClose" aria-label="Sulje ostoskori">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </header>
+    <div class="cart-body" id="cartBody"></div>
+  </aside>
+</div>
 
 <script>
 /* ═══ Live queue data (oikea Supabase-tietokanta, ei enää simuloitu) ═══ */
@@ -4255,22 +4313,208 @@ if (hamburgerBtn && mobileMenu) {
   document.addEventListener("keydown", e=>{ if (e.key === "Escape") closeMobileMenu(); });
 }
 
-/* ═══════════ VERKKOKAUPPA — ilmoita minulle ═══════════ */
-const shopBtn = $("shopSignupBtn");
-if (shopBtn) {
-  shopBtn.addEventListener("click", ()=>{
-    const input = $("shopContact");
-    const val = (input.value || "").trim();
-    if (!val) { input.focus(); return; }
-    submitToNetlify({ yhteystieto: val, konteksti: "Verkkokauppa" });
-    toast(`Kiitos! Ilmoitamme sinulle (${val}) kun verkkokauppa avautuu.`);
-    $("shopSignupBox").outerHTML = `
-      <div class="shop-signed reveal visible">
-        <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
-        Kiitos — ilmoitamme heti kun verkkokauppa avautuu.
-      </div>`;
-  });
+/* ═══════════ VERKKOKAUPPA — tuotteet, ostoskori, kassa ═══════════ */
+const PILL_ICO = '<svg viewBox="0 0 24 24"><path d="M9 2h6M10 2v4l-3 4v10a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V10l-3-4V2"/></svg>';
+const SHOP = { products: [], byId: {} };
+const CART = { items: [], view: "cart", submitting: false, error: "", lastOrder: null }; // items: [{id, qty}]
+const FREE_SHIP_LIMIT = 49, SHIP_FEE = 4.90;
+const eur = n => (Math.round(n*100)/100).toFixed(2).replace(".", ",") + " €";
+
+function loadCartFromStorage(){
+  try{ const s=JSON.parse(localStorage.getItem("aatamiCart")||"null"); if(s&&Array.isArray(s.items)) CART.items=s.items; }catch(_){}
 }
+function saveCart(){ try{ localStorage.setItem("aatamiCart", JSON.stringify({items:CART.items})); }catch(_){} }
+
+async function loadShopProducts(){
+  const {data, error} = await sb.from("products").select("*").eq("is_active",true).order("sort_order");
+  if(error){ console.error("products load failed", error); return; }
+  SHOP.products = data||[];
+  SHOP.byId = Object.fromEntries(SHOP.products.map(p=>[p.id,p]));
+  renderShopGrid();
+  updateCartCount();
+}
+function renderShopGrid(){
+  const grid=$("shopGrid");
+  if(!grid) return;
+  if(!SHOP.products.length){ grid.innerHTML=`<div class="shop-loading">Tuotteet päivittyvät pian.</div>`; return; }
+  grid.innerHTML = SHOP.products.map((p,i)=>`
+    <div class="pcard reveal" data-delay="${(i%4)+1}">
+      ${p.badge?`<span class="p-badge">${esc(p.badge)}</span>`:""}
+      <div class="p-ico">${PILL_ICO}</div>
+      <div class="pcat">${esc(p.category)}</div>
+      <h3>${esc(p.name)}</h3>
+      <p class="pdesc">${esc(p.description)}</p>
+      <div class="pbuy">
+        <span class="pprice">${eur(p.price_eur)}</span>
+        <button type="button" class="btn-buy" data-add="${p.id}">Lisää koriin</button>
+      </div>
+    </div>`).join("");
+  grid.querySelectorAll("[data-add]").forEach(b=>{
+    b.addEventListener("click", ()=>addToCart(b.dataset.add, b));
+  });
+  observeReveals();
+}
+
+function cartCount(){ return CART.items.reduce((s,i)=>s+i.qty,0); }
+function cartSubtotal(){ return CART.items.reduce((s,i)=>{ const p=SHOP.byId[i.id]; return s+(p?p.price_eur*i.qty:0); },0); }
+function updateCartCount(){
+  const n=cartCount(), el=$("navCartCount");
+  if(!el) return;
+  el.textContent=n; el.hidden = n===0;
+}
+function addToCart(id, btn){
+  const line=CART.items.find(i=>i.id===id);
+  if(line) line.qty++; else CART.items.push({id, qty:1});
+  saveCart(); updateCartCount();
+  if(btn){ btn.classList.add("added"); btn.textContent="Lisätty ✓"; setTimeout(()=>{btn.classList.remove("added"); btn.textContent="Lisää koriin";},1100); }
+  if($("cartOverlay").classList.contains("open")){ CART.view="cart"; renderCart(); }
+}
+function changeQty(id, delta){
+  const line=CART.items.find(i=>i.id===id);
+  if(!line) return;
+  line.qty+=delta;
+  if(line.qty<=0) CART.items=CART.items.filter(i=>i.id!==id);
+  saveCart(); updateCartCount(); renderCart();
+}
+function removeFromCart(id){
+  CART.items=CART.items.filter(i=>i.id!==id);
+  saveCart(); updateCartCount(); renderCart();
+}
+function openCart(){
+  CART.view = CART.items.length ? CART.view : "cart";
+  if(CART.view==="done") CART.view="cart";
+  $("cartOverlay").classList.add("open");
+  document.body.style.overflow="hidden";
+  renderCart();
+}
+function closeCart(){
+  $("cartOverlay").classList.remove("open");
+  document.body.style.overflow="";
+  if(CART.view==="done"){ CART.view="cart"; }
+}
+function renderCart(){
+  const body=$("cartBody"), title=$("cartTitle");
+  if(CART.view==="done" && CART.lastOrder){
+    title.textContent="Kiitos tilauksesta";
+    const o=CART.lastOrder;
+    body.innerHTML=`
+      <div class="co-done">
+        <div class="co-check"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></div>
+        <h4>Tilaus vastaanotettu</h4>
+        <div class="co-order-num">Tilausnumero #${o.order_number}</div>
+        <p>Lähetimme vahvistuksen sähköpostiisi. Pakkaamme tuotteesi ja toimitamme ne pian.<br><br>
+        <b>Yhteensä ${eur(o.total_eur)}</b>${o.shipping_eur>0?` (sis. toimitus ${eur(o.shipping_eur)})`:` · ilmainen toimitus`}</p>
+      </div>
+      <button class="cart-cta" id="cartContinue">Jatka ostoksia</button>`;
+    $("cartContinue").onclick=closeCart;
+    return;
+  }
+  if(!CART.items.length){
+    title.textContent="Ostoskori";
+    body.innerHTML=`
+      <div class="cart-empty">
+        <svg viewBox="0 0 24 24"><path d="M5 7h14l-1.4 10.5a2 2 0 0 1-2 1.7H8.4a2 2 0 0 1-2-1.7L5 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+        <div>Ostoskorisi on tyhjä.</div>
+      </div>
+      <button class="cart-ghost" id="cartToShop">Selaa tuotteita →</button>`;
+    $("cartToShop").onclick=()=>{ closeCart(); location.hash="#verkkokauppa"; navigateTo("#verkkokauppa"); };
+    return;
+  }
+
+  const sub=cartSubtotal();
+  const ship=sub>=FREE_SHIP_LIMIT?0:SHIP_FEE;
+
+  if(CART.view==="checkout"){
+    title.textContent="Kassa";
+    const pre = (typeof LOGIN!=="undefined" && LOGIN.state==="in") ? LOGIN : {email:"",fullName:""};
+    body.innerHTML=`
+      <button class="co-back" id="coBack">← Takaisin koriin</button>
+      <div class="co-field"><label>Nimi</label><input id="coName" value="${esc(pre.fullName||"")}" placeholder="Etunimi Sukunimi"></div>
+      <div class="co-field"><label>Sähköposti</label><input id="coEmail" type="email" value="${esc(pre.email||"")}" placeholder="sinun@sahkoposti.fi"></div>
+      <div class="co-field"><label>Puhelin</label><input id="coPhone" type="tel" placeholder="+358 40 123 4567"></div>
+      <div class="co-field"><label>Katuosoite</label><input id="coAddress" placeholder="Katu ja numero"></div>
+      <div class="co-row">
+        <div class="co-field"><label>Postinumero</label><input id="coPostal" inputmode="numeric" placeholder="90100"></div>
+        <div class="co-field"><label>Kaupunki</label><input id="coCity" placeholder="Oulu"></div>
+      </div>
+      <div class="cart-summary">
+        <div class="csr"><span>Välisumma</span><span>${eur(sub)}</span></div>
+        <div class="csr"><span>Toimitus</span><span>${ship===0?"Ilmainen":eur(ship)}</span></div>
+        <div class="csr total"><span>Yhteensä</span><b>${eur(sub+ship)}</b></div>
+      </div>
+      ${CART.error?`<div class="co-error">${esc(CART.error)}</div>`:""}
+      <button class="cart-cta" id="coSubmit" ${CART.submitting?"disabled":""}>${CART.submitting?"Lähetetään…":"Vahvista tilaus"}</button>
+      <div class="cart-ship-hint">Ei korttimaksua vielä — maksu laskutetaan erikseen. Demo-vaiheen tilaus.</div>`;
+    $("coBack").onclick=()=>{ CART.view="cart"; CART.error=""; renderCart(); };
+    $("coSubmit").onclick=submitOrder;
+    return;
+  }
+
+  // view === cart
+  title.textContent="Ostoskori";
+  body.innerHTML = `
+    ${CART.items.map(i=>{
+      const p=SHOP.byId[i.id]; if(!p) return "";
+      return `
+      <div class="cart-line">
+        <div class="cart-line-ico">${PILL_ICO}</div>
+        <div class="cart-line-mid">
+          <div class="cln">${esc(p.name)}</div>
+          <div class="clp">${eur(p.price_eur)}</div>
+          <div class="qty-step">
+            <button type="button" data-dec="${i.id}" aria-label="Vähennä">−</button>
+            <span>${i.qty}</span>
+            <button type="button" data-inc="${i.id}" aria-label="Lisää">+</button>
+          </div>
+          <button class="cart-line-remove" data-rem="${i.id}">Poista</button>
+        </div>
+        <div class="cart-line-total">${eur(p.price_eur*i.qty)}</div>
+      </div>`;
+    }).join("")}
+    <div class="cart-summary">
+      <div class="csr"><span>Välisumma</span><span>${eur(sub)}</span></div>
+      <div class="csr"><span>Toimitus</span><span>${ship===0?"Ilmainen":eur(ship)}</span></div>
+      <div class="csr total"><span>Yhteensä</span><b>${eur(sub+ship)}</b></div>
+      ${ship>0?`<div class="cart-ship-hint">Lisää ${eur(FREE_SHIP_LIMIT-sub)} niin toimitus on ilmainen.</div>`:""}
+    </div>
+    <button class="cart-cta" id="cartCheckout">Siirry kassalle</button>
+    <button class="cart-ghost" id="cartKeep">Jatka ostoksia</button>`;
+  body.querySelectorAll("[data-inc]").forEach(b=>b.onclick=()=>changeQty(b.dataset.inc,1));
+  body.querySelectorAll("[data-dec]").forEach(b=>b.onclick=()=>changeQty(b.dataset.dec,-1));
+  body.querySelectorAll("[data-rem]").forEach(b=>b.onclick=()=>removeFromCart(b.dataset.rem));
+  $("cartCheckout").onclick=()=>{ CART.view="checkout"; CART.error=""; renderCart(); };
+  $("cartKeep").onclick=closeCart;
+}
+async function submitOrder(){
+  const g=id=>(($( id)||{}).value||"").trim();
+  const name=g("coName"), email=g("coEmail"), phone=g("coPhone"),
+        address=g("coAddress"), postal=g("coPostal"), city=g("coCity");
+  if(!name||!email||!address||!postal||!city){ CART.error="Täytä nimi, sähköposti ja toimitusosoite."; renderCart(); return; }
+  if(!/^\S+@\S+\.\S+$/.test(email)){ CART.error="Tarkista sähköpostiosoite."; renderCart(); return; }
+
+  CART.submitting=true; CART.error=""; renderCart();
+  const {data, error} = await sb.rpc("place_order", {
+    p_items: CART.items.map(i=>({product_id:i.id, quantity:i.qty})),
+    p_customer_name:name, p_email:email, p_phone:phone,
+    p_address:address, p_postal_code:postal, p_city:city,
+  });
+  CART.submitting=false;
+  if(error || !data || !data[0]){
+    console.error("place_order failed", error);
+    CART.error="Tilaus ei onnistunut — yritä hetken kuluttua uudelleen.";
+    renderCart();
+    return;
+  }
+  CART.lastOrder=data[0];
+  CART.items=[]; saveCart(); updateCartCount();
+  CART.view="done"; renderCart();
+  toast(`Kiitos! Tilaus #${data[0].order_number} vastaanotettu.`);
+}
+
+$("navCart").addEventListener("click", openCart);
+$("cartClose").addEventListener("click", closeCart);
+$("cartBackdrop").addEventListener("click", closeCart);
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && $("cartOverlay").classList.contains("open")) closeCart(); });
 /* ═══════════ SIVUREITITYS (nav-otsikoiden mukaiset näkymät) ═══════════ */
 // Estetään selainta palauttamasta omaa aiempaa vieritysasemaansa hash-vaihdoissa
 // (erit. mobiili-Safari), jotta manuaalinen ylösvieritys toimii luotettavasti
@@ -4357,6 +4601,9 @@ function wireDoctorBioCards(){
   renderDemandList();
   observeReveals();
   navigateTo(location.hash, { instant:true });
+  loadCartFromStorage();
+  updateCartCount();
+  await loadShopProducts();
   await restoreQueueEntryFromStorage();
   await restoreLoginSession();
 })();
