@@ -312,6 +312,7 @@ img,svg{display:block}
 .how::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:1px;height:44px;background:linear-gradient(180deg,var(--brass),transparent)}
 .how h2{font-size:clamp(28px,3.4vw,40px);color:var(--ink)}
 .how-grid{display:grid;grid-template-columns:1fr 46px 1fr 46px 1fr 46px 1fr;margin-top:70px;align-items:start}
+.how-grid-3{display:grid;grid-template-columns:1fr 46px 1fr 46px 1fr;margin-top:70px;align-items:start}
 .how-item{text-align:center;padding:0 8px}
 .how-disc{
   position:relative;width:104px;height:104px;margin:0 auto 26px;border-radius:50%;
@@ -332,6 +333,21 @@ img,svg{display:block}
 .how-item p{font-size:13.5px;color:#6d6558;line-height:1.7;max-width:230px;margin:0 auto}
 .how-arrow{display:flex;align-items:center;justify-content:center;height:104px;color:var(--brass)}
 .how-arrow svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7}
+
+/* ═══════════════ VIDEOPAIKKA (esittelyvideo, lisätään myöhemmin) ═══════════════ */
+.video-slot{
+  max-width:760px;margin:48px auto 0;aspect-ratio:16/9;border-radius:20px;
+  background:linear-gradient(135deg,var(--oak),var(--panel));
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  border:1px solid rgba(201,163,92,.25);position:relative;overflow:hidden;
+}
+.video-slot::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 420px 220px at 50% 40%,rgba(201,163,92,.12),transparent 70%)}
+.video-slot .vs-play{
+  width:72px;height:72px;border-radius:50%;border:1.5px solid rgba(201,163,92,.55);
+  display:flex;align-items:center;justify-content:center;color:var(--brass-hi);position:relative;z-index:1;
+}
+.video-slot .vs-play svg{width:26px;height:26px;stroke:currentColor;fill:currentColor;stroke-width:0;margin-left:3px}
+.video-slot .vs-label{position:relative;z-index:1;font-family:var(--font-label);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-d)}
 
 /* ═══════════════ AIKA-SECTION ═══════════════ */
 .value{background:var(--stone-2);color:var(--ink);padding:104px 0;position:relative}
@@ -748,6 +764,7 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
 /* ═══════════════ PALVELUT / VAIVAT ═══════════════ */
 .conditions{background:var(--black-2);padding:100px 0 104px;position:relative;border-top:1px solid var(--brass-dim)}
 .cond-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:52px}
+.cond-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:52px}
 .cond{
   background:linear-gradient(180deg,#191512,#110f0c);border:1px solid rgba(201,163,92,.18);
   border-radius:14px;padding:26px 24px 24px;transition:transform .3s var(--ease-out),border-color .3s;
@@ -839,13 +856,15 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
 }
 .faq-item[open] summary .pm{transform:rotate(45deg);background:var(--brass);border-color:var(--brass);color:#181307}
 .faq-item .fa{padding:0 40px 22px 4px;font-size:14px;color:var(--ink-soft);line-height:1.75}
+/* Leipätekstin sisäiset linkit — pelkkä alleviivaus, ei väriä (kontrasti vaihtelee taustan mukaan). */
+.fa a,.explainer-lede a,.price-note a,.cond-note a,.value p a{text-decoration:underline;text-underline-offset:2px}
 
 @media(max-width:1060px){
-  .cond-grid{grid-template-columns:repeat(2,1fr)}
+  .cond-grid,.cond-grid-3{grid-template-columns:repeat(2,1fr)}
   .doc-grid{grid-template-columns:1fr}
 }
 @media(max-width:640px){
-  .cond-grid{grid-template-columns:1fr}
+  .cond-grid,.cond-grid-3{grid-template-columns:1fr}
   .price-card{padding:6px 22px}
   .price-row{flex-direction:column;gap:4px;align-items:flex-start}
   .cta-row{flex-direction:column;align-items:stretch;width:100%}
@@ -1301,7 +1320,7 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
   .hamburger{display:flex}
   .status{grid-template-columns:1fr 1fr;gap:24px}
   .status .cell{border-left:none;padding:0}
-  .how-grid{grid-template-columns:1fr 1fr;gap:48px 24px}
+  .how-grid,.how-grid-3{grid-template-columns:1fr 1fr;gap:48px 24px}
   .how-arrow{display:none}
   .value-grid{grid-template-columns:1fr}
   .city-grid{grid-template-columns:repeat(3,1fr)}
@@ -1313,7 +1332,7 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
   .hero-content{padding:70px 0 84px}
   .hero .lede{max-width:100%}
   .status{grid-template-columns:1fr;padding:24px}
-  .how-grid{grid-template-columns:1fr;gap:44px}
+  .how-grid,.how-grid-3{grid-template-columns:1fr;gap:44px}
   .cards3{grid-template-columns:1fr}
   .city-grid{grid-template-columns:1fr 1fr}
   .f-grid{grid-template-columns:1fr}
@@ -1374,6 +1393,8 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
     <ul class="nav-links">
       <li><a href="#toimipisteet">Toimipisteet</a></li>
       <li><a href="#palvelut">Palvelut</a></li>
+      <li><a href="#hoitopolut">Hoitopolut</a></li>
+      <li><a href="#etavastaanotot">Etävastaanotot</a></li>
       <li><a href="#tietoa">Aatami</a></li>
       <li><a href="#verkkokauppa">Verkkokauppa</a></li>
     </ul>
@@ -1391,6 +1412,8 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
   <div class="mobile-menu" id="mobileMenu">
     <a href="#toimipisteet">Toimipisteet</a>
     <a href="#palvelut">Palvelut</a>
+    <a href="#hoitopolut">Hoitopolut</a>
+    <a href="#etavastaanotot">Etävastaanotot</a>
     <a href="#tietoa">Aatami</a>
     <a href="#verkkokauppa">Verkkokauppa</a>
     <button type="button" class="btn btn-gold join-btn">Liity jonoon <span class="arr">→</span></button>
@@ -2546,12 +2569,133 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
       </details>
       <details class="faq-item">
         <summary>Miten jatkohoito toimii?<span class="pm">+</span></summary>
-        <div class="fa">Käynnin jälkeen yhteys lääkäriisi jatkuu: tarvittaessa varaat uuden ajan liittymällä jonoon uudelleen. Etävastaanotto on tulossa myöhemmin — aluksi keskitymme siihen, että jono ilman ajanvarausta toimii mahdollisimman hyvin.</div>
+        <div class="fa">Käynnin jälkeen yhteys lääkäriisi jatkuu: monen pitkäaikaisvaivan seuranta hoituu soittokontrollilla ilman uutta käyntiä — katso <a href="#hoitopolut">Hoitopolut ja seuranta</a>. Tarvitset videovälitteisen etävastaanoton, se varataan <a href="#etavastaanotot">Vastaanotto.fi-palvelun</a> kautta.</div>
       </details>
       <details class="faq-item">
         <summary>Hoidetaanko Aatamissa myös kiireellisiä asioita?<span class="pm">+</span></summary>
         <div class="fa">Aatami ei korvaa päivystystä. Hätätilanteessa soita 112. Me hoidamme sen kaiken muun — asiat, jotka eivät ole päivystyksellisiä, mutta joiden ei myöskään pidä odottaa viikkoja.</div>
       </details>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ═══ HOITOPOLUT & SEURANTA ═══ -->
+<div class="page" data-page="hoitopolut">
+<section class="how" id="hoitopolutProsessi">
+  <div class="wrap">
+    <div class="sect-head center">
+      <span class="eyebrow reveal">Hoitopolut</span>
+      <h2 class="reveal" style="margin-top:16px">Hoito ei pääty ovesta ulos kävellessä.</h2>
+      <span class="gold-line reveal" style="margin-left:auto;margin-right:auto"></span>
+      <p class="explainer-lede reveal">
+        Moni pitkäaikaisvaiva ei vaadi uutta käyntiä joka kerta — vain sitä, että joku oikeasti
+        seuraa. Näin hoito ja seuranta etenevät Aatamissa ensikäynnin jälkeen.
+      </p>
+    </div>
+    <div class="how-grid-3">
+      <div class="how-item reveal" data-delay="1">
+        <div class="how-disc">
+          <svg viewBox="0 0 48 48"><circle cx="24" cy="14" r="7"/><path d="M10 42c0-8 6.3-13 14-13s14 5 14 13"/></svg>
+          <span class="how-num">1</span>
+        </div>
+        <h3>Ensikäynti ja arvio</h3>
+        <p>Lääkäri tutkii tilanteesi ja tekee ensimmäisen arvion — sama käynti kuin mikä tahansa muu, ei erikoisvarausta.</p>
+      </div>
+      <div class="how-arrow reveal" data-delay="1"><svg viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></div>
+      <div class="how-item reveal" data-delay="2">
+        <div class="how-disc">
+          <svg viewBox="0 0 48 48"><path d="M9 3h6l1 3h3v15H5V6h3z"/><path d="M9 13l2 2 4-4"/></svg>
+          <span class="how-num">2</span>
+        </div>
+        <h3>Hoitosuunnitelma</h3>
+        <p>Saat kirjallisen suunnitelman: mitä hoidetaan, millä ja miksi — sekä milloin ja miten seuranta jatkuu.</p>
+      </div>
+      <div class="how-arrow reveal" data-delay="2"><svg viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></div>
+      <div class="how-item reveal" data-delay="3">
+        <div class="how-disc">
+          <svg viewBox="0 0 48 48"><path d="M24 8v32M8 24h32"/><circle cx="24" cy="24" r="18"/></svg>
+          <span class="how-num">3</span>
+        </div>
+        <h3>Seuranta etänä</h3>
+        <p>Tuloskeskustelu ja annoksen tarkistus hoituvat soittokontrollilla — ei tarvitse tulla paikan päälle joka kerta.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="conditions" id="hoitopolutVaivat">
+  <div class="wrap">
+    <div class="sect-head center">
+      <span class="eyebrow reveal">Yleisimmät hoitopolut</span>
+      <h2 class="reveal" style="margin-top:16px;color:#fff">Näihin seuranta sopii parhaiten.</h2>
+      <span class="gold-line reveal" style="margin-left:auto;margin-right:auto"></span>
+    </div>
+    <div class="cond-grid-3">
+      <div class="cond reveal" data-delay="1">
+        <div class="cond-ico"><svg viewBox="0 0 24 24"><path d="M20.8 8.6a5 5 0 0 0-8.1-1.5L12 7.8l-.7-.7a5 5 0 1 0-7.1 7.1l7.1 7 .7.7.7-.7 7.1-7a5 5 0 0 0 1-5.6z"/><path d="M3 12h4l2-3 3 6 2-3h4"/></svg></div>
+        <h3>Verenpaine ja kolesteroli</h3>
+        <p>Lääkitys säädetään kuntoon ensikäynnillä — sen jälkeen arvot ja vointi tarkistetaan soittokontrollilla.</p>
+      </div>
+      <div class="cond reveal" data-delay="2">
+        <div class="cond-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg></div>
+        <h3>Mieliala ja jaksaminen</h3>
+        <p>Hoidon vaikutusta seurataan säännöllisin väliajoin — ei tarvitse odottaa seuraavaa käyntiä kertoaksesi miten menee.</p>
+      </div>
+      <div class="cond reveal" data-delay="3">
+        <div class="cond-ico"><svg viewBox="0 0 24 24"><path d="M6 3v7a6 6 0 0 0 12 0V3"/><path d="M6 3h3M15 3h3"/><path d="M12 16v5M9 21h6"/></svg></div>
+        <h3>Painonhallinta</h3>
+        <p>Pitkäjänteinen suunnitelma etenee kuukausittaisella seurannalla — ei pikadieettiä, ei unohdu välissä.</p>
+      </div>
+    </div>
+    <p class="cond-note reveal">Soittokontrolli maksaa <b>30 €</b> — katso <a href="#hinnasto">koko hinnasto</a>.</p>
+  </div>
+</section>
+</div>
+
+<!-- ═══ ETÄVASTAANOTOT ═══ -->
+<div class="page" data-page="etavastaanotot">
+<section class="explainer" id="etavastaanottoInfo">
+  <div class="wrap">
+    <div class="sect-head center">
+      <span class="eyebrow reveal">Etävastaanotot</span>
+      <h2 class="reveal" style="margin-top:16px">Kun käynti ei vaadi paikan päällä oloa.</h2>
+      <span class="gold-line reveal" style="margin-left:auto;margin-right:auto"></span>
+      <p class="explainer-lede reveal">
+        Osa seurantakäynneistä ja konsultaatioista hoituu videovälitteisesti — ilman matkaa,
+        ilman jonottamista paikan päällä. Aatamin etävastaanotot varataan
+        <a href="https://www.vastaanotto.fi" target="_blank" rel="noopener noreferrer">Vastaanotto.fi</a>-palvelun kautta.
+      </p>
+    </div>
+
+    <div class="video-slot reveal">
+      <div class="vs-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+      <div class="vs-label">Esittelyvideo tulossa</div>
+    </div>
+
+    <div class="explainer-cta reveal" style="margin-top:38px">
+      <a href="https://www.vastaanotto.fi" target="_blank" rel="noopener noreferrer" class="btn btn-gold btn-sm">Varaa etävastaanotto — Vastaanotto.fi <span class="arr">→</span></a>
+      <a href="#hoitopolut" class="btn btn-dark btn-sm">Katso miten seuranta toimii</a>
+    </div>
+  </div>
+</section>
+
+<section class="value" id="etavastaanottoSopiiko">
+  <div class="wrap value-grid">
+    <div>
+      <span class="eyebrow reveal">Milloin etä sopii</span>
+      <h2 class="reveal" style="margin-top:16px">Ei kaikkeen, mutta useimpaan.</h2>
+    </div>
+    <div>
+      <p class="reveal" style="font-size:15px;color:var(--ink-soft);line-height:1.8">
+        Suurin osa seurantakäynneistä ja tuloskeskusteluista onnistuu täysin etänä — verenpaineen,
+        kolesterolin, painonhallinnan ja mielialan seuranta ei vaadi fyysistä tutkimusta joka kerta.
+        Jos tilanne kuitenkin vaatii tutkimista paikan päällä, lääkäri sanoo sen suoraan ja ohjaa
+        sinut lähimpään Aatamin toimipisteeseen.
+      </p>
+      <p class="reveal" style="font-size:15px;color:var(--ink-soft);line-height:1.8;margin-top:16px">
+        Etävastaanotto ei korvaa päivystystä. Hätätilanteessa soita aina 112.
+      </p>
     </div>
   </div>
 </section>
@@ -4580,6 +4724,8 @@ const PAGE_OF = {
   koti: "koti", avaus: "koti", esittely: "koti",
   toimipisteet: "toimipisteet", loyda: "toimipisteet",
   palvelut: "palvelut", prosessi: "palvelut", hinnasto: "palvelut", faq: "palvelut",
+  hoitopolut: "hoitopolut",
+  etavastaanotot: "etavastaanotot",
   tietoa: "tietoa", arvomme: "tietoa", laakarit: "tietoa",
   verkkokauppa: "verkkokauppa",
   tietosuoja: "tietosuoja",
