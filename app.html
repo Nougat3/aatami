@@ -182,6 +182,22 @@ a{color:inherit;text-decoration:none}
 .pstep-tag.now{background:rgba(201,163,92,.16);color:#8a6a2e}
 .pstep-tag.next{background:var(--bg-2);color:var(--ink-soft)}
 .pstep-check{width:22px;height:22px;stroke:var(--ok);fill:none;stroke-width:2.2;align-self:center}
+.pstep-action{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:12px}
+.pstep-link{font-size:13px;font-weight:600;color:#8a6a2e;text-decoration:underline;text-underline-offset:2px}
+.pstep-action .btn-gold{padding:9px 18px;font-size:13px}
+/* Progress bar */
+.path-progress{height:6px;background:var(--bg-2);border-radius:999px;overflow:hidden;margin:0 0 20px}
+.pp-bar{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-hi));border-radius:999px;transition:width .5s var(--ease)}
+/* Intro (aloittamaton polku) */
+.path-intro{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:40px 28px;text-align:center;max-width:520px;margin:0 auto}
+.pi-ico{width:64px;height:64px;border-radius:18px;background:var(--dark);display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+.pi-ico svg{width:30px;height:30px;stroke:var(--gold-hi);fill:none;stroke-width:1.5}
+.path-intro h2{font-family:var(--fd);font-size:24px;font-weight:600}
+.path-intro p{color:var(--ink-soft);font-size:14.5px;line-height:1.7;margin:10px auto 22px;max-width:400px}
+.pi-stages{display:flex;flex-direction:column;gap:2px;text-align:left;max-width:320px;margin:0 auto}
+.pi-stage{display:flex;align-items:center;gap:12px;padding:9px 0;font-size:14px;border-bottom:1px solid var(--line)}
+.pi-stage:last-child{border-bottom:none}
+.pis-num{width:24px;height:24px;border-radius:50%;background:var(--bg-2);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex:none}
 
 /* ═══════ TABS ═══════ */
 .tabs{display:flex;gap:6px;background:var(--bg-2);border-radius:999px;padding:4px;margin-bottom:20px;width:fit-content}
@@ -364,17 +380,8 @@ a{color:inherit;text-decoration:none}
       <div class="tiles" id="tiles"></div>
 
       <div class="row2">
-        <!-- Active care path -->
-        <div class="dcard">
-          <div class="dc-top">
-            <span class="dc-eyebrow">Hoitopolku: Verenpaine</span>
-            <span class="dc-phase">Vaihe 4 / 7</span>
-          </div>
-          <h3>Etävastaanotto</h3>
-          <div class="dc-next">Seuraava: Hoitosuunnitelma</div>
-          <div class="stepper" id="miniStepper"></div>
-          <button class="btn-gold" style="margin-top:22px" onclick="go('hoitopolut')">Jatka polkua</button>
-        </div>
+        <!-- Active care path (dynaaminen) -->
+        <div class="dcard" id="pathCard"></div>
         <!-- Next appointment -->
         <div class="dcard">
           <span class="dc-eyebrow">Seuraava vastaanotto</span>
@@ -400,8 +407,7 @@ a{color:inherit;text-decoration:none}
     <!-- ═══════════ HOITOPOLUT ═══════════ -->
     <section class="view" data-view="hoitopolut">
       <a class="back" onclick="go('etusivu')"><svg viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg>Etusivu</a>
-      <div class="head"><div><h1>Hoitopolku: Verenpaine</h1><div class="sub">Vaihe 4 / 7 — tavoitteena verenpaineen hallinta pysyvästi.</div></div></div>
-      <div class="path-steps" id="pathSteps"></div>
+      <div id="pathDetail"></div>
     </section>
 
     <!-- ═══════════ MITTAUKSET ═══════════ -->
@@ -518,24 +524,61 @@ const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 
 /* ═══ DEMO DATA ═══ */
-const CARE_PATHS = [
-  {id:"verenpaine", name:"Verenpaine & kolesteroli", status:"Hoitopolku käynnissä", active:true, icon:'<path d="M20.8 8.6a5 5 0 0 0-8.1-1.5L12 7.8l-.7-.7a5 5 0 1 0-7.1 7.1l7.1 7 .7.7.7-.7 7.1-7a5 5 0 0 0 1-5.6z"/><path d="M3 12h4l2-3 3 6 2-3h4"/>'},
-  {id:"seksuaali", name:"Miesten seksuaaliterveys", status:"Aloita hoitopolku", icon:'<circle cx="10" cy="14" r="7"/><path d="M15 9l6-6M16 3h5v5"/>'},
-  {id:"uni", name:"Uni & jaksaminen", status:"Aloita hoitopolku", icon:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>'},
-  {id:"paino", name:"Painonhallinta", status:"Aloita hoitopolku", icon:'<path d="M6 3v7a6 6 0 0 0 12 0V3"/><path d="M6 3h3M15 3h3"/><path d="M12 16v5M9 21h6"/>'},
-  {id:"tarkastus", name:"Terveystarkastus", status:"Suositeltu sinulle", icon:'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>'},
-];
+/* Aatamin hoitopolun 7 vakiovaihetta. Yksittäinen polku voi antaa vaiheille
+   omat otsikkonsa (details) — muuten käytetään näitä. */
+const STAGE = ["Kysely","Mittaaminen","Laboratoriot","Vastaanotto","Hoitosuunnitelma","Seuranta","Kontrolli"];
+const STAGE_MINI = ["Kysely","Mittaaminen","Laboratoriot","Vastaanotto","Hoito­suunnitelma","Seuranta","Kontrolli"];
 
-const PATH_STEPS = [
-  {n:1, t:"Täytä terveyskysely", s:"Valmis 12.6.", state:"done"},
-  {n:2, t:"Mittaa verenpaine 4 päivän ajan", s:"Valmis 13.6.", state:"done"},
-  {n:3, t:"Käy Synlabissa", s:"Valmis 14.6.", state:"done"},
-  {n:4, t:"Etävastaanotto", s:"To 21.8. klo 16.30", state:"now"},
-  {n:5, t:"Hoitosuunnitelma", s:"Seuraava vaihe", state:"next"},
-  {n:6, t:"Seuranta", s:"Ei aloitettu", state:"todo"},
-  {n:7, t:"Kontrolli", s:"Ei aloitettu", state:"todo"},
-];
-const MINI_STEPS = ["Kysely","Mittaaminen","Laboratoriot","Vastaanotto","Hoito­suunnitelma","Seuranta","Kontrolli"];
+const PATHS = {
+  verenpaine:{ name:"Verenpaine", full:"Verenpaine & kolesteroli",
+    icon:'<path d="M20.8 8.6a5 5 0 0 0-8.1-1.5L12 7.8l-.7-.7a5 5 0 1 0-7.1 7.1l7.1 7 .7.7.7-.7 7.1-7a5 5 0 0 0 1-5.6z"/><path d="M3 12h4l2-3 3 6 2-3h4"/>',
+    intro:"Verenpaineen ja kolesterolin hallinta — mittaus, hoito ja seuranta yhdessä polussa.",
+    started:true, current:3,
+    details:["Täytä terveyskysely","Mittaa verenpaine 4 päivän ajan","Käy Synlabissa","Etävastaanotto","Hoitosuunnitelma","Seuranta","Kontrolli"],
+    doneDates:["Valmis 12.6.","Valmis 13.6.","Valmis 14.6."],
+    nowInfo:"To 21.8. klo 16.30" },
+  seksuaali:{ name:"Miesten seksuaaliterveys", full:"Miesten seksuaaliterveys",
+    icon:'<circle cx="10" cy="14" r="7"/><path d="M15 9l6-6M16 3h5v5"/>',
+    intro:"Luottamuksellinen polku erektio-, libido- ja hormoniasioihin — ilman kiusaantumista.",
+    started:false, current:0 },
+  uni:{ name:"Uni & jaksaminen", full:"Uni & jaksaminen",
+    icon:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+    intro:"Kartoitetaan unen ja jaksamisen syyt ennen kuin puhutaan lääkkeistä.",
+    started:false, current:0 },
+  paino:{ name:"Painonhallinta", full:"Painonhallinta",
+    icon:'<path d="M6 3v7a6 6 0 0 0 12 0V3"/><path d="M6 3h3M15 3h3"/><path d="M12 16v5M9 21h6"/>',
+    intro:"Lääketieteellinen, pitkäjänteinen suunnitelma — ei pikadieettejä.",
+    started:false, current:0 },
+  tarkastus:{ name:"Terveystarkastus", full:"Terveystarkastus", statusOverride:"Suositeltu sinulle",
+    icon:'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
+    intro:"Kattava kokonaiskuva terveydestäsi — labrat, mittaukset ja lääkärin arvio.",
+    started:false, current:0 },
+};
+const PATH_ORDER = ["verenpaine","seksuaali","uni","paino","tarkastus"];
+let activePathId = "verenpaine";   // dashboardilla korostettu polku
+let viewingPathId = "verenpaine";  // hoitopolut-näkymässä avattu polku
+
+function pathSteps(id){ const p=PATHS[id]; return p.details || STAGE; }
+function pathStatusText(id){
+  const p=PATHS[id];
+  if(p.started) return `Vaihe ${p.current+1} / ${pathSteps(id).length}`;
+  return p.statusOverride || "Aloita hoitopolku";
+}
+function stepState(id, i){
+  const p=PATHS[id];
+  if(!p.started) return "todo";
+  if(i < p.current) return "done";
+  if(i === p.current) return "now";
+  if(i === p.current+1) return "next";
+  return "todo";
+}
+function stepSub(id, i, state){
+  const p=PATHS[id];
+  if(state==="done") return (p.doneDates && p.doneDates[i]) || "Valmis";
+  if(state==="now") return p.nowInfo && i===3 ? p.nowInfo : "Tämä vaihe käynnissä";
+  if(state==="next") return "Seuraava vaihe";
+  return "Ei aloitettu";
+}
 
 const MEAS = {
   Verenpaine:{val:"129 / 78", unit:"mmHg", badge:["Parantunut","ok"], sub:"Viimeisin mittaus 18.8.2024",
@@ -609,18 +652,40 @@ function chartFor(m, h){
 
 /* ═══ RENDER ═══ */
 function renderTiles(){
-  $('#tiles').innerHTML = CARE_PATHS.map(p=>`
-    <div class="tile ${p.active?'active-tile':''}" onclick="go('hoitopolut')">
+  $('#tiles').innerHTML = PATH_ORDER.map(id=>{
+    const p=PATHS[id];
+    return `<div class="tile ${id===activePathId?'active-tile':''}" onclick="openPath('${id}')">
       <div class="tile-ico"><svg viewBox="0 0 24 24">${p.icon}</svg></div>
-      <h3>${p.name}</h3>
-      <div class="st">${p.status}</div>
+      <h3>${p.full}</h3>
+      <div class="st">${pathStatusText(id)}</div>
       <div class="go"><svg viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+}
+/* Dashboardin aktiivinen-polku-kortti */
+function renderPathCard(){
+  const el=$('#pathCard'); if(!el) return;
+  const p=PATHS[activePathId], steps=pathSteps(activePathId);
+  const nowTitle = steps[p.current] || "Valmis";
+  const nextTitle = steps[p.current+1] ? `Seuraava: ${steps[p.current+1]}` : "Polku valmis 🎉";
+  el.innerHTML = `
+    <div class="dc-top">
+      <span class="dc-eyebrow">Hoitopolku: ${p.name}</span>
+      <span class="dc-phase">${pathStatusText(activePathId)}</span>
+    </div>
+    <h3>${nowTitle}</h3>
+    <div class="dc-next">${nextTitle}</div>
+    <div class="stepper" id="miniStepper"></div>
+    <button class="btn-gold" style="margin-top:22px" onclick="openPath('${activePathId}')">Jatka polkua</button>`;
+  renderMiniStepper();
 }
 function renderMiniStepper(){
-  $('#miniStepper').innerHTML = PATH_STEPS.map((s,i)=>{
-    const cls = s.state==='done'?'done':(s.state==='now'?'now':'');
-    return `<div class="stp ${cls}"><div class="num">${s.state==='done'?'✓':s.n}</div><div class="lb">${MINI_STEPS[i]}</div></div>`;
+  const el=$('#miniStepper'); if(!el) return;
+  const steps=pathSteps(activePathId);
+  el.innerHTML = steps.map((t,i)=>{
+    const st=stepState(activePathId,i);
+    const cls = st==='done'?'done':(st==='now'?'now':'');
+    return `<div class="stp ${cls}"><div class="num">${st==='done'?'✓':(i+1)}</div><div class="lb">${STAGE_MINI[i]||t}</div></div>`;
   }).join('');
 }
 function renderMetricCards(){
@@ -650,20 +715,77 @@ function renderQuick(){
       ${i.s?`<div class="qs">${i.s}</div>`:''}
     </div>`).join('');
 }
-function renderPathSteps(){
-  $('#pathSteps').innerHTML = PATH_STEPS.map(s=>{
-    const cls = s.state==='done'?'done':(s.state==='now'?'now':'');
+/* Hoitopolut-näkymä: aloittamaton polku → intro; aloitettu → vaiheet + eteneminen. */
+function renderPathDetail(){
+  const el=$('#pathDetail'); if(!el) return;
+  const id=viewingPathId, p=PATHS[id], steps=pathSteps(id);
+
+  if(!p.started){
+    el.innerHTML = `
+      <div class="path-intro">
+        <div class="pi-ico"><svg viewBox="0 0 24 24">${p.icon}</svg></div>
+        <h2>${p.full}</h2>
+        <p>${p.intro||""}</p>
+        <div class="pi-stages">${STAGE.map((s,i)=>`<div class="pi-stage"><span class="pis-num">${i+1}</span>${s}</div>`).join('')}</div>
+        <button class="btn-gold" style="margin-top:24px;padding:13px 28px" onclick="startPath('${id}')">Aloita hoitopolku</button>
+      </div>`;
+    return;
+  }
+
+  const done = p.current;
+  const total = steps.length;
+  const stepsHtml = steps.map((t,i)=>{
+    const st=stepState(id,i), cls=st==='done'?'done':(st==='now'?'now':'');
     let right='';
-    if(s.state==='done') right='<svg class="pstep-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>';
-    else if(s.state==='now') right='<span class="pstep-tag now">Tämä vaihe</span>';
-    else if(s.state==='next') right='<span class="pstep-tag next">Seuraava</span>';
+    if(st==='done') right='<svg class="pstep-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>';
+    else if(st==='now') right='<span class="pstep-tag now">Tämä vaihe</span>';
+    else if(st==='next') right='<span class="pstep-tag next">Seuraava</span>';
+    let action='';
+    if(st==='now'){
+      const label = (i===3) ? 'Merkitse käyty ✓' : 'Merkitse tehdyksi ✓';
+      const extra = (i===3) ? `<a href="https://www.vastaanotto.fi" target="_blank" rel="noopener noreferrer" class="pstep-link">Siirry vastaanotolle →</a>` : '';
+      action = `<div class="pstep-action">${extra}<button class="btn-gold" onclick="advancePath('${id}')">${label}</button></div>`;
+    }
     return `<div class="pstep ${cls}">
-      <div class="pstep-num">${s.state==='done'?'✓':s.n}</div>
-      <div class="pstep-mid"><div class="pt">${s.t}</div><div class="ps">${s.s}</div></div>
+      <div class="pstep-num">${st==='done'?'✓':(i+1)}</div>
+      <div class="pstep-mid"><div class="pt">${t}</div><div class="ps">${stepSub(id,i,st)}</div>${action}</div>
       ${right}
     </div>`;
   }).join('');
+
+  el.innerHTML = `
+    <div class="head"><div>
+      <h1>Hoitopolku: ${p.name}</h1>
+      <div class="sub">Vaihe ${Math.min(p.current+1,total)} / ${total} — ${done}/${total} vaihetta valmiina.</div>
+    </div></div>
+    <div class="path-progress"><div class="pp-bar" style="width:${Math.round(done/total*100)}%"></div></div>
+    <div class="path-steps">${stepsHtml}</div>`;
 }
+function openPath(id){
+  viewingPathId=id;
+  if(PATHS[id].started) activePathId=id;
+  go('hoitopolut');
+}
+function startPath(id){
+  const p=PATHS[id];
+  p.started=true; p.current=0;
+  activePathId=id; viewingPathId=id;
+  renderTiles(); renderPathCard(); renderPathDetail();
+  toast(`${p.full} -hoitopolku aloitettu.`);
+}
+function advancePath(id){
+  const p=PATHS[id], total=pathSteps(id).length;
+  if(p.current < total-1){
+    p.current++;
+    renderTiles(); renderPathCard(); renderPathDetail();
+    toast(`Vaihe merkitty tehdyksi — siirryttiin vaiheeseen ${p.current+1}/${total}.`);
+  } else {
+    p.current = total; // kaikki valmiina
+    renderTiles(); renderPathCard(); renderPathDetail();
+    toast(`${p.full} -hoitopolku suoritettu 🎉`);
+  }
+}
+window.openPath=openPath; window.startPath=startPath; window.advancePath=advancePath;
 let measCurrent='Verenpaine';
 function renderMeasTabs(){
   $('#measTabs').innerHTML = Object.keys(MEAS).map(k=>`<button class="tab ${k===measCurrent?'on':''}" data-meas="${k}">${k}</button>`).join('');
@@ -698,6 +820,7 @@ function go(view){
   $$('.view').forEach(v=>v.classList.toggle('on', v.dataset.view===view));
   $$('.sb-link').forEach(l=>l.classList.toggle('on', l.dataset.view===view));
   $$('.bn').forEach(b=>b.classList.toggle('on', b.dataset.view===view));
+  if(view==='hoitopolut') renderPathDetail();
   if(view==='mittaukset'){ renderMeasTabs(); renderMeasBlock(); }
   if(view==='laboratoriot') renderLabs();
   window.scrollTo(0,0);
@@ -734,10 +857,10 @@ window.toast=toast;
 
 /* ═══ INIT ═══ */
 renderTiles();
-renderMiniStepper();
+renderPathCard();
 renderMetricCards();
 renderQuick();
-renderPathSteps();
+renderPathDetail();
 renderMeasTabs();
 renderMeasBlock();
 renderLabs();
