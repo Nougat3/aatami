@@ -1032,6 +1032,14 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
 .pcard .ping li{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:4px 0;font-size:12.5px}
 .pin-name{color:var(--ink);font-weight:500}
 .pin-dose{color:#8a8172;font-variant-numeric:tabular-nums;white-space:nowrap}
+/* Ohjelmakortin "sisältää"-lista: checkmarkit annosten sijaan */
+.ping-check li{align-items:flex-start}
+.ping-check .pin-name{display:flex;gap:9px;align-items:flex-start;line-height:1.4}
+.ping-check .pin-name::before{content:"";flex:none;width:17px;height:17px;margin-top:1px;border-radius:50%;background:rgba(95,144,112,.16) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233f7355' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center/11px no-repeat}
+/* Kaupan osioiden välistys */
+#shopGrid .shop-cat{margin-top:64px}
+#shopGrid .shop-cat:first-child{margin-top:30px}
+#shopGrid .pgrid{margin-top:28px}
 .pcard .pbuy{
   display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding-top:16px;border-top:1px solid rgba(28,25,20,.1);
 }
@@ -2825,28 +2833,29 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
   <div class="wrap">
     <div class="sect-head center">
       <span class="eyebrow reveal">Verkkokauppa</span>
-      <h2 class="reveal" style="margin-top:16px">Aloita perustasta. Lisää tarvittaessa.</h2>
+      <h2 class="reveal" style="margin-top:16px">Ota terveytesi haltuun — omahoidolla.</h2>
       <span class="gold-line reveal" style="margin-left:auto;margin-right:auto"></span>
       <p class="shop-sub reveal">
-        Ei kymmentä purkkia joista arvata — yksi lääkärin muotoilema perusta
-        jokapäiväiseen hyvinvointiin, ja tarvittaessa Uni-lisä, jos ilta menee valvoessa.
-        Vain tutkitut aineet, oikeina annoksina, kotiovellesi toimitettuna.
+        Omahoito-ohjelmat antavat selkeät ohjeet ja työkalut yleisimpiin vaivoihin —
+        seuranta hoituu Aatami-sovelluksessa, ilman jatkuvia käyntejä. Lisäksi lääkärin
+        valitsemat lisäravinteet arjen tueksi.
       </p>
     </div>
 
     <div class="shop-trust reveal">
       <div class="st-item"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>Lääketieteellisesti perusteltu</div>
-      <div class="st-item"><svg viewBox="0 0 24 24"><path d="M3 7h11v8H3zM14 10h4l3 3v2h-7z"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>Ilmainen toimitus yli 49 €</div>
-      <div class="st-item"><svg viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/></svg>Suomessa pakattu ja testattu</div>
+      <div class="st-item"><svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h10"/></svg>Seuranta Aatami-sovelluksessa</div>
+      <div class="st-item"><svg viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/></svg>Suomessa suunniteltu</div>
     </div>
 
-    <div class="pgrid" id="shopGrid">
+    <div id="shopGrid">
       <div class="shop-loading">Ladataan tuotteita…</div>
     </div>
 
     <p class="shop-foot reveal">
-      Lisäravinteet eivät korvaa monipuolista ruokavaliota. Jos jokin oire mietityttää,
-      kysy lääkäriltäsi — esimerkiksi Aatamin vastaanotolla.
+      Omahoito-ohjelmat ja lisäravinteet eivät korvaa lääkärin arviota. Jos jokin oire
+      mietityttää, varaa <a href="#etavastaanotot">etävastaanotto</a> tai tule
+      <a href="#toimipisteet">toimipisteeseen</a>.
     </p>
   </div>
 </section>
@@ -4477,6 +4486,7 @@ if (hamburgerBtn && mobileMenu) {
 
 /* ═══════════ VERKKOKAUPPA — tuotteet, ostoskori, kassa ═══════════ */
 const PILL_ICO = '<svg viewBox="0 0 24 24"><path d="M9 2h6M10 2v4l-3 4v10a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V10l-3-4V2"/></svg>';
+const PROGRAM_ICO = '<svg viewBox="0 0 24 24"><path d="M9 3h6a1 1 0 0 1 1 1v1h2v16H6V5h2V4a1 1 0 0 1 1-1z"/><path d="M9 5h6M9 11l1.5 1.5L13 10M9 16l1.5 1.5L13 15"/></svg>';
 const SHOP = { products: [], byId: {}, selectedPlan: {} }; // selectedPlan: productId -> "one_time"|"annual" (kortin valinta ennen ostoskoriin lisäystä)
 const CART = { items: [], view: "cart", submitting: false, error: "", lastOrder: null }; // items: [{id, qty, plan}]
 const FREE_SHIP_LIMIT = 49, SHIP_FEE = 4.90;
@@ -4509,35 +4519,59 @@ async function loadShopProducts(){
   renderShopGrid();
   updateCartCount();
 }
+function productCard(p, i, showEyebrow){
+  const ing = Array.isArray(p.ingredients) ? p.ingredients : [];
+  const isProgram = p.billing === "one_time";
+  const ico = isProgram ? PROGRAM_ICO : PILL_ICO;
+  let planBlock, note, shownPrice;
+  if(isProgram){
+    shownPrice = p.price_eur;
+    planBlock = "";
+    note = `<div class="plan-note">Kertaostos — ei kuukausimaksua</div>`;
+  } else {
+    const plan = SHOP.selectedPlan[p.id] || "one_time";
+    const annualUnit = planUnitPrice(p, "annual");
+    const annualMonthly = Math.round(annualUnit/12*100)/100;
+    shownPrice = plan==="annual" ? annualUnit : p.price_eur;
+    planBlock = `<div class="plan-toggle" data-plan-for="${p.id}">
+        <button type="button" class="plan-opt ${plan==="one_time"?"on":""}" data-plan="one_time">Kertaosto</button>
+        <button type="button" class="plan-opt ${plan==="annual"?"on":""}" data-plan="annual">Vuositilaus <span>−20 %</span></button>
+      </div>`;
+    note = plan==="annual"
+      ? `<div class="plan-note">${eur(annualUnit)} kerralla (${eur(annualMonthly)} / kk) — 12 kk toimitus, maksetaan heti</div>`
+      : `<div class="plan-note">30 päivän annos, kertaostos</div>`;
+  }
+  const buyLabel = isProgram ? "Aloita ohjelma" : "Lisää koriin";
+  return `
+    <div class="pcard reveal" data-delay="${(i%3)+1}">
+      ${p.badge?`<span class="p-badge">${esc(p.badge)}</span>`:""}
+      <div class="p-ico">${ico}</div>
+      ${showEyebrow?`<div class="pcat">${esc(p.category)}</div>`:""}
+      <h3>${esc(p.name)}</h3>
+      <p class="pdesc">${esc(p.description)}</p>
+      ${ing.length?`<ul class="ping ${isProgram?'ping-check':''}">${ing.map(x=>`<li><span class="pin-name">${esc(x.name)}</span>${x.dose?`<span class="pin-dose">${esc(x.dose)}</span>`:""}</li>`).join("")}</ul>`:""}
+      ${planBlock}
+      ${note}
+      <div class="pbuy">
+        <span class="pprice">${eur(shownPrice)}</span>
+        <button type="button" class="btn-buy" data-add="${p.id}">${buyLabel}</button>
+      </div>
+    </div>`;
+}
 function renderShopGrid(){
   const grid=$("shopGrid");
   if(!grid) return;
   if(!SHOP.products.length){ grid.innerHTML=`<div class="shop-loading">Tuotteet päivittyvät pian.</div>`; return; }
-  grid.innerHTML = SHOP.products.map((p,i)=>{
-    const ing = Array.isArray(p.ingredients) ? p.ingredients : [];
-    const plan = SHOP.selectedPlan[p.id] || "one_time";
-    const annualUnit = planUnitPrice(p, "annual");
-    const annualMonthly = Math.round(annualUnit/12*100)/100;
-    const shownPrice = plan==="annual" ? annualUnit : p.price_eur;
-    return `
-    <div class="pcard reveal" data-delay="${(i%3)+1}">
-      ${p.badge?`<span class="p-badge">${esc(p.badge)}</span>`:""}
-      <div class="p-ico">${PILL_ICO}</div>
-      <div class="pcat">${esc(p.category)}</div>
-      <h3>${esc(p.name)}</h3>
-      <p class="pdesc">${esc(p.description)}</p>
-      ${ing.length?`<ul class="ping">${ing.map(x=>`<li><span class="pin-name">${esc(x.name)}</span><span class="pin-dose">${esc(x.dose||"")}</span></li>`).join("")}</ul>`:""}
-      <div class="plan-toggle" data-plan-for="${p.id}">
-        <button type="button" class="plan-opt ${plan==="one_time"?"on":""}" data-plan="one_time">Kertaosto</button>
-        <button type="button" class="plan-opt ${plan==="annual"?"on":""}" data-plan="annual">Vuositilaus <span>−20 %</span></button>
-      </div>
-      ${plan==="annual"?`<div class="plan-note">${eur(annualUnit)} kerralla (${eur(annualMonthly)} / kk) — 12 kk toimitus, maksetaan heti</div>`:`<div class="plan-note">30 päivän annos, kertaostos</div>`}
-      <div class="pbuy">
-        <span class="pprice">${eur(shownPrice)}</span>
-        <button type="button" class="btn-buy" data-add="${p.id}">Lisää koriin</button>
-      </div>
-    </div>`;
-  }).join("");
+  const programs = SHOP.products.filter(p=>p.category==="Omahoito-ohjelma");
+  const supplements = SHOP.products.filter(p=>p.category!=="Omahoito-ohjelma");
+  const sections = [
+    { items:programs, title:"Omahoito-ohjelmat", sub:"Ohjeet ja työkalut yhteen vaivaan — seuranta Aatami-sovelluksessa, ei jatkuvia käyntejä.", eyebrow:false },
+    { items:supplements, title:"Lisäravinteet", sub:"Lääkärin valitsemat perusravinteet — vain tutkittu ja tarpeellinen.", eyebrow:true },
+  ];
+  grid.innerHTML = sections.filter(s=>s.items.length).map(s=>`
+    <div class="shop-cat reveal"><h3 class="shop-cat-title">${s.title}</h3><p class="shop-cat-sub">${s.sub}</p></div>
+    <div class="pgrid">${s.items.map((p,i)=>productCard(p,i,s.eyebrow)).join("")}</div>
+  `).join("");
   grid.querySelectorAll(".plan-opt").forEach(b=>{
     b.addEventListener("click", ()=>{
       const id=b.closest("[data-plan-for]").dataset.planFor;
