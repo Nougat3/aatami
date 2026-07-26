@@ -1007,8 +1007,20 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
 }
 .shop-signed svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
 
+.oh-teaser{
+  display:flex;align-items:center;gap:26px;flex-wrap:wrap;text-align:left;
+  background:var(--ink);color:#efe9df;border-radius:18px;padding:32px 34px;margin:0 0 40px;
+}
+.oh-teaser .p-ico{background:rgba(201,163,92,.18);color:var(--brass);flex:none;margin:0}
+.oh-teaser-txt{flex:1;min-width:220px}
+.oh-teaser-txt .pcat{color:var(--brass)}
+.oh-teaser-txt h3{font-family:var(--font-display);font-size:19px;font-weight:600;color:#fff}
+.oh-teaser-txt p{font-size:13px;color:rgba(239,233,223,.72);line-height:1.6;margin-top:8px;min-height:0}
+.oh-teaser .btn{flex:none}
+
 @media(max-width:640px){
   .pgrid .pcard{flex-basis:100%}
+  .oh-teaser{flex-direction:column;text-align:center;padding:28px 22px}
   .shop-signup{flex-direction:column}
   .shop-signup .btn{width:100%}
 }
@@ -2838,7 +2850,7 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
       <h2 class="reveal" style="margin-top:16px">Ota terveytesi haltuun — omahoidolla.</h2>
       <span class="gold-line reveal" style="margin-left:auto;margin-right:auto"></span>
       <p class="shop-sub reveal">
-        Omahoito-ohjelmat antavat selkeät ohjeet ja työkalut yleisimpiin vaivoihin —
+        Aatami Omahoito antaa tavoitteidesi mukaan koostetut, selkeät ohjeet ja työkalut —
         seuranta hoituu Aatami-sovelluksessa, ilman jatkuvia käyntejä. Lisäksi lääkärin
         valitsemat lisäravinteet arjen tueksi.
       </p>
@@ -2850,12 +2862,22 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
       <div class="st-item"><svg viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/></svg>Suomessa suunniteltu</div>
     </div>
 
+    <div class="oh-teaser reveal">
+      <div class="p-ico"><svg viewBox="0 0 24 24"><path d="M9 3h6a1 1 0 0 1 1 1v1h2v16H6V5h2V4a1 1 0 0 1 1-1z"/><path d="M9 5h6M9 11l1.5 1.5L13 10M9 16l1.5 1.5L13 15"/></svg></div>
+      <div class="oh-teaser-txt">
+        <div class="pcat">Aatami Omahoito</div>
+        <h3>Lääkärin suunnittelema henkilökohtainen omahoitosuunnitelma</h3>
+        <p>Ei valikkoa valmiita ohjelmia — kerro tavoitteesi sovelluksessa, niin kokoamme niistä juuri sinulle sopivan 12 viikon suunnitelman.</p>
+      </div>
+      <a href="./app.html" class="btn btn-gold">Aloita sovelluksessa →</a>
+    </div>
+
     <div id="shopGrid">
       <div class="shop-loading">Ladataan tuotteita…</div>
     </div>
 
     <p class="shop-foot reveal">
-      Omahoito-ohjelmat ja lisäravinteet eivät korvaa lääkärin arviota. Jos jokin oire
+      Omahoito ja lisäravinteet eivät korvaa lääkärin arviota. Jos jokin oire
       mietityttää, varaa <a href="#etavastaanotot">etävastaanotto</a> tai tule
       <a href="#toimipisteet">toimipisteeseen</a>.
     </p>
@@ -4394,11 +4416,8 @@ function renderShopGrid(){
   const grid=$("shopGrid");
   if(!grid) return;
   if(!SHOP.products.length){ grid.innerHTML=`<div class="shop-loading">Tuotteet päivittyvät pian.</div>`; return; }
-  const programs = SHOP.products.filter(p=>p.category==="Omahoito-ohjelma");
-  const supplements = SHOP.products.filter(p=>p.category!=="Omahoito-ohjelma");
   const sections = [
-    { items:programs, title:"Omahoito-ohjelmat", sub:"Ohjeet ja työkalut yhteen vaivaan — seuranta Aatami-sovelluksessa, ei jatkuvia käyntejä.", eyebrow:false },
-    { items:supplements, title:"Lisäravinteet", sub:"Lääkärin valitsemat perusravinteet — vain tutkittu ja tarpeellinen.", eyebrow:true },
+    { items:SHOP.products, title:"Lisäravinteet", sub:"Lääkärin valitsemat perusravinteet — vain tutkittu ja tarpeellinen.", eyebrow:true },
   ];
   grid.innerHTML = sections.filter(s=>s.items.length).map(s=>`
     <div class="shop-cat reveal"><h3 class="shop-cat-title">${s.title}</h3><p class="shop-cat-sub">${s.sub}</p></div>

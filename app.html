@@ -229,8 +229,24 @@ a{color:inherit;text-decoration:none}
 .oh-bar{height:6px;background:var(--bg-2);border-radius:999px;overflow:hidden}
 .oh-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-hi));border-radius:999px}
 .oh-btn{margin-top:18px;text-align:center;text-decoration:none;display:block}
+.oh-btn[disabled]{opacity:.4;cursor:not-allowed}
 .btn-ghost{background:transparent;border:1px solid rgba(201,163,92,.5);color:var(--gold-hi);border-radius:999px;padding:11px 20px;font-weight:600;font-size:13.5px;transition:background .18s}
 .btn-ghost:hover{background:rgba(201,163,92,.12)}
+.oh-intake-head{max-width:560px;margin-bottom:22px}
+.oh-intake-head h2{font-family:var(--fd);font-size:22px;font-weight:600}
+.oh-intake-head p{font-size:13.5px;color:var(--ink-soft);line-height:1.6;margin-top:8px}
+.oh-check{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:500;margin-top:14px;cursor:pointer}
+.oh-check input{width:17px;height:17px;accent-color:var(--gold)}
+.oh-card.active .oh-check{color:var(--cream)}
+.oh-card.active .btn-line{color:var(--cream);border-color:rgba(239,233,223,.32)}
+.oh-tasks{display:flex;flex-direction:column;gap:2px;margin-top:14px}
+.oh-tasks .oh-check{margin-top:8px}
+.oh-target{margin-top:12px}
+.oh-target label{display:block;font-size:11px;color:var(--gold-soft);font-weight:600;margin-bottom:5px}
+.oh-target input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:9px 12px;color:var(--cream);font-size:13.5px}
+.oh-target input::placeholder{color:rgba(239,233,223,.4)}
+.oh-intake-foot{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
+.oh-total{font-size:14px;font-weight:600;color:var(--ink)}
 
 /* ═══════ TABS ═══════ */
 .tabs{display:flex;gap:6px;background:var(--bg-2);border-radius:999px;padding:4px;margin-bottom:20px;width:fit-content}
@@ -449,7 +465,7 @@ a{color:inherit;text-decoration:none}
         </div>
       </div>
 
-      <div class="section-title first">Omahoito-ohjelmat</div>
+      <div class="section-title first">Oma omahoitosuunnitelma</div>
       <div class="tiles" id="tiles"></div>
 
       <div class="row2">
@@ -607,14 +623,15 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { storageKey: "aatami-patient-auth" }
 });
 
-/* Potilaan oma data (ladataan Supabasesta kirjautumisen jälkeen) */
-const ME = { userId:null, email:"", name:"", firstName:"", initials:"", meds:[], measurements:[], careState:{}, labs:[], programs:[], omahoito:{} };
-/* Ohjelmakohtaiset ikonit (slug → svg) */
-const PROG_ICON = {
-  "ohjelma-verenpaine":'<path d="M20.8 8.6a5 5 0 0 0-8.1-1.5L12 7.8l-.7-.7a5 5 0 1 0-7.1 7.1l7.1 7 .7.7.7-.7 7.1-7a5 5 0 0 0 1-5.6z"/><path d="M3 12h4l2-3 3 6 2-3h4"/>',
-  "ohjelma-kolesteroli":'<path d="M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11z"/><path d="m9.5 14 2 2 3-3.5"/>',
-  "ohjelma-painonhallinta":'<path d="M6 3v7a6 6 0 0 0 12 0V3"/><path d="M6 3h3M15 3h3"/><path d="M12 16v5M9 21h6"/>',
-  "ohjelma-uni":'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+/* Potilaan oma data (ladataan Supabasesta kirjautumisen jälkeen).
+   omahoito = { purchased, purchased_at, price_paid_eur, goals:[{module,target}], modules:{slug:{week,tasks_done,completed}} } */
+const ME = { userId:null, email:"", name:"", firstName:"", initials:"", meds:[], measurements:[], careState:{}, labs:[], omahoitoModules:[], omahoito:{} };
+/* Moduulikohtaiset ikonit (omahoito_modules.slug → svg). Lisää tähän kun uusia moduuleita julkaistaan. */
+const MODULE_ICON = {
+  "verenpaine":'<path d="M20.8 8.6a5 5 0 0 0-8.1-1.5L12 7.8l-.7-.7a5 5 0 1 0-7.1 7.1l7.1 7 .7.7.7-.7 7.1-7a5 5 0 0 0 1-5.6z"/><path d="M3 12h4l2-3 3 6 2-3h4"/>',
+  "kolesteroli":'<path d="M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11z"/><path d="m9.5 14 2 2 3-3.5"/>',
+  "paino":'<path d="M6 3v7a6 6 0 0 0 12 0V3"/><path d="M6 3h3M15 3h3"/><path d="M12 16v5M9 21h6"/>',
+  "uni":'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
 };
 function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
@@ -783,22 +800,31 @@ function chartFor(m, h){
 }
 
 /* ═══ RENDER ═══ */
-/* Dashboardin tiilet = omahoito-ohjelmat (aktiiviset + ostettavat). */
+/* Dashboardin tiili = oma omahoitosuunnitelma (yksi kokonaisuus, ei erillisiä ohjelmia). */
 function renderTiles(){
   const el=$('#tiles'); if(!el) return;
-  if(!ME.programs.length){ el.innerHTML=`<div class="m-empty">Ohjelmat päivittyvät pian.</div>`; return; }
-  el.innerHTML = ME.programs.map(p=>{
-    const st=ME.omahoito[p.slug];
-    const active=st&&st.purchased;
-    const status = active ? `Aktiivinen · viikko ${st.week||1}/12` : `${eur0(p.price_eur)} · omahoito-ohjelma`;
-    return `<div class="tile ${active?'active-tile':''}" onclick="go('omahoito')">
-      <div class="tile-ico"><svg viewBox="0 0 24 24">${PROG_ICON[p.slug]||''}</svg></div>
-      <h3>${esc(p.name)}</h3>
-      <div class="st">${status}</div>
+  const goals=ME.omahoito.goals||[], mods=ME.omahoito.modules||{};
+  if(!ME.omahoito.purchased || !goals.length){
+    el.innerHTML=`<div class="tile" onclick="go('omahoito')">
+      <div class="tile-ico"><svg viewBox="0 0 24 24"><path d="M9 3h6a1 1 0 0 1 1 1v1h2v16H6V5h2V4a1 1 0 0 1 1-1z"/><path d="M9 5h6M9 11l1.5 1.5L13 10M9 16l1.5 1.5L13 15"/></svg></div>
+      <h3>Aloita oma omahoitosuunnitelma</h3>
+      <div class="st">Kerro tavoitteesi, saat henkilökohtaisen suunnitelman</div>
       <div class="go"><svg viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></div>
     </div>`;
-  }).join('');
+    return;
+  }
+  const active=goals.filter(g=>!(mods[g.module]&&mods[g.module].completed));
+  const statusText = active.length
+    ? active.map(g=>{ const m=mods[g.module]||{}; return `${moduleName(g.module)} vko ${m.week||1}/12`; }).join(' · ')
+    : 'Kaikki tavoitteet suoritettu — ylläpidossa';
+  el.innerHTML=`<div class="tile active-tile" onclick="go('omahoito')">
+    <div class="tile-ico"><svg viewBox="0 0 24 24"><path d="M9 3h6a1 1 0 0 1 1 1v1h2v16H6V5h2V4a1 1 0 0 1 1-1z"/><path d="M9 5h6M9 11l1.5 1.5L13 10M9 16l1.5 1.5L13 15"/></svg></div>
+    <h3>Minun omahoitosuunnitelmani</h3>
+    <div class="st">${esc(statusText)}</div>
+    <div class="go"><svg viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></div>
+  </div>`;
 }
+function moduleName(slug){ const m=ME.omahoitoModules.find(x=>x.slug===slug); return m?m.name:slug; }
 function eur0(n){ return Math.round(n)+" €"; }
 /* Dashboardin aktiivinen-polku-kortti */
 function renderPathCard(){
@@ -935,42 +961,122 @@ function advancePath(id){
 }
 window.openPath=openPath; window.advancePath=advancePath;
 
-/* Omahoito-näkymä: kaupasta ostettavat/ostetut ohjelmat. Erillään hoitopolusta:
-   omahoito on potilaan itse hankkima ohjeistus, ei lääkärin laatima suunnitelma. */
+/* Omahoito-näkymä: EI valikkoa erillisistä ohjelmista. Potilas kertoo
+   tavoitteensa, ja suunnitelma kootaan valmiiksi kirjoitetuista moduuleista
+   (omahoito_modules). Erillään hoitopolusta: lääkkeetön, potilaan itse
+   aloittama — ei vaadi lääkärin päätöstä. */
+let INTAKE={}; // slug -> tavoite (valitut moduulit ennen ostoa)
+
 function renderOmahoito(){
   const el=$('#omahoitoList'); if(!el) return;
-  if(!ME.programs.length){ el.innerHTML=`<div class="m-empty">Ohjelmat päivittyvät pian.</div>`; return; }
-  const active=[], buyable=[];
-  ME.programs.forEach(p=>{ (ME.omahoito[p.slug]&&ME.omahoito[p.slug].purchased ? active : buyable).push(p); });
-
-  const card=(p,isActive)=>{
-    const st=ME.omahoito[p.slug]||{};
-    const week=st.week||1, total=12, pct=Math.round(Math.min(week,total)/total*100);
-    const ico=`<div class="oh-ico"><svg viewBox="0 0 24 24">${PROG_ICON[p.slug]||''}</svg></div>`;
-    if(isActive){
-      return `<div class="oh-card active">
-        <div class="oh-top">${ico}<span class="oh-badge">Aktiivinen</span></div>
-        <h3>${esc(p.name)}</h3>
-        <div class="oh-desc">${esc(p.tagline||p.description||'')}</div>
-        <div class="oh-prog"><div class="oh-prog-head"><span>Viikko ${week}/${total}</span><span>${pct}%</span></div>
-          <div class="oh-bar"><div class="oh-bar-fill" style="width:${pct}%"></div></div></div>
-        <button class="btn-gold oh-btn" onclick="go('mittaukset')">Avaa työkalut</button>
-      </div>`;
-    }
-    return `<div class="oh-card">
-      <div class="oh-top">${ico}<span class="oh-price">${eur0(p.price_eur)}</span></div>
-      <h3>${esc(p.name)}</h3>
-      <div class="oh-desc">${esc(p.tagline||p.description||'')}</div>
-      <a class="btn-ghost oh-btn" href="./index.html#kauppa" target="_blank" rel="noopener">Osta ohjelma →</a>
-    </div>`;
-  };
-
-  let html='';
-  if(active.length){ html+=`<div class="oh-sec-t">Aktiiviset ohjelmasi</div><div class="oh-grid">${active.map(p=>card(p,true)).join('')}</div>`; }
-  html+=`<div class="oh-sec-t">${active.length?'Muut ohjelmat':'Saatavilla olevat ohjelmat'}</div><div class="oh-grid">${buyable.map(p=>card(p,false)).join('')}</div>`;
-  el.innerHTML=html;
+  el.innerHTML = (ME.omahoito.purchased && (ME.omahoito.goals||[]).length)
+    ? renderOmahoitoPlan() : renderOmahoitoIntake();
 }
 window.renderOmahoito=renderOmahoito;
+
+function renderOmahoitoIntake(){
+  if(!ME.omahoitoModules.length) return `<div class="m-empty">Suunnitelmat päivittyvät pian.</div>`;
+  const total = ME.omahoitoModules.filter(m=>INTAKE[m.slug]!=null).reduce((s,m)=>s+Number(m.price_eur),0);
+  const cards = ME.omahoitoModules.map(m=>{
+    const checked = INTAKE[m.slug]!=null;
+    const target = checked ? INTAKE[m.slug] : (m.default_target||'');
+    return `<div class="oh-card ${checked?'active':''}">
+      <div class="oh-top"><div class="oh-ico"><svg viewBox="0 0 24 24">${MODULE_ICON[m.slug]||''}</svg></div><span class="oh-price">${eur0(m.price_eur)}</span></div>
+      <h3>${esc(m.goal_label)}</h3>
+      <label class="oh-check"><input type="checkbox" ${checked?'checked':''} onchange="toggleIntakeModule('${m.slug}', this.checked)"> Ota mukaan suunnitelmaani</label>
+      ${checked?`<div class="oh-target"><label>Tavoite${m.target_unit?` (${esc(m.target_unit)})`:''}</label><input type="text" value="${esc(target)}" placeholder="${esc(m.default_target||'')}" oninput="INTAKE['${m.slug}']=this.value"></div>`:''}
+    </div>`;
+  }).join('');
+  return `
+    <div class="oh-intake-head">
+      <h2>Aatami Omahoito</h2>
+      <p>Lääkärin suunnittelema henkilökohtainen omahoitosuunnitelma. Valitse tavoitteesi — kokoamme niistä 12 viikon suunnitelman juuri sinulle.</p>
+    </div>
+    <div class="oh-grid">${cards}</div>
+    <div class="oh-intake-foot">
+      <div class="oh-total">${Object.keys(INTAKE).length?`Yhteensä ${eur0(total)}`:'Valitse vähintään yksi tavoite'}</div>
+      <button class="btn-gold" ${Object.keys(INTAKE).length?'':'disabled'} onclick="purchaseOmahoito()">Osta suunnitelma</button>
+    </div>`;
+}
+window.toggleIntakeModule=function(slug, on){
+  if(on){ const m=ME.omahoitoModules.find(x=>x.slug===slug); INTAKE[slug]=m?(m.default_target||''):''; }
+  else { delete INTAKE[slug]; }
+  renderOmahoito();
+};
+
+async function purchaseOmahoito(){
+  const modules = Object.keys(INTAKE).map(slug=>({slug, target:INTAKE[slug]||''}));
+  if(!modules.length) return;
+  const {error} = await sb.rpc('purchase_omahoito_plan', {p_modules: modules});
+  if(error){ toast('Oston tallennus epäonnistui — yritä uudelleen.'); console.error(error); return; }
+  await loadPatient();
+  INTAKE={};
+  renderTiles(); renderOmahoito();
+  toast('Omahoitosuunnitelmasi on nyt aktiivinen.');
+}
+window.purchaseOmahoito=purchaseOmahoito;
+
+function renderOmahoitoPlan(){
+  const goals=ME.omahoito.goals||[], mods=ME.omahoito.modules||{};
+  const cards = goals.map(g=>{
+    const def=ME.omahoitoModules.find(m=>m.slug===g.module);
+    if(!def) return '';
+    const st=mods[g.module]||{week:1,tasks_done:{},completed:false};
+    const ico=`<div class="oh-ico"><svg viewBox="0 0 24 24">${MODULE_ICON[g.module]||''}</svg></div>`;
+    if(st.completed){
+      return `<div class="oh-card active">
+        <div class="oh-top">${ico}<span class="oh-badge">Ylläpito</span></div>
+        <h3>${esc(def.goal_label)}</h3>
+        <div class="oh-desc">Suunnitelma suoritettu. Tavoitteesi oli ${esc(g.target)}. Jatka mittausten seurannalla — jos tavoite ei vielä täyty, varaa aika lääkärille.</div>
+        <button class="btn-line oh-btn" onclick="go('mittaukset')">Avaa mittaukset</button>
+        <a class="btn-ghost oh-btn" href="./index.html#etavastaanotot" target="_blank" rel="noopener">Varaa etävastaanotto →</a>
+      </div>`;
+    }
+    const weeks=def.weeks||[];
+    const wk=weeks.find(w=>w.week===st.week) || weeks[weeks.length-1];
+    const done=(st.tasks_done&&st.tasks_done[st.week])||[];
+    const allDone = !!wk && wk.tasks.every(t=>done.includes(t.id));
+    const pct=Math.round(Math.min(st.week,weeks.length)/weeks.length*100);
+    return `<div class="oh-card active">
+      <div class="oh-top">${ico}<span class="oh-badge">Vko ${st.week}/${weeks.length}</span></div>
+      <h3>${esc(def.goal_label)} — tavoite ${esc(g.target)}</h3>
+      <div class="oh-prog"><div class="oh-prog-head"><span>${esc(wk?wk.theme:'')}</span><span>${pct}%</span></div>
+        <div class="oh-bar"><div class="oh-bar-fill" style="width:${pct}%"></div></div></div>
+      <div class="oh-desc">${esc(wk?wk.body:'')}</div>
+      <div class="oh-tasks">${(wk?wk.tasks:[]).map(t=>`
+        <label class="oh-check"><input type="checkbox" ${done.includes(t.id)?'checked':''} onchange="toggleOmahoitoTask('${g.module}',${st.week},'${t.id}',this.checked)"> ${esc(t.label)}</label>`).join('')}
+      </div>
+      <button class="btn-gold oh-btn" ${allDone?'':'disabled'} onclick="advanceOmahoitoWeek('${g.module}')">${st.week>=weeks.length?'Merkitse suunnitelma suoritetuksi':'Siirry seuraavaan viikkoon →'}</button>
+    </div>`;
+  }).join('');
+  return `<div class="oh-intake-head"><h2>Minun omahoitosuunnitelmani</h2><p>Lääkärin koostama, etenet omaan tahtiisi — merkitse viikon tehtävät tehdyksi kun olet valmis jatkamaan.</p></div>
+    <div class="oh-grid">${cards}</div>`;
+}
+
+async function saveOmahoito(){
+  const {error}=await sb.from('patient_profiles').upsert({ user_id:ME.userId, omahoito:ME.omahoito, updated_at:new Date().toISOString() });
+  if(error) console.error('omahoito save failed', error);
+}
+window.toggleOmahoitoTask=function(slug, week, taskId, on){
+  const mods=ME.omahoito.modules||(ME.omahoito.modules={});
+  const st=mods[slug]||(mods[slug]={week:1,tasks_done:{},completed:false});
+  const list = st.tasks_done[week] || (st.tasks_done[week]=[]);
+  const i=list.indexOf(taskId);
+  if(on && i===-1) list.push(taskId);
+  if(!on && i!==-1) list.splice(i,1);
+  saveOmahoito();
+  renderTiles(); renderOmahoito();
+};
+window.advanceOmahoitoWeek=function(slug){
+  const def=ME.omahoitoModules.find(m=>m.slug===slug); if(!def) return;
+  const mods=ME.omahoito.modules||(ME.omahoito.modules={});
+  const st=mods[slug]||(mods[slug]={week:1,tasks_done:{},completed:false});
+  const total=(def.weeks||[]).length;
+  if(st.week>=total){ st.completed=true; toast(`${def.goal_label}-suunnitelma suoritettu — jatkat nyt ylläpidossa.`); }
+  else { st.week++; toast(`Siirryit viikkoon ${st.week}/${total}.`); }
+  saveOmahoito();
+  renderTiles(); renderOmahoito();
+};
 let measCurrent='Verenpaine';
 function renderMeasTabs(){
   $('#measTabs').innerHTML = Object.keys(MEAS).map(k=>`<button class="tab ${k===measCurrent?'on':''}" data-meas="${k}">${k}</button>`).join('');
@@ -1146,11 +1252,11 @@ async function loadPatient(){
   ME.meds=(data&&data.medications)||[];
   ME.measurements=(data&&data.measurements)||[];
   ME.careState=(data&&data.care_paths)||{};
-  ME.omahoito=(data&&data.omahoito)||{};
+  ME.omahoito=(data&&data.omahoito)||{purchased:false, goals:[], modules:{}};
   const {data:labs}=await sb.from("lab_results").select("*").eq("user_id",user.id).order("sort_order");
   ME.labs=labs||[];
-  const {data:progs}=await sb.from("products").select("*").eq("category","Omahoito-ohjelma").order("sort_order");
-  ME.programs=progs||[];
+  const {data:mods}=await sb.from("omahoito_modules").select("*").order("sort_order");
+  ME.omahoitoModules=mods||[];
   return true;
 }
 async function enterApp(){
