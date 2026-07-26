@@ -1411,6 +1411,7 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
         <svg viewBox="0 0 24 24"><path d="M5 7h14l-1.4 10.5a2 2 0 0 1-2 1.7H8.4a2 2 0 0 1-2-1.7L5 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
         <span class="nav-cart-count" id="navCartCount" hidden>0</span>
       </button>
+      <a href="./app.html" class="btn btn-line btn-sm nav-desktop-only" id="navLoginLink">Kirjaudu</a>
       <button type="button" class="btn btn-gold btn-sm join-btn nav-desktop-only">Liity jonoon</button>
       <button type="button" class="hamburger nav-mobile-only" id="hamburgerBtn" aria-label="Avaa valikko" aria-expanded="false" aria-controls="mobileMenu">
         <span></span><span></span><span></span>
@@ -1424,6 +1425,7 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
     <a href="#etavastaanotot">Etävastaanotot</a>
     <a href="#tietoa">Aatami</a>
     <a href="#verkkokauppa">Verkkokauppa</a>
+    <a href="./app.html" id="navLoginLinkMobile">Kirjaudu</a>
     <button type="button" class="btn btn-gold join-btn">Liity jonoon <span class="arr">→</span></button>
   </div>
 </div>
@@ -3026,11 +3028,6 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
         <div class="qm-wrap" id="qmBody"></div>
       </section>
 
-      <!-- Kirjaudu -->
-      <section class="app-screen" id="scrKirjaudu" hidden>
-        <div class="login-box" id="loginBody"></div>
-      </section>
-
     </div>
   </div>
 
@@ -3043,10 +3040,10 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
       <svg viewBox="0 0 24 24"><path d="M5 3v6a5 5 0 0 0 10 0V3"/><path d="M5 3h2M13 3h2"/><path d="M10 14v3a5 5 0 0 0 10 0v-2"/><circle cx="20" cy="12" r="2.4"/></svg>
       Lääkärit
     </button>
-    <button class="app-tab" data-scr="kirjaudu">
+    <a class="app-tab" href="./app.html" id="appTabKirjaudu">
       <svg viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="m10 8 4 4-4 4M14 12H3"/></svg>
       <span class="tab-label">Kirjaudu</span>
-    </button>
+    </a>
   </nav>
 </div>
 
@@ -3331,150 +3328,23 @@ function remainingMinutes(){
 }
 const rndi=(a,b)=>Math.floor(a+Math.random()*(b-a+1));
 
-/* ═══ Kirjaudu / Omat tiedot (oikea Supabase-tili) ═══
-   Potilas luo sähköposti+salasana-tilin. Lääkelista ja mittaukset tallentuvat
-   patient_profiles-tauluun (vain omistaja näkee, RLS). Kun kirjautunut potilas
-   liittyy jonoon, join_queue linkittää tiketin hänen tiliinsä, jolloin lääkäri
-   näkee nämä tiedot henkilökuntanäkymässä. */
-const LOGIN={
-  state:"auth",        // auth | in
-  authMode:"signin",   // signin | signup
-  email:"", fullName:"",
-  loading:false, error:"",
-  meds:[],
-  measurements:[],
-};
+/* ═══ Kirjautuminen ═══
+   Nettisivu ja sovellus (app.html) jakavat saman Supabase-istunnon
+   (storageKey "aatami-patient-auth"), joten kirjautuminen tapahtuu vain
+   sovelluksessa — "Kirjaudu"-linkit vievät suoraan sinne. Täällä seurataan
+   vain istunnon tilaa kassan esitäyttöä ja nav-linkin tekstiä varten. */
+const LOGIN={ state:"auth", email:"", fullName:"" }; // auth | in
 function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
-function renderLogin(){
-  const box=$("loginBody");
-  if(!box) return;
-
-  if(LOGIN.state==="auth"){
-    const signup = LOGIN.authMode==="signup";
-    box.style.textAlign="center";
-    box.innerHTML=`
-      <div class="mono-big">A</div>
-      <h3>${signup ? "Luo Aatami-tili" : "Kirjaudu Aatamiin"}</h3>
-      <p>Tallenna lääkelistasi ja mittauksesi turvallisesti — <b>lääkärisi näkee nämä ennen käyntiäsi</b>, kun liityt jonoon kirjautuneena.</p>
-      <div class="qm-field"><label for="authEmail">Sähköposti</label>
-      <input id="authEmail" type="email" inputmode="email" autocomplete="username" placeholder="sinun@sahkoposti.fi" value="${esc(LOGIN.email)}"></div>
-      <div class="qm-field"><label for="authPassword">Salasana</label>
-      <input id="authPassword" type="password" autocomplete="${signup?'new-password':'current-password'}" placeholder="${signup?'Väh. 6 merkkiä':'Salasanasi'}"></div>
-      <button class="btn btn-gold qm-btn" onclick="qAuthSubmit()" ${LOGIN.loading?'disabled':''}>${LOGIN.loading?"Hetki…":(signup?"Luo tili":"Kirjaudu sisään")}</button>
-      ${LOGIN.error?`<div style="color:#e2897a;font-size:13px;margin-top:10px">${esc(LOGIN.error)}</div>`:""}
-      <button class="qm-ghost" onclick="qToggleAuthMode()">${signup?"Onko sinulla jo tili? Kirjaudu":"Ei vielä tiliä? Luo tili"}</button>`;
-    setTimeout(()=>{const i=box.querySelector("input");if(i&&!i.value)i.focus()},60);
-    return;
-  }
-
-  // LOGIN.state === "in"  →  Omat tiedot
-  box.style.textAlign="left";
-  box.innerHTML=`
-    <div class="omat-head">
-      <span class="qm-eyebrow">Kirjautuneena · ${esc(LOGIN.email)}</span>
-      <h3 class="qm-h">Omat tiedot</h3>
-      <p class="qm-sub">Täytä lääkelistasi ja viimeisimmät mittauksesi valmiiksi — <b>lääkärisi näkee nämä ennen käyntiäsi</b>, mikä nopeuttaa asiointia eikä aikaa kulu perustietojen läpikäyntiin vastaanotolla. Muutokset tallentuvat automaattisesti.</p>
-    </div>
-
-    <div class="omat-section">
-      <h4>Nimi</h4>
-      <div class="omat-add-row">
-        <input id="omatName" placeholder="Etunimi Sukunimi" value="${esc(LOGIN.fullName)}" onchange="qSaveName()">
-      </div>
-    </div>
-
-    <div class="omat-section">
-      <h4>Lääkelista</h4>
-      <div class="omat-list" id="medList">
-        ${LOGIN.meds.length ? LOGIN.meds.map((m,i)=>`
-          <div class="omat-row">
-            <span class="omat-row-main"><b>${esc(m.name)}</b><span>${esc(m.dose)}</span></span>
-            <button type="button" class="omat-remove" onclick="qRemoveMed(${i})" aria-label="Poista">×</button>
-          </div>`).join("") : `<p class="omat-empty">Ei vielä lisättyjä lääkkeitä.</p>`}
-      </div>
-      <div class="omat-add-row">
-        <input id="medName" placeholder="Lääke, esim. Ramipril 5mg">
-        <input id="medDose" placeholder="Annostus, esim. 1×/pv">
-        <button type="button" class="btn btn-line btn-sm" onclick="qAddMed()">+ Lisää</button>
-      </div>
-    </div>
-
-    <div class="omat-section">
-      <h4>Mittaukset</h4>
-      <div class="omat-list" id="measureList">
-        ${LOGIN.measurements.length ? LOGIN.measurements.map((m,i)=>`
-          <div class="omat-row">
-            <span class="omat-row-main"><b>${esc(m.type)}</b><span>${esc(m.value)} · ${esc(m.date)}</span></span>
-            <button type="button" class="omat-remove" onclick="qRemoveMeasurement(${i})" aria-label="Poista">×</button>
-          </div>`).join("") : `<p class="omat-empty">Ei vielä lisättyjä mittauksia.</p>`}
-      </div>
-      <div class="omat-add-row">
-        <select id="measureType">
-          <option>Verenpaine</option>
-          <option>Paino</option>
-          <option>Verensokeri</option>
-          <option>Muu</option>
-        </select>
-        <input id="measureValue" placeholder="Arvo, esim. 128/82">
-        <button type="button" class="btn btn-line btn-sm" onclick="qAddMeasurement()">+ Lisää</button>
-      </div>
-    </div>
-
-    <button class="qm-ghost" onclick="qLogout()">Kirjaudu ulos</button>`;
-}
-
-window.qToggleAuthMode=function(){
-  LOGIN.authMode = LOGIN.authMode==="signup" ? "signin" : "signup";
-  LOGIN.error="";
-  renderLogin();
-};
-window.qAuthSubmit=async function(){
-  const email=(($("authEmail")||{}).value||"").trim();
-  const password=($("authPassword")||{}).value||"";
-  if(!email || !password){ LOGIN.error="Täytä sähköposti ja salasana."; renderLogin(); return; }
-  LOGIN.email=email; LOGIN.error=""; LOGIN.loading=true; renderLogin();
-
-  let res;
-  if(LOGIN.authMode==="signup"){
-    res=await sb.auth.signUp({email, password});
-  } else {
-    res=await sb.auth.signInWithPassword({email, password});
-  }
-  LOGIN.loading=false;
-  if(res.error){
-    LOGIN.error = LOGIN.authMode==="signup"
-      ? "Rekisteröinti epäonnistui — tarkista sähköposti ja että salasana on vähintään 6 merkkiä. (Sähköposti voi olla jo käytössä.)"
-      : "Kirjautuminen epäonnistui — tarkista sähköposti ja salasana.";
-    renderLogin();
-    return;
-  }
-  await loadPatientProfile();
-};
 async function loadPatientProfile(){
   const {data:{user}} = await sb.auth.getUser();
-  if(!user){ LOGIN.state="auth"; updateLoginTabLabel(); renderLogin(); return; }
+  if(!user){ LOGIN.state="auth"; updateLoginTabLabel(); return; }
   LOGIN.email=user.email||LOGIN.email;
-  const {data, error}=await sb.from("patient_profiles").select("*").eq("user_id",user.id).maybeSingle();
+  const {data, error}=await sb.from("patient_profiles").select("full_name").eq("user_id",user.id).maybeSingle();
   if(error) console.error("profile load failed", error);
   LOGIN.fullName=(data&&data.full_name)||"";
-  LOGIN.meds=(data&&data.medications)||[];
-  LOGIN.measurements=(data&&data.measurements)||[];
   LOGIN.state="in";
   updateLoginTabLabel();
-  renderLogin();
-}
-async function savePatientProfile(){
-  const {data:{user}} = await sb.auth.getUser();
-  if(!user) return;
-  const {error}=await sb.from("patient_profiles").upsert({
-    user_id:user.id,
-    full_name:LOGIN.fullName||"",
-    medications:LOGIN.meds,
-    measurements:LOGIN.measurements,
-    updated_at:new Date().toISOString(),
-  });
-  if(error){ console.error("profile save failed", error); toast("Tallennus epäonnistui — yritä uudelleen."); }
 }
 /* Palauttaa aiemman istunnon (Supabase säilyttää sen selaimessa) sivun latautuessa. */
 async function restoreLoginSession(){
@@ -3482,50 +3352,13 @@ async function restoreLoginSession(){
   if(session){ await loadPatientProfile(); }
   else { updateLoginTabLabel(); }
 }
-window.qLogout=async function(){
-  await sb.auth.signOut();
-  Object.assign(LOGIN,{state:"auth",authMode:"signin",email:"",fullName:"",error:"",loading:false,meds:[],measurements:[]});
-  updateLoginTabLabel();
-  showScr("kirjaudu"); // päivittää myös yläotsikon ("Omat tiedot" → "Kirjaudu")
-};
 function updateLoginTabLabel(){
-  const tab=document.querySelector('.app-tab[data-scr="kirjaudu"] .tab-label');
-  if(tab) tab.textContent = LOGIN.state==="in" ? "Omat tiedot" : "Kirjaudu";
+  const label = LOGIN.state==="in" ? "Oma sovellus" : "Kirjaudu";
+  const tab=document.querySelector('#appTabKirjaudu .tab-label');
+  if(tab) tab.textContent = label;
+  const navLink=$("navLoginLink"); if(navLink) navLink.textContent = label;
+  const navLinkMobile=$("navLoginLinkMobile"); if(navLinkMobile) navLinkMobile.textContent = label;
 }
-window.qSaveName=async function(){
-  LOGIN.fullName=(($("omatName")||{}).value||"").trim();
-  await savePatientProfile();
-};
-window.qAddMed=async function(){
-  const name=($("medName")||{}).value||"";
-  const dose=($("medDose")||{}).value||"";
-  if(!name.trim()) return;
-  LOGIN.meds.push({name:name.trim(), dose:dose.trim()||"—"});
-  renderLogin();
-  await savePatientProfile();
-  setTimeout(()=>{const i=$("medName");if(i)i.focus()},60);
-};
-window.qRemoveMed=async function(i){
-  LOGIN.meds.splice(i,1);
-  renderLogin();
-  await savePatientProfile();
-};
-window.qAddMeasurement=async function(){
-  const type=($("measureType")||{}).value||"Muu";
-  const value=($("measureValue")||{}).value||"";
-  if(!value.trim()) return;
-  const today=new Date();
-  const date=String(today.getDate()).padStart(2,"0")+"."+String(today.getMonth()+1).padStart(2,"0")+".";
-  LOGIN.measurements.push({type, value:value.trim(), date});
-  renderLogin();
-  await savePatientProfile();
-  setTimeout(()=>{const i=$("measureValue");if(i)i.focus()},60);
-};
-window.qRemoveMeasurement=async function(i){
-  LOGIN.measurements.splice(i,1);
-  renderLogin();
-  await savePatientProfile();
-};
 
 function toast(text){
   const d=document.createElement("div");
@@ -3567,25 +3400,24 @@ function closeModal(){
   if(["waiting","called","arrived"].includes(Q.state)) updatePill(true);
 }
 /* ── Näyttöjen reititys ── */
-const SCREENS={liikkeet:"scrLiikkeet",laakarit:"scrLaakarit",jono:"scrJono",kirjaudu:"scrKirjaudu"};
-const TITLES={liikkeet:"Valitse toimipiste",laakarit:"Lääkärit",jono:"Etäjono",kirjaudu:"Kirjaudu"};
+const SCREENS={liikkeet:"scrLiikkeet",laakarit:"scrLaakarit",jono:"scrJono"};
+const TITLES={liikkeet:"Valitse toimipiste",laakarit:"Lääkärit",jono:"Etäjono"};
 let curScr="liikkeet";
 function showScr(name){
   curScr=name;
   Object.entries(SCREENS).forEach(([k,id])=>{$(id).hidden = k!==name});
-  $("appTitle").textContent = (name==="kirjaudu" && LOGIN.state==="in") ? "Omat tiedot" : TITLES[name];
-  document.querySelectorAll(".app-tab").forEach(t=>{
+  $("appTitle").textContent = TITLES[name];
+  document.querySelectorAll(".app-tab[data-scr]").forEach(t=>{
     t.classList.toggle("on", t.dataset.scr===name || (name==="jono"&&t.dataset.scr==="liikkeet"));
   });
   if(name==="liikkeet") renderShopScreen();
   if(name==="laakarit") renderDocs();
-  if(name==="kirjaudu") renderLogin();
 }
-document.querySelectorAll(".app-tab").forEach(t=>{
+document.querySelectorAll(".app-tab[data-scr]").forEach(t=>{
   t.onclick=()=>showScr(t.dataset.scr);
 });
 $("qClose").onclick=()=>{
-  if(curScr==="jono"||curScr==="laakarit"||curScr==="kirjaudu") showScr("liikkeet");
+  if(curScr==="jono"||curScr==="laakarit") showScr("liikkeet");
   else closeModal();
 };
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&backdrop.classList.contains("open"))closeModal()});
