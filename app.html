@@ -209,6 +209,29 @@ a{color:inherit;text-decoration:none}
 .pi-stage:last-child{border-bottom:none}
 .pis-num{width:24px;height:24px;border-radius:50%;background:var(--bg-2);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex:none}
 
+/* ═══════ OMAHOITO ═══════ */
+.oh-sec-t{font-family:var(--fd);font-size:15px;font-weight:600;color:var(--ink);margin:6px 0 14px}
+.oh-sec-t + .oh-grid{margin-bottom:26px}
+.oh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.oh-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column}
+.oh-card.active{border-color:rgba(201,163,92,.45);background:linear-gradient(165deg,#221a11,#161009)}
+.oh-card.active h3{color:var(--cream)}
+.oh-card.active .oh-desc{color:var(--cream-d,#c9c2b4)}
+.oh-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.oh-ico{width:46px;height:46px;border-radius:13px;background:rgba(201,163,92,.14);display:flex;align-items:center;justify-content:center}
+.oh-ico svg{width:24px;height:24px;stroke:var(--gold-hi);fill:none;stroke-width:1.6}
+.oh-badge{font-family:var(--fl);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#211a0e;background:linear-gradient(180deg,var(--gold-hi),var(--gold));padding:5px 11px;border-radius:999px;font-weight:700}
+.oh-price{font-family:var(--fd);font-size:18px;font-weight:600;color:var(--gold-hi)}
+.oh-card h3{font-size:15.5px;font-weight:600;line-height:1.25}
+.oh-desc{font-size:12.5px;color:var(--ink-soft);line-height:1.6;margin-top:8px;flex:1}
+.oh-prog{margin-top:16px}
+.oh-prog-head{display:flex;justify-content:space-between;font-size:11.5px;color:var(--gold-soft);margin-bottom:6px;font-weight:600}
+.oh-bar{height:6px;background:var(--bg-2);border-radius:999px;overflow:hidden}
+.oh-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-hi));border-radius:999px}
+.oh-btn{margin-top:18px;text-align:center;text-decoration:none;display:block}
+.btn-ghost{background:transparent;border:1px solid rgba(201,163,92,.5);color:var(--gold-hi);border-radius:999px;padding:11px 20px;font-weight:600;font-size:13.5px;transition:background .18s}
+.btn-ghost:hover{background:rgba(201,163,92,.12)}
+
 /* ═══════ TABS ═══════ */
 .tabs{display:flex;gap:6px;background:var(--bg-2);border-radius:999px;padding:4px;margin-bottom:20px;width:fit-content}
 .tab{border:none;background:none;border-radius:999px;padding:9px 18px;font-size:13.5px;font-weight:600;color:var(--ink-soft);transition:background .2s,color .2s}
@@ -387,7 +410,8 @@ a{color:inherit;text-decoration:none}
     </div>
     <nav class="sb-nav" id="sbNav">
       <a class="sb-link on" data-view="etusivu"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>Etusivu</a>
-      <a class="sb-link" data-view="hoitopolut"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.5 6H15a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h6.5"/></svg>Hoitopolut</a>
+      <a class="sb-link" data-view="hoitopolut"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.5 6H15a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h6.5"/></svg>Hoitopolku</a>
+      <a class="sb-link" data-view="omahoito"><svg viewBox="0 0 24 24"><path d="M9 3h6a1 1 0 0 1 1 1v1h2v16H6V5h2V4a1 1 0 0 1 1-1z"/><path d="M9 5h6M9 11l1.5 1.5L13 10M9 16l1.5 1.5L13 15"/></svg>Omahoito</a>
       <a class="sb-link" data-view="mittaukset"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 3 4-6"/></svg>Mittaukset</a>
       <a class="sb-link" data-view="laboratoriot"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-4 8a2 2 0 0 0 1.8 3h8.4a2 2 0 0 0 1.8-3l-4-8V3"/><path d="M7.5 15h9"/></svg>Laboratoriot</a>
       <a class="sb-link" data-view="vastaanotot"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/></svg>Vastaanotot</a>
@@ -425,7 +449,7 @@ a{color:inherit;text-decoration:none}
         </div>
       </div>
 
-      <div class="section-title first">Miten voimme auttaa tänään?</div>
+      <div class="section-title first">Omahoito-ohjelmat</div>
       <div class="tiles" id="tiles"></div>
 
       <div class="row2">
@@ -453,10 +477,16 @@ a{color:inherit;text-decoration:none}
       <div class="quick" id="quick"></div>
     </section>
 
-    <!-- ═══════════ HOITOPOLUT ═══════════ -->
+    <!-- ═══════════ HOITOPOLKU (lääkärin luoma) ═══════════ -->
     <section class="view" data-view="hoitopolut">
       <a class="back" onclick="go('etusivu')"><svg viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg>Etusivu</a>
       <div id="pathDetail"></div>
+    </section>
+
+    <!-- ═══════════ OMAHOITO (maksulliset ohjelmat) ═══════════ -->
+    <section class="view" data-view="omahoito">
+      <div class="head"><div><h1>Omahoito</h1><div class="sub">Ohjeet ja työkalut omaan hoitoon — etenet omaan tahtiisi.</div></div></div>
+      <div id="omahoitoList"></div>
     </section>
 
     <!-- ═══════════ MITTAUKSET ═══════════ -->
@@ -546,9 +576,9 @@ a{color:inherit;text-decoration:none}
 <!-- ═══ BOTTOM NAV (mobile) ═══ -->
 <nav class="botnav" id="botNav">
   <button class="bn on" data-view="etusivu"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>Etusivu</button>
-  <button class="bn" data-view="hoitopolut"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.5 6H15a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h6.5"/></svg>Hoitopolut</button>
+  <button class="bn" data-view="hoitopolut"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.5 6H15a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h6.5"/></svg>Hoitopolku</button>
   <button class="bn bn-add" onclick="openAdd()" aria-label="Lisää mittaus"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
-  <button class="bn" data-view="mittaukset"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 3 4-6"/></svg>Mittaukset</button>
+  <button class="bn" data-view="omahoito"><svg viewBox="0 0 24 24"><path d="M9 3h6a1 1 0 0 1 1 1v1h2v16H6V5h2V4a1 1 0 0 1 1-1z"/><path d="M9 5h6M9 11l1.5 1.5L13 10M9 16l1.5 1.5L13 15"/></svg>Omahoito</button>
   <button class="bn" data-view="profiili"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>Profiili</button>
 </nav>
 
@@ -578,7 +608,14 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 });
 
 /* Potilaan oma data (ladataan Supabasesta kirjautumisen jälkeen) */
-const ME = { userId:null, email:"", name:"", firstName:"", initials:"", meds:[], measurements:[], careState:{}, labs:[] };
+const ME = { userId:null, email:"", name:"", firstName:"", initials:"", meds:[], measurements:[], careState:{}, labs:[], programs:[], omahoito:{} };
+/* Ohjelmakohtaiset ikonit (slug → svg) */
+const PROG_ICON = {
+  "ohjelma-verenpaine":'<path d="M20.8 8.6a5 5 0 0 0-8.1-1.5L12 7.8l-.7-.7a5 5 0 1 0-7.1 7.1l7.1 7 .7.7.7-.7 7.1-7a5 5 0 0 0 1-5.6z"/><path d="M3 12h4l2-3 3 6 2-3h4"/>',
+  "ohjelma-kolesteroli":'<path d="M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11z"/><path d="m9.5 14 2 2 3-3.5"/>',
+  "ohjelma-painonhallinta":'<path d="M6 3v7a6 6 0 0 0 12 0V3"/><path d="M6 3h3M15 3h3"/><path d="M12 16v5M9 21h6"/>',
+  "ohjelma-uni":'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+};
 function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
 /* ═══ DEMO DATA ═══ */
@@ -746,20 +783,35 @@ function chartFor(m, h){
 }
 
 /* ═══ RENDER ═══ */
+/* Dashboardin tiilet = omahoito-ohjelmat (aktiiviset + ostettavat). */
 function renderTiles(){
-  $('#tiles').innerHTML = PATH_ORDER.map(id=>{
-    const p=PATHS[id];
-    return `<div class="tile ${id===activePathId?'active-tile':''}" onclick="openPath('${id}')">
-      <div class="tile-ico"><svg viewBox="0 0 24 24">${p.icon}</svg></div>
-      <h3>${p.full}</h3>
-      <div class="st">${pathStatusText(id)}</div>
+  const el=$('#tiles'); if(!el) return;
+  if(!ME.programs.length){ el.innerHTML=`<div class="m-empty">Ohjelmat päivittyvät pian.</div>`; return; }
+  el.innerHTML = ME.programs.map(p=>{
+    const st=ME.omahoito[p.slug];
+    const active=st&&st.purchased;
+    const status = active ? `Aktiivinen · viikko ${st.week||1}/12` : `${eur0(p.price_eur)} · omahoito-ohjelma`;
+    return `<div class="tile ${active?'active-tile':''}" onclick="go('omahoito')">
+      <div class="tile-ico"><svg viewBox="0 0 24 24">${PROG_ICON[p.slug]||''}</svg></div>
+      <h3>${esc(p.name)}</h3>
+      <div class="st">${status}</div>
       <div class="go"><svg viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></div>
     </div>`;
   }).join('');
 }
+function eur0(n){ return Math.round(n)+" €"; }
 /* Dashboardin aktiivinen-polku-kortti */
 function renderPathCard(){
   const el=$('#pathCard'); if(!el) return;
+  const anyStarted = PATH_ORDER.some(id=>PATHS[id].started);
+  if(!anyStarted){
+    el.innerHTML = `
+      <div class="dc-top"><span class="dc-eyebrow">Hoitopolku</span></div>
+      <h3>Ei aktiivista hoitopolkua</h3>
+      <div class="dc-next">Lääkäri laatii hoitopolun tarvittaessa etävastaanotolla.</div>
+      <button class="btn-gold" style="margin-top:22px" onclick="go('hoitopolut')">Lue lisää</button>`;
+    return;
+  }
   const p=PATHS[activePathId], steps=pathSteps(activePathId);
   const nowTitle = steps[p.current] || "Valmis";
   const nextTitle = steps[p.current+1] ? `Seuraava: ${steps[p.current+1]}` : "Polku valmis 🎉";
@@ -815,23 +867,24 @@ function renderQuick(){
       ${i.s?`<div class="qs">${i.s}</div>`:''}
     </div>`).join('');
 }
-/* Hoitopolut-näkymä: aloittamaton polku → intro; aloitettu → vaiheet + eteneminen. */
+/* Hoitopolku-näkymä: lääkärin luoma polku. Potilas ei aloita itse — seuraa ja
+   kuittaa vaiheita. Jos aktiivista polkua ei ole, ohjataan varaamaan etävastaanotto. */
 function renderPathDetail(){
   const el=$('#pathDetail'); if(!el) return;
-  const id=viewingPathId, p=PATHS[id], steps=pathSteps(id);
-
-  if(!p.started){
+  let id = (PATHS[viewingPathId] && PATHS[viewingPathId].started) ? viewingPathId
+         : PATH_ORDER.find(x=>PATHS[x].started);
+  if(!id){
     el.innerHTML = `
       <div class="path-intro">
-        <div class="pi-ico"><svg viewBox="0 0 24 24">${p.icon}</svg></div>
-        <h2>${p.full}</h2>
-        <p>${p.intro||""}</p>
-        <div class="pi-stages">${STAGE.map((s,i)=>`<div class="pi-stage"><span class="pis-num">${i+1}</span>${s}</div>`).join('')}</div>
-        <button class="btn-gold" style="margin-top:24px;padding:13px 28px" onclick="startPath('${id}')">Aloita hoitopolku</button>
+        <div class="pi-ico"><svg viewBox="0 0 24 24"><path d="M9 3h6a1 1 0 0 1 1 1v1h2v16H6V5h2V4a1 1 0 0 1 1-1z"/><path d="M9 5h6"/></svg></div>
+        <h2>Ei aktiivista hoitopolkua</h2>
+        <p>Hoitopolku on lääkärin laatima suunnitelma pitkäaikaisvaivan hoitoon ja seurantaan. Lääkärisi luo sen tarvittaessa vastaanotolla.</p>
+        <a href="./index.html#etavastaanotot" class="btn-gold" style="margin-top:22px;padding:13px 28px;display:inline-block">Varaa etävastaanotto</a>
       </div>`;
     return;
   }
-
+  viewingPathId=id; activePathId=id;
+  const p=PATHS[id], steps=pathSteps(id);
   const done = p.current;
   const total = steps.length;
   const stepsHtml = steps.map((t,i)=>{
@@ -866,14 +919,6 @@ function openPath(id){
   if(PATHS[id].started) activePathId=id;
   go('hoitopolut');
 }
-function startPath(id){
-  const p=PATHS[id];
-  p.started=true; p.current=0;
-  activePathId=id; viewingPathId=id;
-  renderTiles(); renderPathCard(); renderPathDetail();
-  saveCareState();
-  toast(`${p.full} -hoitopolku aloitettu.`);
-}
 function advancePath(id){
   const p=PATHS[id], total=pathSteps(id).length;
   if(p.current < total-1){
@@ -888,7 +933,44 @@ function advancePath(id){
     toast(`${p.full} -hoitopolku suoritettu 🎉`);
   }
 }
-window.openPath=openPath; window.startPath=startPath; window.advancePath=advancePath;
+window.openPath=openPath; window.advancePath=advancePath;
+
+/* Omahoito-näkymä: kaupasta ostettavat/ostetut ohjelmat. Erillään hoitopolusta:
+   omahoito on potilaan itse hankkima ohjeistus, ei lääkärin laatima suunnitelma. */
+function renderOmahoito(){
+  const el=$('#omahoitoList'); if(!el) return;
+  if(!ME.programs.length){ el.innerHTML=`<div class="m-empty">Ohjelmat päivittyvät pian.</div>`; return; }
+  const active=[], buyable=[];
+  ME.programs.forEach(p=>{ (ME.omahoito[p.slug]&&ME.omahoito[p.slug].purchased ? active : buyable).push(p); });
+
+  const card=(p,isActive)=>{
+    const st=ME.omahoito[p.slug]||{};
+    const week=st.week||1, total=12, pct=Math.round(Math.min(week,total)/total*100);
+    const ico=`<div class="oh-ico"><svg viewBox="0 0 24 24">${PROG_ICON[p.slug]||''}</svg></div>`;
+    if(isActive){
+      return `<div class="oh-card active">
+        <div class="oh-top">${ico}<span class="oh-badge">Aktiivinen</span></div>
+        <h3>${esc(p.name)}</h3>
+        <div class="oh-desc">${esc(p.tagline||p.description||'')}</div>
+        <div class="oh-prog"><div class="oh-prog-head"><span>Viikko ${week}/${total}</span><span>${pct}%</span></div>
+          <div class="oh-bar"><div class="oh-bar-fill" style="width:${pct}%"></div></div></div>
+        <button class="btn-gold oh-btn" onclick="go('mittaukset')">Avaa työkalut</button>
+      </div>`;
+    }
+    return `<div class="oh-card">
+      <div class="oh-top">${ico}<span class="oh-price">${eur0(p.price_eur)}</span></div>
+      <h3>${esc(p.name)}</h3>
+      <div class="oh-desc">${esc(p.tagline||p.description||'')}</div>
+      <a class="btn-ghost oh-btn" href="./index.html#kauppa" target="_blank" rel="noopener">Osta ohjelma →</a>
+    </div>`;
+  };
+
+  let html='';
+  if(active.length){ html+=`<div class="oh-sec-t">Aktiiviset ohjelmasi</div><div class="oh-grid">${active.map(p=>card(p,true)).join('')}</div>`; }
+  html+=`<div class="oh-sec-t">${active.length?'Muut ohjelmat':'Saatavilla olevat ohjelmat'}</div><div class="oh-grid">${buyable.map(p=>card(p,false)).join('')}</div>`;
+  el.innerHTML=html;
+}
+window.renderOmahoito=renderOmahoito;
 let measCurrent='Verenpaine';
 function renderMeasTabs(){
   $('#measTabs').innerHTML = Object.keys(MEAS).map(k=>`<button class="tab ${k===measCurrent?'on':''}" data-meas="${k}">${k}</button>`).join('');
@@ -937,6 +1019,7 @@ function go(view){
   $$('.sb-link').forEach(l=>l.classList.toggle('on', l.dataset.view===view));
   $$('.bn').forEach(b=>b.classList.toggle('on', b.dataset.view===view));
   if(view==='hoitopolut') renderPathDetail();
+  if(view==='omahoito') renderOmahoito();
   if(view==='mittaukset'){ renderMeasTabs(); renderMeasBlock(); }
   if(view==='laboratoriot') renderLabs();
   window.scrollTo(0,0);
@@ -1008,7 +1091,7 @@ function renderAll(){
   buildMeasurements();
   buildLabs();
   renderProfileBits();
-  renderTiles(); renderPathCard(); renderPathDetail();
+  renderTiles(); renderPathCard(); renderPathDetail(); renderOmahoito();
   renderMetricCards(); renderQuick();
   renderMeasTabs(); renderMeasBlock();
   renderLabs(); renderMeds();
@@ -1063,8 +1146,11 @@ async function loadPatient(){
   ME.meds=(data&&data.medications)||[];
   ME.measurements=(data&&data.measurements)||[];
   ME.careState=(data&&data.care_paths)||{};
+  ME.omahoito=(data&&data.omahoito)||{};
   const {data:labs}=await sb.from("lab_results").select("*").eq("user_id",user.id).order("sort_order");
   ME.labs=labs||[];
+  const {data:progs}=await sb.from("products").select("*").eq("category","Omahoito-ohjelma").order("sort_order");
+  ME.programs=progs||[];
   return true;
 }
 async function enterApp(){
