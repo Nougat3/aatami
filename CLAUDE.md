@@ -34,9 +34,13 @@ POST` builderin nopeuttamiseksi). Demo-potilas: `toni.demo@aatamiterveys.fi`.
 
 Tämä jako on perustavanlaatuinen eikä pelkkä UI-yksityiskohta:
 
-- **Hoitopolku** = lääkärin suunnittelema kliininen polku: verikokeet,
-  lääkehoito, seuranta. Vaatii aina lääkärin päätöksen — potilas ei voi
-  aloittaa sitä itse. Syntyy vastaanotolla.
+- **Hoitopolku** = 9-vaiheinen kliininen polku kyselystä kontrolliin.
+  Potilas voi **astua polkuun itse** (vaiheet 1–5: valinta,
+  tunnistautuminen, terveyskysely, kotimittaukset, etävastaanotto), mutta
+  **kliinisen päätöksen tekee aina lääkäri** vaiheessa 6
+  (hoitosuunnitelma) sekä vaiheissa 8–9 (kontrolli, päätös). Palvelin
+  pakottaa tämän rajan: `advance_care_path` heittää virheen jos potilas
+  yrittää edetä vaiheesta 5 eteenpäin.
 - **Omahoito** = lääkkeetön, potilaan itse ostama ja etenevä ohjelma:
   liikunta, ravitsemus, stressinhallinta, uni. Turvallista tarjota suoraan
   ilman lääkärin väliintuloa, koska ei sisällä kliinistä päätöksentekoa.
@@ -78,6 +82,22 @@ care_paths jsonb, omahoito jsonb, updated_at`. `omahoito`-kentän muoto:
   modules: { verenpaine: {week, tasks_done: {"1":["t1","t2"]}, completed} } }
 ```
 
+`care_path_templates` (julkinen luku aktiivisille): `slug, name, full_name,
+intro, steps jsonb (9 vaihetta: n, key, title, by=patient|doctor|shared,
+body), questionnaire jsonb (terveyskyselyn kysymykset), measurements jsonb
+(vaaditut kotimittaukset + target_count), labs jsonb, is_active,
+sort_order`. Lääkäri kirjoittaa kyselyn ja ohjeet suoraan tähän — ei
+koodimuutosta. `patient_profiles.care_paths`-muoto:
+```
+{ verenpaine: { started_at, step, answers, plan:{text,target,by,at},
+                controls: [], status: "active"|"ended" } }
+```
+RPC:t: `start_care_path(slug)` (potilas aloittaa),
+`advance_care_path(slug, answers)` (potilas etenee, estää vaiheen 5 yli),
+`staff_set_care_plan(queue_entry_id, slug, plan, target)` (lääkäri
+kirjoittaa suunnitelman → vaihe 7). Vaihe 4 kuitataan **oikeasta
+mittausdatasta** (lasketaan `measurements`-listasta), ei potilaan rastista.
+
 `omahoito_modules` (julkinen luku aktiivisille): `slug, name, goal_label,
 target_unit, default_target, price_eur, weeks jsonb, is_active,
 sort_order`. `weeks` on 12 alkion taulukko: `{week, theme, body,
@@ -111,12 +131,13 @@ Näiden sulkeminen tekee "lääkäri näkee kaiken ja voi luoda hoitopolun"
 
 1. ~~Osto ei aktivoi omahoito-ohjelmaa~~ **Suljettu.** `purchase_omahoito_plan`
    aktivoi suunnitelman suoraan ostohetkellä.
-2. **Lääkäri ei näe omahoitoa eikä hoitopolkua.**
-   `staff_get_patient_profile` palauttaa vain
-   `full_name, phone, medications, measurements`.
-3. **Lääkärillä ei ole työkalua luoda hoitopolkua.** Ei UI:ta, ei RPC:tä joka
-   kirjoittaisi `care_paths`-kenttään — app.html:n teksti ("lääkärisi luo
-   sen vastaanotolla") ei vielä toteudu missään.
+2. ~~Lääkäri ei näe omahoitoa eikä hoitopolkua~~ **Suljettu.**
+   `staff_get_patient_profile` palauttaa nyt myös `care_paths, omahoito`.
+3. **Lääkärillä ei ole käyttöliittymää hoitosuunnitelman kirjoittamiseen.**
+   RPC `staff_set_care_plan` on olemassa ja turvarajat testattu
+   (potilas ei pysty kutsumaan sitä), mutta `staff.html`:ssä ei ole vielä
+   lomaketta joka kutsuisi sitä — eikä RPC:n positiivista polkua ole
+   testattu lääkärin tunnuksilla.
 
 ## Omahoidon seuraavat laajennukset (kun runko on validoitu)
 
