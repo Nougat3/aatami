@@ -138,6 +138,18 @@ Omahoito-ohjelman tehtävät kannattaa kytkeä oikeaan mittausdataan
 itseraportoinnin (rasti ruutuun) sijaan aina kun mahdollista — muuten
 ohjelma mittaa vain klikkausaktiivisuutta, ei oikeaa käyttäytymistä.
 
+## Sovelluksen ulkoasu (app.html)
+
+`app.html` on **yhtenäisen tumma** (Opal-tyylinen: selkeä ja pelkistetty),
+toisin kuin `index.html` joka pitää vaalean cream-ilmeensä. Kaikki värit
+tulevat `:root`-muuttujista — älä kovakoodaa vaaleita tekstivärejä tai
+`#fff`-taustoja, ne jäävät lukukelvottomiksi. Kulta (`--gold*`) on ainoa
+korostusväri. Alapalkki (mobiili) on **kelluva pilleri**, irti ruudun
+reunoista — ei kiinni pohjassa.
+
+Kontrastisääntö: himmeimmän tekstin (`--muted`) on ylitettävä 4.5:1
+korttitaustaa (`--card`) vasten — tarkista jos muutat sävyjä.
+
 ## Muut voimassa olevat rajoitteet
 
 - Toimipisteet ja reaaliaikainen jonotus säilytetään aina — ei poisteta
