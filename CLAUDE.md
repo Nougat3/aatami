@@ -133,11 +133,16 @@ Näiden sulkeminen tekee "lääkäri näkee kaiken ja voi luoda hoitopolun"
    aktivoi suunnitelman suoraan ostohetkellä.
 2. ~~Lääkäri ei näe omahoitoa eikä hoitopolkua~~ **Suljettu.**
    `staff_get_patient_profile` palauttaa nyt myös `care_paths, omahoito`.
-3. **Lääkärillä ei ole käyttöliittymää hoitosuunnitelman kirjoittamiseen.**
-   RPC `staff_set_care_plan` on olemassa ja turvarajat testattu
-   (potilas ei pysty kutsumaan sitä), mutta `staff.html`:ssä ei ole vielä
-   lomaketta joka kutsuisi sitä — eikä RPC:n positiivista polkua ole
-   testattu lääkärin tunnuksilla.
+3. ~~Lääkärillä ei ole työkalua luoda hoitopolkua~~ **Suljettu.**
+   `staff.html` näyttää potilaan esitiedot ja hoitopolun vaiheen, ja
+   sisältää lomakkeet vaiheelle 6 (`staff_set_care_plan`) sekä
+   kontrollille/päätökselle (`staff_control_care_path`). Kesken
+   kirjoitettu suunnitelma säilyy `planDrafts`-muuttujassa
+   realtime-uudelleenrenderöinnin yli.
+
+**Silmukka on nyt kokonainen**: potilas valitsee polun → kysely →
+mittaukset → etävastaanotto → lääkäri kirjoittaa suunnitelman → seuranta
+→ kontrolli → polku päättyy tai jatkuu.
 
 ## Omahoidon seuraavat laajennukset (kun runko on validoitu)
 

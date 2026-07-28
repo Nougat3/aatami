@@ -113,6 +113,25 @@ header.top .row{display:flex;align-items:center;justify-content:space-between;ga
 .q-profile-item{font-size:13.5px;display:flex;gap:8px;flex-wrap:wrap;padding:1px 0}
 .q-profile-item span{color:var(--muted-d)}
 
+/* Hoitopolku lääkärin näkymässä: potilaan esitiedot + suunnitelman kirjaus */
+.cp-box{border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);padding:12px 14px;margin-top:10px}
+.cp-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.cp-title{font-size:13.5px;font-weight:600}
+.cp-step{font-family:var(--font-label);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:#211a0e;background:var(--brass);padding:3px 9px;border-radius:20px;font-weight:700}
+.cp-step.wait{background:rgba(255,255,255,.12);color:var(--muted-d)}
+.cp-qa{font-size:12.5px;line-height:1.6;color:var(--muted-d);margin-top:2px}
+.cp-qa b{color:var(--stone);font-weight:600}
+.cp-plan{margin-top:10px}
+.cp-plan textarea{width:100%;min-height:92px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.14);
+  border-radius:9px;color:var(--stone);padding:10px 12px;font-size:13.5px;font-family:inherit;resize:vertical}
+.cp-plan input{width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.14);
+  border-radius:9px;color:var(--stone);padding:9px 12px;font-size:13.5px;font-family:inherit;margin-top:8px}
+.cp-plan textarea:focus,.cp-plan input:focus{outline:none;border-color:var(--brass)}
+.cp-existing{font-size:13px;line-height:1.6;white-space:pre-wrap;color:var(--stone)}
+.cp-meta{font-size:11.5px;color:var(--muted-d);margin-top:6px}
+.cp-ctrl{margin-top:10px;font-size:12.5px;color:var(--muted-d);border-left:2px solid rgba(201,163,92,.4);padding-left:10px}
+
 .toast-stack{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:50}
 .toast{background:var(--panel);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px 14px;font-size:13px;max-width:280px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
 
@@ -180,6 +199,10 @@ const $ = id => document.getElementById(id);
 
 let me = null;        // oma doctors-rivi
 let entries = [];      // clinic_id:n queue_entries (waiting/called/arrived)
+let pathTemplates = []; // care_path_templates (kyselyn kysymystekstit)
+// Kesken kirjoitetut hoitosuunnitelmat säilytetään uudelleenrenderöinnin yli:
+// realtime-päivitys kutsuu loadQueue():n, joka renderöi kortit uusiksi.
+const planDrafts = {};  // entryId -> {text, target}
 let channel = null;
 
 function toast(text){
@@ -276,6 +299,11 @@ async function loadQueue(){
   // Haetaan omien jonottajien tallentamat tiedot (lääkkeet + mittaukset).
   // staff_get_patient_profile palauttaa tiedot vain jos potilas on kirjautunut ja
   // liittynyt jonoon tililtään; muuten profiili jää tyhjäksi.
+  if(!pathTemplates.length){
+    const {data:tpls} = await sb.from("care_path_templates").select("*").order("sort_order");
+    pathTemplates = tpls || [];
+  }
+
   const mine = entries.filter(e=>e.doctor_id===me.id);
   await Promise.all(mine.map(async e=>{
     const {data:prof} = await sb.rpc("staff_get_patient_profile", {p_queue_entry_id:e.id});
@@ -329,6 +357,110 @@ function profileHtml(p){
     </div>`;
 }
 
+/* Hoitopolku lääkärin näkymässä. Vaihe 6 = suunnitelman kirjoitus,
+   vaiheet 8-9 = kontrolli ja päätös polun jatkosta. */
+function carePathHtml(e){
+  const p = e._profile;
+  if(!p || !p.care_paths) return "";
+  const slugs = Object.keys(p.care_paths);
+  if(!slugs.length) return "";
+
+  return slugs.map(slug=>{
+    const st = p.care_paths[slug] || {};
+    const tpl = pathTemplates.find(t=>t.slug===slug);
+    const name = tpl ? tpl.name : slug;
+    const steps = (tpl && tpl.steps) || [];
+    const stepTitle = (steps.find(x=>x.n===st.step)||{}).title || "";
+    const ended = st.status === "ended";
+
+    // Potilaan kyselyvastaukset luettavassa muodossa
+    const qs = (tpl && tpl.questionnaire) || [];
+    const answers = st.answers || {};
+    const qaRows = qs.filter(q=>answers[q.id]!=null && answers[q.id]!=="")
+      .map(q=>{
+        const v = Array.isArray(answers[q.id]) ? answers[q.id].join(", ") : answers[q.id];
+        return `<div class="cp-qa"><b>${esc(q.label)}</b> ${esc(v)}</div>`;
+      }).join("");
+
+    const controls = Array.isArray(st.controls) ? st.controls : [];
+    const ctrlRows = controls.map(c=>`
+      <div class="cp-ctrl">${esc(c.note||"")}<br>
+        <span>${esc(c.by||"")} · ${c.at?new Date(c.at).toLocaleDateString("fi-FI"):""} · ${c.outcome==="end"?"polku päätetty":"seuranta jatkuu"}</span>
+      </div>`).join("");
+
+    let action = "";
+    if(st.step === 5){
+      const d = planDrafts[e.id] || {};
+      action = `
+        <div class="cp-plan">
+          <textarea id="plan-${e.id}" placeholder="Hoitosuunnitelma potilaalle — elämäntapaohjeet, mahdollinen lääkitys, seurannan tavoitteet."
+            oninput="onPlanInput('${e.id}','text',this.value)">${esc(d.text||"")}</textarea>
+          <input id="target-${e.id}" placeholder="Tavoite, esim. 135/85" value="${esc(d.target||"")}"
+            oninput="onPlanInput('${e.id}','target',this.value)">
+          <button class="btn btn-gold btn-sm" style="margin-top:10px"
+            onclick="savePlan('${e.id}','${slug}')">Tallenna hoitosuunnitelma</button>
+        </div>`;
+    } else if(st.step === 7 && !ended){
+      const d = planDrafts[e.id] || {};
+      action = `
+        <div class="cp-plan">
+          <textarea id="ctrl-${e.id}" placeholder="Kontrollin arvio — miten seurantajakso on mennyt?"
+            oninput="onPlanInput('${e.id}','ctrl',this.value)">${esc(d.ctrl||"")}</textarea>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <button class="btn btn-gold btn-sm" onclick="doControl('${e.id}','${slug}','end')">Tavoite saavutettu — päätä polku</button>
+            <button class="btn btn-line btn-sm" onclick="doControl('${e.id}','${slug}','continue')">Jatka seurantaa</button>
+          </div>
+        </div>`;
+    }
+
+    return `
+      <div class="cp-box">
+        <div class="cp-head">
+          <span class="cp-title">Hoitopolku: ${esc(name)}</span>
+          <span class="cp-step ${st.step===5||st.step===7?"":"wait"}">${ended?"Päättynyt":`Vaihe ${st.step||"?"} / ${steps.length||9}`}</span>
+        </div>
+        ${stepTitle?`<div class="cp-meta">${esc(stepTitle)}</div>`:""}
+        ${qaRows?`<div class="q-profile-block"><h5>Esitiedot</h5>${qaRows}</div>`:""}
+        ${st.plan?`<div class="q-profile-block"><h5>Hoitosuunnitelma</h5>
+          <div class="cp-existing">${esc(st.plan.text||"")}</div>
+          <div class="cp-meta">${st.plan.target?`Tavoite: ${esc(st.plan.target)} · `:""}${esc(st.plan.by||"")}</div></div>`:""}
+        ${ctrlRows?`<div class="q-profile-block"><h5>Kontrollit</h5>${ctrlRows}</div>`:""}
+        ${action}
+      </div>`;
+  }).join("");
+}
+
+window.onPlanInput = function(entryId, field, val){
+  planDrafts[entryId] = planDrafts[entryId] || {};
+  planDrafts[entryId][field] = val;
+};
+
+window.savePlan = async function(entryId, slug){
+  const d = planDrafts[entryId] || {};
+  const text = (d.text||"").trim();
+  if(!text){ toast("Kirjoita hoitosuunnitelma ennen tallennusta."); return; }
+  const {error} = await sb.rpc("staff_set_care_plan", {
+    p_queue_entry_id: entryId, p_slug: slug, p_plan: text, p_target: (d.target||"").trim() || null
+  });
+  if(error){ console.error(error); toast("Tallennus epäonnistui: "+error.message); return; }
+  delete planDrafts[entryId];
+  toast("Hoitosuunnitelma tallennettu — potilas näkee sen sovelluksessa.");
+  await loadQueue();
+};
+
+window.doControl = async function(entryId, slug, outcome){
+  const d = planDrafts[entryId] || {};
+  const note = (d.ctrl||"").trim();
+  if(!note){ toast("Kirjoita kontrollin arvio ensin."); return; }
+  const {error} = await sb.rpc("staff_control_care_path", {
+    p_queue_entry_id: entryId, p_slug: slug, p_note: note, p_outcome: outcome
+  });
+  if(error){ console.error(error); toast("Kirjaus epäonnistui: "+error.message); return; }
+  delete planDrafts[entryId];
+  toast(outcome==="end" ? "Hoitopolku päätetty." : "Seuranta jatkuu.");
+  await loadQueue();
+};
+
 function cardHtml(e){
   return `
   <div class="q-card ${e.status}">
@@ -345,6 +477,7 @@ function cardHtml(e){
       <span>Liittyi klo ${fmtClock(e.joined_at)}</span>
     </div>
     ${profileHtml(e._profile)}
+    ${carePathHtml(e)}
     <div class="q-actions">
       ${actionButtons(e)}
     </div>
