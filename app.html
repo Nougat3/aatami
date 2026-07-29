@@ -214,6 +214,22 @@ a{color:inherit;text-decoration:none}
 .pi-stage:last-child{border-bottom:none}
 .pis-num{width:24px;height:24px;border-radius:50%;background:var(--bg-2);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex:none}
 
+.task-top{font-size:12.5px;color:var(--gold-soft);font-weight:600;margin-top:2px}
+.tasks{margin-top:12px}
+.task{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line)}
+.task:last-child{border-bottom:none}
+.task-box{width:24px;height:24px;flex:none;border-radius:7px;border:1.5px solid var(--line);
+  background:transparent;color:#211a0e;font-size:14px;font-weight:700;display:flex;
+  align-items:center;justify-content:center;margin-top:1px;transition:all .18s}
+.task.done .task-box{background:var(--ok);border-color:transparent}
+.task-box[disabled]{cursor:default}
+.task-lb{font-size:14px;font-weight:600;line-height:1.35}
+.task.done .task-lb{color:var(--muted);text-decoration:line-through}
+.task-sub{font-size:11.5px;color:var(--gold-soft);margin-top:3px}
+.task.late .task-sub{color:var(--warn-soft)}
+.task-help{font-size:12px;color:var(--ink-soft);line-height:1.55;margin-top:5px}
+.task-note{font-size:11.5px;color:var(--muted);line-height:1.55;margin-top:14px;
+  border-left:2px solid var(--line);padding-left:10px}
 .ctrl-row{padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;line-height:1.6}
 .ctrl-row:last-child{border-bottom:none}
 
@@ -975,14 +991,55 @@ function renderControls(st){
   </div>`;
 }
 function renderCarePlanCard(st){
-  const p=st.plan;
+  const p=st.plan||{};
+  const tasks=Array.isArray(p.tasks)?p.tasks:[];
+  if(!tasks.length) return '';
+  const today=new Date(); today.setHours(0,0,0,0);
+  const doneN=tasks.filter(t=>isTaskDone(t)).length;
+
+  const rows=tasks.map(t=>{
+    const done=isTaskDone(t);
+    const due=t.due_date?new Date(t.due_date+'T00:00:00'):null;
+    const late=!done&&due&&due<today;
+    const auto=t.type==='measurement'&&t.meas_type;
+    const cnt=auto?(ME.measurements||[]).filter(x=>x.type===t.meas_type).length:0;
+    return `<div class="task ${done?'done':''} ${late?'late':''}">
+      <button class="task-box" onclick="toggleCareTask('${t.id}')" ${auto?'disabled':''}
+        aria-label="${done?'Tehty':'Merkitse tehdyksi'}">${done?'✓':''}</button>
+      <div class="task-mid">
+        <div class="task-lb">${esc(t.label)}</div>
+        <div class="task-sub">${due?due.toLocaleDateString('fi-FI'):''}${late?' · myöhässä':''}${
+          auto?` · ${cnt}/${t.target_count} kirjattu`:''}${t.custom?' · lääkärin lisäämä':''}</div>
+        ${t.help?`<div class="task-help">${esc(t.help)}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
   return `<div class="card" style="margin-bottom:16px">
-    <h4><svg viewBox="0 0 24 24"><path d="M9 3h6l1 3h3v15H5V6h3z"/><path d="M9 13l2 2 4-4"/></svg>Hoitosuunnitelmasi</h4>
-    <p style="white-space:pre-wrap">${esc(p.text||'')}</p>
-    ${p.target?`<div class="note-meta">Tavoite: ${esc(p.target)}</div>`:''}
-    <div class="note-meta">${esc(p.by||'Lääkäri')}${p.at?` · ${new Date(p.at).toLocaleDateString('fi-FI')}`:''}</div>
+    <h4><svg viewBox="0 0 24 24"><path d="M9 3h6l1 3h3v15H5V6h3z"/><path d="M9 13l2 2 4-4"/></svg>Hoitopolkusi tehtävät</h4>
+    <div class="task-top">${doneN}/${tasks.length} tehty${p.target?` · tavoite ${esc(p.target)}`:''}</div>
+    <div class="tasks">${rows}</div>
+    <div class="task-note">Tämä on oma muistilistasi, ei potilasasiakirja. Virallinen
+      kirjaus käynnistä on potilastietojärjestelmässä.</div>
+    <div class="note-meta">${esc(p.template_name||'')} v${p.template_version||1} · ${esc(p.by||'Lääkäri')}${p.at?` · ${new Date(p.at).toLocaleDateString('fi-FI')}`:''}</div>
   </div>`;
 }
+/* Mittaustehtävä kuittautuu oikeasta mittausdatasta, ei potilaan rastista. */
+function isTaskDone(t){
+  if(t.type==='measurement'&&t.meas_type){
+    return (ME.measurements||[]).filter(x=>x.type===t.meas_type).length >= (t.target_count||1);
+  }
+  return !!t.done;
+}
+window.toggleCareTask=async function(taskId){
+  const slug=viewingPathSlug||activePathSlug(); if(!slug) return;
+  const st=pathState(slug); const t=((st.plan||{}).tasks||[]).find(x=>x.id===taskId);
+  if(!t) return;
+  const {data,error}=await sb.rpc('complete_care_task',{p_slug:slug,p_task_id:taskId,p_done:!t.done});
+  if(error){ toast('Kuittaus epäonnistui.'); console.error(error); return; }
+  ME.careState=data||{};
+  renderTiles(); renderPathCard(); renderPathDetail();
+};
 
 /* Kunkin vaiheen oma toiminto. Vain potilaan vaiheilla (3,4,5) on nappi. */
 function renderStepAction(slug,tpl,st,step){

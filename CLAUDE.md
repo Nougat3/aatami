@@ -30,6 +30,27 @@ Supabase-projekti: `ruesbriqeecwyacnfqry`. Deploy: GitHub Pages
 (`Nougat3/aatami`, `git push` + `gh api repos/Nougat3/aatami/pages/builds -X
 POST` builderin nopeuttamiseksi). Demo-potilas: `toni.demo@aatamiterveys.fi`.
 
+## Juridinen raja: hoitopolku EI ole potilasasiakirja
+
+Tämä on perustavanlaatuinen rajaus, joka määrää mitä Aatamiin saa tallentaa:
+
+| | Potilaskertomus | Aatamin hoitopolku |
+|---|---|---|
+| Missä | Potilastietojärjestelmä, siirtyy Kantaan | Aatami-sovellus |
+| Mitä | Diagnoosi (esim. I10), lääkemääräys, kliininen arvio | Tehtävälista päivämäärineen |
+| Sääntely | Potilasasiakirja-asetus | Ei potilasasiakirja |
+
+Lääkäri pitää vastaanoton ja kirjaa **virallisen sisällön normaalisti
+potilastietojärjestelmään**. Aatamiin syntyy vain potilaan oma muistilista.
+Siksi lääkäri **ei kirjoita hoitopolkua vapaana tekstinä** — hän valitsee
+mallipohjan (esim. "Verenpaine v1"), voi poistaa tarpeettomat tehtävät ja
+lisätä 1–2 omaa. Molemmissa käyttöliittymissä on tämä rajaus näkyvissä
+tekstinä, jottei sitä unohdeta.
+
+**Tehtävät kopioidaan potilaalle määrityshetkellä** (`plan.tasks`), ei
+viitata pohjaan elävästi. Näin pohjan myöhempi muokkaus (v1 → v2) ei muuta
+takautuvasti jo hoidossa olevan potilaan listaa. Todennettu testillä.
+
 ## Ydinkonsepti: Hoitopolku vs. Omahoito — kaksi eri asiaa
 
 Tämä jako on perustavanlaatuinen eikä pelkkä UI-yksityiskohta:
@@ -92,10 +113,21 @@ koodimuutosta. `patient_profiles.care_paths`-muoto:
 { verenpaine: { started_at, step, answers, plan:{text,target,by,at},
                 controls: [], status: "active"|"ended" } }
 ```
+`care_path_templates` sisältää lisäksi `version` ja `tasks jsonb`:
+`[{id, day, label, type, meas_type, target_count, optional, help}]`.
+`type`: `measurement` (kuittautuu mittausdatasta), `lab`, `med`, `survey`,
+`booking`, `custom`. `day` on siirtymä alkupäivästä; `due_date` lasketaan
+määrityshetkellä.
+
 RPC:t: `start_care_path(slug)` (potilas aloittaa),
 `advance_care_path(slug, answers)` (potilas etenee, estää vaiheen 5 yli),
-`staff_set_care_plan(queue_entry_id, slug, plan, target)` (lääkäri
-kirjoittaa suunnitelman → vaihe 7). Vaihe 4 kuitataan **oikeasta
+`staff_assign_care_plan(queue_entry_id, slug, start_date,
+excluded_task_ids, extra_tasks, target)` (lääkäri määrittää mallipohjan →
+vaihe 7, kopioi tehtävät päivämäärineen),
+`complete_care_task(slug, task_id, done)` (potilas kuittaa),
+`staff_control_care_path(...)` (kontrolli ja päätös).
+
+Sekä vaihe 4 että `measurement`-tyyppiset tehtävät kuittautuvat **oikeasta
 mittausdatasta** (lasketaan `measurements`-listasta), ei potilaan rastista.
 
 `omahoito_modules` (julkinen luku aktiivisille): `slug, name, goal_label,

@@ -130,6 +130,15 @@ header.top .row{display:flex;align-items:center;justify-content:space-between;ga
 .cp-plan textarea:focus,.cp-plan input:focus{outline:none;border-color:var(--brass)}
 .cp-existing{font-size:13px;line-height:1.6;white-space:pre-wrap;color:var(--stone)}
 .cp-meta{font-size:11.5px;color:var(--muted-d);margin-top:6px}
+.cp-note{font-size:11.5px;line-height:1.55;color:var(--muted-d);background:rgba(255,255,255,.04);
+  border-left:2px solid var(--brass);padding:8px 10px;border-radius:0 8px 8px 0;margin-bottom:10px}
+.cp-tpl{font-size:12.5px;color:var(--muted-d);margin-bottom:8px}
+.cp-tpl b{color:var(--brass-soft)}
+.cp-task{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;line-height:1.5;padding:5px 0;cursor:pointer}
+.cp-task input{margin-top:2px;accent-color:var(--brass);flex:none;width:16px;height:16px}
+.cp-task > span{flex:1;min-width:0}
+.cp-task b{color:var(--stone);font-weight:600;margin-right:4px}
+.cp-task i{color:var(--muted);font-style:normal}
 .cp-ctrl{margin-top:10px;font-size:12.5px;color:var(--muted-d);border-left:2px solid rgba(201,163,92,.4);padding-left:10px}
 
 .toast-stack{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:50}
@@ -391,20 +400,37 @@ function carePathHtml(e){
     let action = "";
     if(st.step === 5){
       const d = planDrafts[e.id] || {};
+      const tTasks = (tpl && tpl.tasks) || [];
+      const excluded = d.excluded || {};
+      const taskRows = tTasks.map(t=>`
+        <label class="cp-task">
+          <input type="checkbox" ${excluded[t.id]?"":"checked"} onchange="toggleTask('${e.id}','${t.id}',this.checked)">
+          <span><b>Päivä ${t.day}</b> ${esc(t.label)}${t.optional?' <i>(valinnainen)</i>':''}</span>
+        </label>`).join("");
       action = `
         <div class="cp-plan">
-          <textarea id="plan-${e.id}" placeholder="Hoitosuunnitelma potilaalle — elämäntapaohjeet, mahdollinen lääkitys, seurannan tavoitteet."
-            oninput="onPlanInput('${e.id}','text',this.value)">${esc(d.text||"")}</textarea>
-          <input id="target-${e.id}" placeholder="Tavoite, esim. 135/85" value="${esc(d.target||"")}"
+          <div class="cp-note">Tämä ei ole potilasasiakirja. Kirjaa diagnoosi, lääkitys ja
+            muu virallinen sisältö potilastietojärjestelmään normaalisti — tästä syntyy
+            vain potilaan oma muistilista.</div>
+          <div class="cp-tpl">Mallipohja: <b>${esc(name)} v${tpl?tpl.version:1}</b></div>
+          ${taskRows}
+          <input placeholder="Lisää oma tehtävä (valinnainen)" value="${esc(d.xLabel||"")}"
+            oninput="onPlanInput('${e.id}','xLabel',this.value)">
+          <input placeholder="Minä päivänä? esim. 14" inputmode="numeric" value="${esc(d.xDay||"")}"
+            oninput="onPlanInput('${e.id}','xDay',this.value)">
+          <input placeholder="Tavoite, esim. 135/85" value="${esc(d.target||"")}"
             oninput="onPlanInput('${e.id}','target',this.value)">
           <button class="btn btn-gold btn-sm" style="margin-top:10px"
-            onclick="savePlan('${e.id}','${slug}')">Tallenna hoitosuunnitelma</button>
+            onclick="assignPlan('${e.id}','${slug}')">Määritä hoitopolku potilaalle</button>
         </div>`;
     } else if(st.step === 7 && !ended){
       const d = planDrafts[e.id] || {};
+      const tasks = (st.plan && st.plan.tasks) || [];
+      const doneN = tasks.filter(t=>t.done).length;
       action = `
         <div class="cp-plan">
-          <textarea id="ctrl-${e.id}" placeholder="Kontrollin arvio — miten seurantajakso on mennyt?"
+          <div class="cp-tpl">Tehtäviä tehty ${doneN}/${tasks.length}</div>
+          <textarea placeholder="Kontrollin arvio — miten seurantajakso on mennyt?"
             oninput="onPlanInput('${e.id}','ctrl',this.value)">${esc(d.ctrl||"")}</textarea>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
             <button class="btn btn-gold btn-sm" onclick="doControl('${e.id}','${slug}','end')">Tavoite saavutettu — päätä polku</button>
@@ -421,9 +447,9 @@ function carePathHtml(e){
         </div>
         ${stepTitle?`<div class="cp-meta">${esc(stepTitle)}</div>`:""}
         ${qaRows?`<div class="q-profile-block"><h5>Esitiedot</h5>${qaRows}</div>`:""}
-        ${st.plan?`<div class="q-profile-block"><h5>Hoitosuunnitelma</h5>
-          <div class="cp-existing">${esc(st.plan.text||"")}</div>
-          <div class="cp-meta">${st.plan.target?`Tavoite: ${esc(st.plan.target)} · `:""}${esc(st.plan.by||"")}</div></div>`:""}
+        ${st.plan&&st.plan.tasks?`<div class="q-profile-block"><h5>Määritetty hoitopolku</h5>
+          ${(st.plan.tasks||[]).map(t=>`<div class="cp-qa">${t.done?"✓":"☐"} <b>${esc(t.due_date||"")}</b> ${esc(t.label)}</div>`).join("")}
+          <div class="cp-meta">${esc(st.plan.template_name||"")} v${st.plan.template_version||1}${st.plan.target?` · tavoite ${esc(st.plan.target)}`:""} · ${esc(st.plan.by||"")}</div></div>`:""}
         ${ctrlRows?`<div class="q-profile-block"><h5>Kontrollit</h5>${ctrlRows}</div>`:""}
         ${action}
       </div>`;
@@ -435,16 +461,28 @@ window.onPlanInput = function(entryId, field, val){
   planDrafts[entryId][field] = val;
 };
 
-window.savePlan = async function(entryId, slug){
+window.toggleTask = function(entryId, taskId, included){
+  planDrafts[entryId] = planDrafts[entryId] || {};
+  planDrafts[entryId].excluded = planDrafts[entryId].excluded || {};
+  if(included) delete planDrafts[entryId].excluded[taskId];
+  else planDrafts[entryId].excluded[taskId] = true;
+};
+
+window.assignPlan = async function(entryId, slug){
   const d = planDrafts[entryId] || {};
-  const text = (d.text||"").trim();
-  if(!text){ toast("Kirjoita hoitosuunnitelma ennen tallennusta."); return; }
-  const {error} = await sb.rpc("staff_set_care_plan", {
-    p_queue_entry_id: entryId, p_slug: slug, p_plan: text, p_target: (d.target||"").trim() || null
+  const excluded = Object.keys(d.excluded || {});
+  const extra = [];
+  if((d.xLabel||"").trim()){
+    extra.push({ label:(d.xLabel||"").trim(), day: parseInt(d.xDay,10) || 1 });
+  }
+  const {error} = await sb.rpc("staff_assign_care_plan", {
+    p_queue_entry_id: entryId, p_slug: slug, p_start_date: null,
+    p_excluded_task_ids: excluded, p_extra_tasks: extra,
+    p_target: (d.target||"").trim() || null
   });
-  if(error){ console.error(error); toast("Tallennus epäonnistui: "+error.message); return; }
+  if(error){ console.error(error); toast("Määritys epäonnistui: "+error.message); return; }
   delete planDrafts[entryId];
-  toast("Hoitosuunnitelma tallennettu — potilas näkee sen sovelluksessa.");
+  toast("Hoitopolku määritetty — potilas näkee tehtävälistan sovelluksessa.");
   await loadQueue();
 };
 
