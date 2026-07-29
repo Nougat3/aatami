@@ -51,6 +51,37 @@ tekstinä, jottei sitä unohdeta.
 viitata pohjaan elävästi. Näin pohjan myöhempi muokkaus (v1 → v2) ei muuta
 takautuvasti jo hoidossa olevan potilaan listaa. Todennettu testillä.
 
+### Palvelukuvaus (virallinen sanamuoto)
+
+Tämä teksti on sekä `index.html`:n hoitopolut-osiossa että `app.html`:n
+hoitopolkujen valintaruudussa — pidä ne synkassa:
+
+> Aatami on digitaalinen hoitopolku- ja seurantapalvelu, jossa
+> terveydenhuollon ammattihenkilö suunnittelee potilaan hoitopolun. Palvelu
+> auttaa potilasta toteuttamaan lääkärin antamia ohjeita, seuraamaan
+> omahoitoa ja muistamaan sovitut tehtävät. Kaikki diagnoosit,
+> lääkemääräykset ja hoitopäätökset tehdään erillisessä
+> potilastietojärjestelmässä terveydenhuollon ammattihenkilön toimesta.
+
+### Tavoiteltu työnkulku
+
+1. Potilas varaa etävastaanoton (Vastaanotto.fi)
+2. Etävastaanotto pidetään
+3. Lääkäri kirjaa potilaskertomuksen ja reseptit **omassa
+   potilastietojärjestelmässään**
+4. Lääkäri avaa Aatamin ja valitsee potilaalle sopivan hoitopolun
+5. Potilas saa tehtävälistan ja muistutukset
+
+**Vaihe 4 ei vielä toimi etävastaanottopotilaalle:** kaikki hoitopolku-RPC:t
+vaativat `queue_entry_id`:n ja `staff.html` listaa vain jonossa olevat.
+Etävastaanotolla käynyt potilas ei ole jonossa, joten lääkäri ei löydä
+häntä. Vaatii tavan, jolla lääkäri löytää potilaan jonon ulkopuolelta —
+ratkaisematta, koska se on tietosuojapäätös (ks. aukot alla).
+
+**Vaihe 5:n muistutukset puuttuvat:** tehtävillä on eräpäivät ja
+myöhässä-merkintä, mutta mikään ei muistuta potilasta (ei push-ilmoituksia
+eikä sähköpostia).
+
 ## Ydinkonsepti: Hoitopolku vs. Omahoito — kaksi eri asiaa
 
 Tämä jako on perustavanlaatuinen eikä pelkkä UI-yksityiskohta:

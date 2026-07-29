@@ -1032,6 +1032,12 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
 .st-item{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-soft);font-weight:500}
 .st-item svg{width:18px;height:18px;stroke:var(--brass);fill:none;stroke-width:1.5;flex:none}
 .shop-loading{grid-column:1/-1;text-align:center;color:#6d6558;font-size:14px;padding:40px 0}
+.svc-desc{max-width:720px;margin:40px auto 0;background:var(--ink);color:rgba(239,233,223,.82);
+  border-radius:16px;padding:26px 30px;font-size:13.5px;line-height:1.75}
+.svc-desc h4{font-family:var(--font-label);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--brass);margin-bottom:10px}
+.svc-desc b{color:#fff;font-weight:600}
+@media(max-width:640px){ .svc-desc{padding:22px 20px} }
 .shop-foot{max-width:600px;margin:44px auto 0;text-align:center;font-size:12px;color:#8a8172;line-height:1.7}
 .pcard{display:flex;flex-direction:column}
 .p-badge{
@@ -2614,6 +2620,14 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
         Moni pitkäaikaisvaiva ei vaadi uutta käyntiä joka kerta — vain sitä, että joku oikeasti
         seuraa. Näin hoito ja seuranta etenevät Aatamissa ensikäynnin jälkeen.
       </p>
+    </div>
+    <div class="svc-desc reveal">
+      <h4>Mikä Aatami on</h4>
+      <p>Aatami on <b>digitaalinen hoitopolku- ja seurantapalvelu</b>, jossa terveydenhuollon
+      ammattihenkilö suunnittelee potilaan hoitopolun. Palvelu auttaa potilasta toteuttamaan
+      lääkärin antamia ohjeita, seuraamaan omahoitoa ja muistamaan sovitut tehtävät.</p>
+      <p style="margin-top:12px">Kaikki <b>diagnoosit, lääkemääräykset ja hoitopäätökset</b>
+      tehdään erillisessä potilastietojärjestelmässä terveydenhuollon ammattihenkilön toimesta.</p>
     </div>
     <div class="how-grid-3">
       <div class="how-item reveal" data-delay="1">
