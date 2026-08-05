@@ -782,6 +782,9 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
 .cond-ico svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.5}
 .cond h3{font-family:var(--font-body);font-weight:600;font-size:15.5px;color:#fff;margin-bottom:7px}
 .cond p{font-size:13px;color:var(--muted-d);line-height:1.65}
+.cond-cta{max-width:560px;margin:34px auto 0;text-align:center}
+.cond-cta p{font-size:12.5px;line-height:1.7;color:rgba(239,233,223,.62);margin-top:16px}
+.cond-cta p a{color:var(--brass-soft);text-decoration:underline;text-underline-offset:2px}
 .cond-note{margin-top:34px;text-align:center;font-size:13.5px;color:var(--muted)}
 .cond-note b{color:var(--brass);font-weight:500}
 
@@ -2643,8 +2646,8 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
           <svg viewBox="0 0 48 48"><circle cx="24" cy="14" r="7"/><path d="M10 42c0-8 6.3-13 14-13s14 5 14 13"/></svg>
           <span class="how-num">1</span>
         </div>
-        <h3>Ensikäynti ja arvio</h3>
-        <p>Lääkäri tutkii tilanteesi ja tekee ensimmäisen arvion — sama käynti kuin mikä tahansa muu, ei erikoisvarausta.</p>
+        <h3>Etävastaanotto</h3>
+        <p>Tapaat lääkärin videolla. Täytät esitiedot ja kotimittaukset etukäteen sovelluksessa, joten aika menee itse asiaan.</p>
       </div>
       <div class="how-arrow reveal" data-delay="1"><svg viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></div>
       <div class="how-item reveal" data-delay="2">
@@ -2652,8 +2655,8 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
           <svg viewBox="0 0 48 48"><path d="M9 3h6l1 3h3v15H5V6h3z"/><path d="M9 13l2 2 4-4"/></svg>
           <span class="how-num">2</span>
         </div>
-        <h3>Hoitosuunnitelma</h3>
-        <p>Saat kirjallisen suunnitelman: mitä hoidetaan, millä ja miksi — sekä milloin ja miten seuranta jatkuu.</p>
+        <h3>Hoitopolku sovellukseen</h3>
+        <p>Lääkäri määrittää sinulle hoitopolun. Saat tehtävälistan päivämäärineen: mittaukset, laboratoriot ja kontrolli.</p>
       </div>
       <div class="how-arrow reveal" data-delay="2"><svg viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></div>
       <div class="how-item reveal" data-delay="3">
@@ -2661,9 +2664,13 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
           <svg viewBox="0 0 48 48"><path d="M24 8v32M8 24h32"/><circle cx="24" cy="24" r="18"/></svg>
           <span class="how-num">3</span>
         </div>
-        <h3>Seuranta etänä</h3>
-        <p>Tuloskeskustelu ja annoksen tarkistus hoituvat soittokontrollilla — ei tarvitse tulla paikan päälle joka kerta.</p>
+        <h3>Seuranta ja kontrolli</h3>
+        <p>Kirjaat arvosi sovellukseen ja lääkäri näkee kehityksen. Kontrolli varataan vasta kun se on tarpeen.</p>
       </div>
+    </div>
+    <div class="explainer-cta reveal" style="margin-top:38px">
+      <a href="./app.html" class="btn btn-gold btn-sm">Avaa Aatami-sovellus</a>
+      <a href="#etavastaanotot" class="btn btn-dark btn-sm">Varaa etävastaanotto <span class="arr">→</span></a>
     </div>
   </div>
 </section>
@@ -2679,20 +2686,24 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
       <div class="cond reveal" data-delay="1">
         <div class="cond-ico"><svg viewBox="0 0 24 24"><path d="M20.8 8.6a5 5 0 0 0-8.1-1.5L12 7.8l-.7-.7a5 5 0 1 0-7.1 7.1l7.1 7 .7.7.7-.7 7.1-7a5 5 0 0 0 1-5.6z"/><path d="M3 12h4l2-3 3 6 2-3h4"/></svg></div>
         <h3>Verenpaine ja kolesteroli</h3>
-        <p>Lääkitys säädetään kuntoon ensikäynnillä — sen jälkeen arvot ja vointi tarkistetaan soittokontrollilla.</p>
+        <p>Mittaat verenpaineen kotona, käyt laboratoriossa ja lääkäri säätää hoidon — seuranta jatkuu sovelluksessa.</p>
       </div>
       <div class="cond reveal" data-delay="2">
         <div class="cond-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg></div>
         <h3>Mieliala ja jaksaminen</h3>
-        <p>Hoidon vaikutusta seurataan säännöllisin väliajoin — ei tarvitse odottaa seuraavaa käyntiä kertoaksesi miten menee.</p>
+        <p>Kartoitetaan sekä elämäntilanne että somaattiset syyt. Kirjaat unta ja mielialaa, lääkäri seuraa kehitystä.</p>
       </div>
       <div class="cond reveal" data-delay="3">
         <div class="cond-ico"><svg viewBox="0 0 24 24"><path d="M6 3v7a6 6 0 0 0 12 0V3"/><path d="M6 3h3M15 3h3"/><path d="M12 16v5M9 21h6"/></svg></div>
         <h3>Painonhallinta</h3>
-        <p>Pitkäjänteinen suunnitelma etenee kuukausittaisella seurannalla — ei pikadieettiä, ei unohdu välissä.</p>
+        <p>Aineenvaihdunta ja tavat kartoitetaan ensin. Suunnitelma etenee tehtävä kerrallaan — ei pikadieettiä.</p>
       </div>
     </div>
-    <p class="cond-note reveal">Soittokontrolli maksaa <b>30 €</b> — katso <a href="#hinnasto">koko hinnasto</a>.</p>
+    <div class="cond-cta reveal">
+      <a href="./app.html" class="btn btn-gold">Aloita sovelluksessa <span class="arr">→</span></a>
+      <p>Kirjaudu sovellukseen, valitse hoitopolku ja täytä esitiedot. Hoitopolku ja seuranta
+      eivät maksa erikseen — maksat vain etävastaanotosta. <a href="#hinnasto">Katso hinnasto</a>.</p>
+    </div>
   </div>
 </section>
 </div>
