@@ -257,6 +257,12 @@ a{color:inherit;text-decoration:none}
 .now-card p{font-size:13.5px;color:var(--ink-soft);line-height:1.65;margin-top:8px}
 
 /* ═══════ HOITOPOLUN KYSELY JA MITTAUSVAIHE ═══════ */
+.crisis{background:rgba(209,149,89,.14);border:1px solid var(--warn);border-radius:14px;
+  padding:16px 18px;margin-bottom:16px}
+.crisis-t{font-size:14px;font-weight:700;color:var(--warn-soft);margin-bottom:6px}
+.crisis p{font-size:13px;line-height:1.65;color:var(--cream)}
+.crisis-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.crisis-acts a{text-decoration:none;font-size:13px;padding:9px 16px}
 .q-form{margin-top:10px}
 .q-item{margin-bottom:16px}
 .q-item label{display:block;font-size:13px;font-weight:600;color:var(--cream);margin-bottom:8px;line-height:1.4}
@@ -712,6 +718,8 @@ const MODULE_ICON = {
   "verenpaine":'<path d="M20.8 8.6a5 5 0 0 0-8.1-1.5L12 7.8l-.7-.7a5 5 0 1 0-7.1 7.1l7.1 7 .7.7.7-.7 7.1-7a5 5 0 0 0 1-5.6z"/><path d="M3 12h4l2-3 3 6 2-3h4"/>',
   "kolesteroli":'<path d="M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11z"/><path d="m9.5 14 2 2 3-3.5"/>',
   "paino":'<path d="M6 3v7a6 6 0 0 0 12 0V3"/><path d="M6 3h3M15 3h3"/><path d="M12 16v5M9 21h6"/>',
+  "painonhallinta":'<path d="M6 3v7a6 6 0 0 0 12 0V3"/><path d="M6 3h3M15 3h3"/><path d="M12 16v5M9 21h6"/>',
+  "mieliala":'<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/>',
   "uni":'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
 };
 function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
@@ -741,9 +749,9 @@ function measurementProgress(tpl){
 }
 
 /* Mittaukset ja labrat rakennetaan potilaan omasta datasta (ME) — ks. build*(). */
-const MEAS_TYPES = ["Verenpaine","Paino","Uni","Syke"];
-const MEAS_UNIT = {Verenpaine:"mmHg", Paino:"kg", Uni:"", Syke:"bpm"};
-const MEAS_COLOR = {Verenpaine:"var(--ok)", Paino:"var(--blue)", Uni:"var(--violet)", Syke:"var(--ok)"};
+const MEAS_TYPES = ["Verenpaine","Paino","Uni","Mieliala","Syke"];
+const MEAS_UNIT = {Verenpaine:"mmHg", Paino:"kg", Uni:"", Mieliala:"/10", Syke:"bpm"};
+const MEAS_COLOR = {Verenpaine:"var(--ok)", Paino:"var(--blue)", Uni:"var(--violet)", Mieliala:"var(--gold)", Syke:"var(--ok)"};
 const MEAS_KIND = {Uni:"bar"}; // muut viivakaavioita
 let MEAS = {};
 let LABS = { viim:[], kaikki:[] };
@@ -1077,6 +1085,7 @@ function renderStepAction(slug,tpl,st,step){
   if(step.key==='kysely'){
     const q=(tpl.questionnaire||[]);
     return `<div>
+      ${crisisHtml()}
       <div class="q-form">${q.map(item=>renderQuestion(item, st.answers||{})).join('')}</div>
       <button class="btn-gold" style="margin-top:14px" onclick="submitQuestionnaire('${slug}')">Lähetä vastaukset</button>
     </div>`;
@@ -1133,7 +1142,29 @@ function draftAnswers(){
 window.setAnswer=function(id,val,silent){
   draftAnswers()[id]=val;
   if(!silent) renderPathDetail();
+  else if(crisisTriggered()) renderPathDetail();
 };
+/* Sovellusta ei valvota reaaliaikaisesti, joten kriisivastausta ei saa vain
+   kirjata hiljaa. Tila johdetaan vastauksista, jottei uudelleenrenderöinti
+   pyyhi ilmoitusta pois. */
+function crisisTriggered(){
+  const tpl=pathTemplate(viewingPathSlug); if(!tpl||!tpl.crisis_note) return false;
+  const a=draftAnswers();
+  return (tpl.questionnaire||[]).some(q=>
+    Array.isArray(q.crisis_if) && q.crisis_if.includes(a[q.id]));
+}
+function crisisHtml(){
+  const tpl=pathTemplate(viewingPathSlug);
+  if(!tpl||!tpl.crisis_note||!crisisTriggered()) return '';
+  return `<div class="crisis" id="crisisBox">
+    <div class="crisis-t">Älä jää yksin</div>
+    <p>${esc(tpl.crisis_note)}</p>
+    <div class="crisis-acts">
+      <a class="btn-gold" href="tel:112">Soita 112</a>
+      <a class="btn-line" href="tel:0925250111">Kriisipuhelin 09 2525 0111</a>
+    </div>
+  </div>`;
+}
 window.toggleAnswer=function(id,val){
   const a=draftAnswers(); const arr=Array.isArray(a[id])?a[id]:[];
   const i=arr.indexOf(val); if(i===-1) arr.push(val); else arr.splice(i,1);

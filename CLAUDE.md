@@ -89,6 +89,24 @@ myöntöä, ja perumisen jälkeen pääsy katkeaa välittömästi.
 myöhässä-merkintä, mutta mikään ei muistuta potilasta (ei push-ilmoituksia
 eikä sähköpostia).
 
+## Aloitus: etäpalvelu ensin
+
+Aatami käynnistyy **etäpalveluna**. Myytävät etähoitopolut alussa:
+Verenpaine ja kolesteroli, Mieliala ja jaksaminen, Painonhallinta.
+Toimipisteet ja reaaliaikainen jonotus **säilyvät koodissa** ja otetaan
+käyttöön myöhemmin — niitä ei poisteta.
+
+### Kriisiturva mielialapolussa
+
+`care_path_templates.crisis_note` + kysymyksen `crisis_if`-lista: jos
+potilas valitsee merkityn vastauksen (esim. itsetuhoiset ajatukset),
+sovellus näyttää **heti** kriisiohjeen (112, kriisipuhelin 09 2525 0111) ja
+kertoo ettei Aatamia valvota reaaliaikaisesti. Tila johdetaan vastauksista,
+ei DOM:ista — muuten uudelleenrenderöinti pyyhkisi ilmoituksen.
+
+Tämä on pakollinen aina kun kyselyssä on kriisiin viittaava kysymys:
+hiljainen kirjaus ei riitä, koska kukaan ei lue vastausta yöllä.
+
 ## Ydinkonsepti: Hoitopolku vs. Omahoito — kaksi eri asiaa
 
 Tämä jako on perustavanlaatuinen eikä pelkkä UI-yksityiskohta:
