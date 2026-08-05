@@ -228,6 +228,18 @@ a{color:inherit;text-decoration:none}
 .task-sub{font-size:11.5px;color:var(--gold-soft);margin-top:3px}
 .task.late .task-sub{color:var(--warn-soft)}
 .task-help{font-size:12px;color:var(--ink-soft);line-height:1.55;margin-top:5px}
+.code-box{background:rgba(201,163,92,.12);border:1px solid rgba(201,163,92,.4);border-radius:14px;
+  padding:18px;text-align:center;margin-top:14px}
+.code-box .code{font-family:var(--fl);font-size:30px;letter-spacing:.22em;color:var(--gold-hi);font-weight:500}
+.code-box .code-exp{font-size:11.5px;color:var(--gold-soft);margin-top:6px}
+.grant-h{font-size:11px;font-family:var(--fl);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);margin:18px 0 8px}
+.grant-row{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:10px 0;border-bottom:1px solid var(--line)}
+.grant-row:last-child{border-bottom:none}
+.grant-row b{display:block;font-size:13.5px;font-weight:600}
+.grant-row span{font-size:11.5px;color:var(--muted)}
+.grant-row .btn-line{padding:7px 14px;font-size:12.5px}
 .svc-note{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;
   padding:16px 18px;font-size:12.5px;line-height:1.7;color:var(--ink-soft);margin-bottom:22px}
 .svc-note b{color:var(--cream);font-weight:600}
@@ -644,6 +656,15 @@ a{color:inherit;text-decoration:none}
         <div class="prow"><span class="pk">Aktiivinen hoitopolku</span><span class="pv" id="profActivePath">—</span></div>
         <div class="prow"><span class="pk">Jäsenyys</span><span class="pv">Vuosipaketti</span></div>
       </div>
+      <div class="card" style="margin-top:16px">
+        <h4><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Anna lääkärille pääsy</h4>
+        <p style="font-size:13px;color:var(--ink-soft);line-height:1.65">Kerro tämä koodi lääkärillesi
+        vastaanotolla, niin hän voi suunnitella sinulle hoitopolun. Koodi on voimassa 30 minuuttia.
+        Voit perua pääsyn milloin tahansa.</p>
+        <div id="accessCodeBox"></div>
+        <button class="btn-gold" style="margin-top:14px" onclick="makeAccessCode()">Luo koodi</button>
+        <div id="grantList"></div>
+      </div>
       <button class="btn-line full" style="width:100%;margin-top:16px" onclick="logout()">Kirjaudu ulos</button>
     </section>
   </main>
@@ -685,7 +706,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 
 /* Potilaan oma data (ladataan Supabasesta kirjautumisen jälkeen).
    omahoito = { purchased, purchased_at, price_paid_eur, goals:[{module,target}], modules:{slug:{week,tasks_done,completed}} } */
-const ME = { userId:null, email:"", name:"", firstName:"", initials:"", meds:[], measurements:[], careState:{}, labs:[], omahoitoModules:[], omahoito:{}, pathTemplates:[] };
+const ME = { userId:null, email:"", name:"", firstName:"", initials:"", meds:[], measurements:[], careState:{}, labs:[], omahoitoModules:[], omahoito:{}, pathTemplates:[], grants:[] };
 /* Moduulikohtaiset ikonit (omahoito_modules.slug → svg). Lisää tähän kun uusia moduuleita julkaistaan. */
 const MODULE_ICON = {
   "verenpaine":'<path d="M20.8 8.6a5 5 0 0 0-8.1-1.5L12 7.8l-.7-.7a5 5 0 1 0-7.1 7.1l7.1 7 .7.7.7-.7 7.1-7a5 5 0 0 0 1-5.6z"/><path d="M3 12h4l2-3 3 6 2-3h4"/>',
@@ -1386,7 +1407,7 @@ function renderAll(){
   renderTiles(); renderPathCard(); renderPathDetail(); renderOmahoito();
   renderMetricCards(); renderQuick();
   renderMeasTabs(); renderMeasBlock();
-  renderLabs(); renderMeds();
+  renderLabs(); renderMeds(); renderGrants();
 }
 
 /* ═══ AUTH ═══ */
@@ -1427,6 +1448,37 @@ async function logout(){
 }
 window.logout=logout;
 
+async function loadGrants(){
+  const {data}=await sb.from('care_access_grants').select('*').order('created_at',{ascending:false});
+  ME.grants=data||[];
+  renderGrants();
+}
+function renderGrants(){
+  const el=$('#grantList'); if(!el) return;
+  const active=(ME.grants||[]).filter(g=>g.claimed_at && !g.revoked_at);
+  if(!active.length){ el.innerHTML=''; return; }
+  el.innerHTML=`<div class="grant-h">Pääsy myönnetty</div>`+active.map(g=>`
+    <div class="grant-row">
+      <div><b>Lääkäri</b><span>Myönnetty ${new Date(g.claimed_at).toLocaleDateString('fi-FI')}</span></div>
+      <button class="btn-line" onclick="revokeGrant('${g.id}')">Peru</button>
+    </div>`).join('');
+}
+window.makeAccessCode=async function(){
+  const {data,error}=await sb.rpc('create_access_code');
+  if(error){ toast('Koodin luonti epäonnistui.'); console.error(error); return; }
+  const row=(data&&data[0])||{};
+  const exp=new Date(row.expires_at);
+  $('#accessCodeBox').innerHTML=`<div class="code-box"><div class="code">${esc(row.code||'')}</div>
+    <div class="code-exp">Voimassa klo ${exp.toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit'})} asti</div></div>`;
+  await loadGrants();
+};
+window.revokeGrant=async function(id){
+  const {error}=await sb.rpc('revoke_access_grant',{p_grant_id:id});
+  if(error){ toast('Perutus epäonnistui.'); return; }
+  toast('Pääsy peruttu.');
+  await loadGrants();
+};
+
 async function loadPatient(){
   const {data:{user}} = await sb.auth.getUser();
   if(!user) return false;
@@ -1445,6 +1497,8 @@ async function loadPatient(){
   ME.omahoitoModules=mods||[];
   const {data:paths}=await sb.from("care_path_templates").select("*").order("sort_order");
   ME.pathTemplates=paths||[];
+  const {data:grants}=await sb.from("care_access_grants").select("*").order("created_at",{ascending:false});
+  ME.grants=grants||[];
   return true;
 }
 async function enterApp(){

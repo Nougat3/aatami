@@ -72,11 +72,18 @@ hoitopolkujen valintaruudussa — pidä ne synkassa:
 4. Lääkäri avaa Aatamin ja valitsee potilaalle sopivan hoitopolun
 5. Potilas saa tehtävälistan ja muistutukset
 
-**Vaihe 4 ei vielä toimi etävastaanottopotilaalle:** kaikki hoitopolku-RPC:t
-vaativat `queue_entry_id`:n ja `staff.html` listaa vain jonossa olevat.
-Etävastaanotolla käynyt potilas ei ole jonossa, joten lääkäri ei löydä
-häntä. Vaatii tavan, jolla lääkäri löytää potilaan jonon ulkopuolelta —
-ratkaisematta, koska se on tietosuojapäätös (ks. aukot alla).
+**Vaihe 4 ratkaistu kertakoodilla.** Potilas luo profiilissaan 8-merkkisen
+koodin (`create_access_code`, voimassa 30 min) ja kertoo sen lääkärille.
+Lääkäri lunastaa sen staff.html:ssä (`staff_claim_access_code`) ja saa
+`grant_id`:n, jolla toimii. Lunastettu oikeus on **pysyvä kunnes potilas
+peruu sen** (`revoke_access_grant`) — kontrolli tapahtuu vasta viikkojen
+päästä, joten lyhyt vanheneminen katkaisisi hoidon. Potilas näkee ja peruu
+myönnöt profiilissaan.
+
+Kaikki lääkärin RPC:t ottavat joko `p_queue_entry_id`:n tai `p_grant_id`:n;
+oikeustarkistus on yhdessä paikassa (`staff_resolve_patient`). Todennettu:
+potilas ei voi lunastaa koodia, toinen lääkäri ei voi käyttää toisen
+myöntöä, ja perumisen jälkeen pääsy katkeaa välittömästi.
 
 **Vaihe 5:n muistutukset puuttuvat:** tehtävillä on eräpäivät ja
 myöhässä-merkintä, mutta mikään ei muistuta potilasta (ei push-ilmoituksia

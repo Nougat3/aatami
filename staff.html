@@ -130,6 +130,16 @@ header.top .row{display:flex;align-items:center;justify-content:space-between;ga
 .cp-plan textarea:focus,.cp-plan input:focus{outline:none;border-color:var(--brass)}
 .cp-existing{font-size:13px;line-height:1.6;white-space:pre-wrap;color:var(--stone)}
 .cp-meta{font-size:11.5px;color:var(--muted-d);margin-top:6px}
+.code-claim{background:var(--panel);border:1px solid rgba(255,255,255,.08);border-radius:14px;
+  padding:16px 18px;margin-bottom:18px}
+.code-claim-t{font-family:var(--font-label);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--brass-soft);margin-bottom:6px}
+.code-claim p{font-size:12.5px;color:var(--muted-d);line-height:1.6;margin-bottom:10px}
+.code-claim-row{display:flex;gap:8px;flex-wrap:wrap}
+.code-claim-row input{flex:1;min-width:150px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.14);
+  border-radius:9px;color:var(--stone);padding:10px 12px;font-size:15px;font-family:var(--font-label);
+  letter-spacing:.14em;text-transform:uppercase}
+.code-claim-row input:focus{outline:none;border-color:var(--brass)}
 .cp-note{font-size:11.5px;line-height:1.55;color:var(--muted-d);background:rgba(255,255,255,.04);
   border-left:2px solid var(--brass);padding:8px 10px;border-radius:0 8px 8px 0;margin-bottom:10px}
 .cp-tpl{font-size:12.5px;color:var(--muted-d);margin-bottom:8px}
@@ -188,6 +198,16 @@ header.top .row{display:flex;align-items:center;justify-content:space-between;ga
     </div>
 
     <div class="section-label">Kutsuttavana</div>
+    <div class="code-claim">
+      <div class="code-claim-t">Potilas koodilla</div>
+      <p>Etävastaanotolla käynyt potilas ei ole jonossa. Pyydä häneltä sovelluksen koodi.</p>
+      <div class="code-claim-row">
+        <input id="claimCode" placeholder="esim. NZSKEP78" autocomplete="off" maxlength="8">
+        <button class="btn btn-gold btn-sm" id="claimBtn">Hae potilas</button>
+      </div>
+      <div id="grantCards"></div>
+    </div>
+
     <div id="waitingList"></div>
 
     <div class="section-label">Kutsuttu / paikalla</div>
@@ -248,6 +268,8 @@ $("loginBtn").onclick = async ()=>{
 };
 $("staffPassword").addEventListener("keydown", e=>{ if(e.key==="Enter") $("loginBtn").click(); });
 
+$("claimBtn").onclick = () => claimCode();
+$("claimCode").addEventListener("keydown", e=>{ if(e.key==="Enter") claimCode(); });
 $("logoutBtn").onclick = async ()=>{
   if(channel) sb.removeChannel(channel);
   await sb.auth.signOut();
@@ -331,6 +353,45 @@ function subscribeRealtime(){
       () => { loadQueue(); }
     )
     .subscribe();
+}
+
+let grantPatients = []; // {grant_id, name, profile}
+
+async function claimCode(){
+  const el = $("claimCode");
+  const code = (el.value||"").trim().toUpperCase();
+  if(!code){ toast("Syötä potilaan koodi."); return; }
+  const {data, error} = await sb.rpc("staff_claim_access_code", {p_code: code});
+  if(error){ toast(error.message || "Koodin lunastus epäonnistui."); return; }
+  const row = (data && data[0]) || null;
+  if(!row){ toast("Koodia ei löytynyt."); return; }
+  el.value = "";
+  if(!grantPatients.some(g=>g.grant_id===row.grant_id)){
+    grantPatients.push({grant_id: row.grant_id, name: row.patient_name});
+  }
+  await refreshGrantPatients();
+  toast("Potilas haettu: " + (row.patient_name || ""));
+}
+
+async function refreshGrantPatients(){
+  await Promise.all(grantPatients.map(async g=>{
+    const {data} = await sb.rpc("staff_get_patient_profile", {p_grant_id: g.grant_id});
+    g.profile = (data && data[0]) || null;
+  }));
+  grantPatients = grantPatients.filter(g=>g.profile); // peruttu pääsy katoaa
+  renderGrantCards();
+}
+
+function renderGrantCards(){
+  const el = $("grantCards");
+  if(!el) return;
+  el.innerHTML = grantPatients.map(g=>`
+    <div class="q-card arrived" style="margin-top:12px">
+      <div class="q-top"><div><div class="q-reason">${esc(g.profile.full_name||"Potilas")}</div></div>
+        <span class="q-status-chip arrived">Koodilla</span></div>
+      ${profileHtml(g.profile)}
+      ${carePathHtml({id:"g:"+g.grant_id, _profile:g.profile})}
+    </div>`).join("");
 }
 
 function renderQueue(){
@@ -461,6 +522,17 @@ window.onPlanInput = function(entryId, field, val){
   planDrafts[entryId][field] = val;
 };
 
+/* Potilas voi olla joko jonossa (queue_entry) tai haettu koodilla (grant). */
+function accessRef(entryId){
+  return String(entryId).startsWith("g:")
+    ? {p_queue_entry_id: null, p_grant_id: String(entryId).slice(2)}
+    : {p_queue_entry_id: entryId, p_grant_id: null};
+}
+async function reloadAfterChange(entryId){
+  if(String(entryId).startsWith("g:")) await refreshGrantPatients();
+  else await loadQueue();
+}
+
 window.toggleTask = function(entryId, taskId, included){
   planDrafts[entryId] = planDrafts[entryId] || {};
   planDrafts[entryId].excluded = planDrafts[entryId].excluded || {};
@@ -475,28 +547,30 @@ window.assignPlan = async function(entryId, slug){
   if((d.xLabel||"").trim()){
     extra.push({ label:(d.xLabel||"").trim(), day: parseInt(d.xDay,10) || 1 });
   }
+  const ref = accessRef(entryId);
   const {error} = await sb.rpc("staff_assign_care_plan", {
-    p_queue_entry_id: entryId, p_slug: slug, p_start_date: null,
+    ...ref, p_slug: slug, p_start_date: null,
     p_excluded_task_ids: excluded, p_extra_tasks: extra,
     p_target: (d.target||"").trim() || null
   });
   if(error){ console.error(error); toast("Määritys epäonnistui: "+error.message); return; }
   delete planDrafts[entryId];
   toast("Hoitopolku määritetty — potilas näkee tehtävälistan sovelluksessa.");
-  await loadQueue();
+  await reloadAfterChange(entryId);
 };
 
 window.doControl = async function(entryId, slug, outcome){
   const d = planDrafts[entryId] || {};
   const note = (d.ctrl||"").trim();
   if(!note){ toast("Kirjoita kontrollin arvio ensin."); return; }
+  const ref = accessRef(entryId);
   const {error} = await sb.rpc("staff_control_care_path", {
-    p_queue_entry_id: entryId, p_slug: slug, p_note: note, p_outcome: outcome
+    ...ref, p_slug: slug, p_note: note, p_outcome: outcome
   });
   if(error){ console.error(error); toast("Kirjaus epäonnistui: "+error.message); return; }
   delete planDrafts[entryId];
   toast(outcome==="end" ? "Hoitopolku päätetty." : "Seuranta jatkuu.");
-  await loadQueue();
+  await reloadAfterChange(entryId);
 };
 
 function cardHtml(e){
