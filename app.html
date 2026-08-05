@@ -214,6 +214,9 @@ a{color:inherit;text-decoration:none}
 .pi-stage:last-child{border-bottom:none}
 .pis-num{width:24px;height:24px;border-radius:50%;background:var(--bg-2);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex:none}
 
+.li-x{background:none;border:1px solid var(--line);color:var(--muted);width:28px;height:28px;
+  border-radius:8px;font-size:16px;line-height:1;flex:none;transition:all .18s}
+.li-x:hover{border-color:var(--warn);color:var(--warn-soft)}
 .task-top{font-size:12.5px;color:var(--gold-soft);font-weight:600;margin-top:2px}
 .tasks{margin-top:12px}
 .task{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line)}
@@ -389,6 +392,28 @@ a{color:inherit;text-decoration:none}
 .prow .pk{color:var(--muted)}
 .prow .pv{font-weight:600}
 
+/* Lääkelista — potilas ylläpitää itse, lääkäri näkee vastaanotolla. */
+window.openMed=function(){ $('#medBg').classList.add('open'); setTimeout(()=>$('#medName').focus(),60); };
+window.closeMed=function(){ $('#medBg').classList.remove('open'); $('#medName').value=''; $('#medDose').value=''; };
+window.saveMed=async function(){
+  const name=($('#medName').value||'').trim(), dose=($('#medDose').value||'').trim();
+  if(!name){ toast('Kirjoita lääkkeen nimi.'); return; }
+  ME.meds.push({name, dose: dose||'—'});
+  await saveMeds();
+  closeMed(); renderMeds();
+  toast('Lääke lisätty.');
+};
+window.removeMed=async function(i){
+  ME.meds.splice(i,1);
+  await saveMeds(); renderMeds();
+};
+async function saveMeds(){
+  if(!ME.userId) return;
+  const {error}=await sb.from('patient_profiles').upsert({
+    user_id:ME.userId, medications:ME.meds, updated_at:new Date().toISOString()});
+  if(error){ console.error('meds save failed',error); toast('Tallennus epäonnistui.'); }
+}
+
 /* Add-measurement modal */
 .modal-bg{position:fixed;inset:0;background:rgba(18,16,13,.55);display:none;align-items:flex-end;justify-content:center;z-index:60}
 .modal-bg.open{display:flex}
@@ -549,19 +574,8 @@ a{color:inherit;text-decoration:none}
       <div class="row2">
         <!-- Active care path (dynaaminen) -->
         <div class="dcard" id="pathCard"></div>
-        <!-- Next appointment -->
-        <div class="dcard">
-          <span class="dc-eyebrow">Seuraava vastaanotto</span>
-          <div class="appt" style="margin-top:16px">
-            <div class="appt-cal"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></div>
-            <div>
-              <div class="date">To 21.8.2024</div>
-              <div class="meta">klo 16.30</div>
-              <div class="meta">Lääkäri J. Lehtinen</div>
-            </div>
-          </div>
-          <button class="btn-dark" style="margin-top:20px;width:100%" onclick="go('vastaanotot')">Näytä tiedot</button>
-        </div>
+        <!-- Seuraava tehtävä (dynaaminen) -->
+        <div class="dcard" id="nextTaskCard"></div>
       </div>
 
       <!-- Metric cards (desktop) -->
@@ -604,48 +618,30 @@ a{color:inherit;text-decoration:none}
     <!-- ═══════════ VASTAANOTOT ═══════════ -->
     <section class="view" data-view="vastaanotot">
       <div class="head"><div><h1>Vastaanotot</h1><div class="sub">Etävastaanotot pidetään Vastaanotto.fi-palvelussa.</div></div></div>
-      <div class="appt-hero">
-        <div class="ah-cal"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></div>
-        <div>
-          <h3>Etävastaanotto — To 21.8.2024</h3>
-          <div class="ah-meta">klo 16.30 · Lääkäri J. Lehtinen · Hoitopolku: Verenpaine</div>
-        </div>
-        <div class="ah-act">
-          <a href="https://www.vastaanotto.fi" target="_blank" rel="noopener noreferrer" class="btn-gold">Siirry vastaanotolle →</a>
-        </div>
-      </div>
-      <div class="pill-hint" style="padding-left:2px">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
-        Videopuhelu avautuu Vastaanotto.fi-palvelussa erilliseen välilehteen. Saat muistutuksen 15 min ennen aikaa.
-      </div>
-
       <div class="card">
-        <h4><svg viewBox="0 0 24 24"><path d="M4 4h16v12H8l-4 4z"/></svg>Muistiinpanot edelliseltä käynniltä</h4>
-        <p>Keskustelimme verenpainearvoista, lääkityksen annostuksesta ja liikunnan lisäämisestä. Jatketaan Ramiprililla, kontrolli 6 viikon kuluttua.</p>
-        <div class="note-meta">Lääkäri J. Lehtinen · 21.8.2024</div>
+        <h4><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Varaa etävastaanotto</h4>
+        <p>Etävastaanotot varataan ja pidetään Vastaanotto.fi-palvelussa. Aatami ei toistaiseksi
+        näytä varauksiasi — näet ne Vastaanotto.fi:stä.</p>
+        <a href="https://www.vastaanotto.fi" target="_blank" rel="noopener noreferrer"
+           class="btn-gold" style="display:inline-block;margin-top:14px">Siirry Vastaanotto.fi:hin →</a>
       </div>
-
-      <div class="section-title" style="margin-top:26px">Aiemmat vastaanotot</div>
-      <div class="list">
-        <div class="li"><div class="li-ico"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/></svg></div><div class="li-mid"><div class="lt">Etävastaanotto — Verenpaine</div><div class="ls">Lääkäri J. Lehtinen</div></div><div class="li-time">14.6.2024</div></div>
-        <div class="li"><div class="li-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg></div><div class="li-mid"><div class="lt">Ensikäynti — Aatami Oulu</div><div class="ls">Lääkäri A. Lammi</div></div><div class="li-time">12.6.2024</div></div>
-      </div>
+      <div id="apptTasks"></div>
     </section>
 
     <!-- ═══════════ LÄÄKITYS ═══════════ -->
     <section class="view" data-view="laakitys">
-      <div class="head"><div><h1>Lääkitys</h1><div class="sub">Nykyinen lääkityksesi — täydennät sen <b>Omat tiedot</b> -osiossa.</div></div></div>
+      <div class="head"><div><h1>Lääkitys</h1><div class="sub">Pidä lääkelistasi ajan tasalla — lääkärisi näkee sen vastaanotolla.</div></div></div>
       <div class="list" id="medsList"></div>
-      <button class="btn-line full" style="width:100%;margin-top:16px" onclick="toast('Reseptin uusinta lähetetään lääkärillesi (demo).')">Pyydä reseptin uusinta</button>
+      <button class="btn-gold full" style="width:100%;margin-top:16px" onclick="openMed()">Lisää lääke</button>
     </section>
 
     <!-- ═══════════ VIESTIT ═══════════ -->
     <section class="view" data-view="viestit">
       <div class="head"><div><h1>Viestit</h1><div class="sub">Yhteys hoitotiimiisi.</div></div></div>
-      <div class="list">
-        <div class="li"><div class="li-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg></div><div class="li-mid"><div class="lt">Lääkäri J. Lehtinen</div><div class="ls">Verenpainearvosi näyttävät hyviltä — jatketaan…</div></div><div class="li-time">2 h sitten</div><div class="unread"></div></div>
-        <div class="li"><div class="li-ico"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 3h3v15H5V6h3z"/><path d="M9 13l2 2 4-4"/></svg></div><div class="li-mid"><div class="lt">Aatami-tiimi</div><div class="ls">Laboratoriotuloksesi ovat valmiit.</div></div><div class="li-time">Eilen</div></div>
-        <div class="li"><div class="li-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></div><div class="li-mid"><div class="lt">Ajanvarausmuistutus</div><div class="ls">Etävastaanotto To 21.8. klo 16.30.</div></div><div class="li-time">2 pv sitten</div></div>
+      <div class="card">
+        <h4><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>Viestit eivät ole vielä käytössä</h4>
+        <p>Yhteys lääkäriisi hoituu toistaiseksi etävastaanotolla. Kiireellisissä asioissa
+        soita omalle terveysasemallesi tai hätätilanteessa 112.</p>
       </div>
     </section>
 
@@ -657,10 +653,9 @@ a{color:inherit;text-decoration:none}
         <div><h3 id="profName">—</h3><div class="pe" id="profEmail">—</div></div>
       </div>
       <div class="list">
-        <div class="prow"><span class="pk">Ikä</span><span class="pv">42 v</span></div>
-        <div class="prow"><span class="pk">Oma lääkäri</span><span class="pv">J. Lehtinen</span></div>
+
         <div class="prow"><span class="pk">Aktiivinen hoitopolku</span><span class="pv" id="profActivePath">—</span></div>
-        <div class="prow"><span class="pk">Jäsenyys</span><span class="pv">Vuosipaketti</span></div>
+
       </div>
       <div class="card" style="margin-top:16px">
         <h4><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Anna lääkärille pääsy</h4>
@@ -684,6 +679,19 @@ a{color:inherit;text-decoration:none}
   <button class="bn" data-view="omahoito"><svg viewBox="0 0 24 24"><path d="M9 3h6a1 1 0 0 1 1 1v1h2v16H6V5h2V4a1 1 0 0 1 1-1z"/><path d="M9 5h6M9 11l1.5 1.5L13 10M9 16l1.5 1.5L13 15"/></svg>Omahoito</button>
   <button class="bn" data-view="profiili"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>Profiili</button>
 </nav>
+
+<!-- ═══ ADD MEDICATION MODAL ═══ -->
+<div class="modal-bg" id="medBg">
+  <div class="modal">
+    <h3>Lisää lääke</h3>
+    <div class="field"><label for="medName">Lääke</label>
+      <input id="medName" placeholder="esim. Ramipril 5 mg"></div>
+    <div class="field"><label for="medDose">Annostus</label>
+      <input id="medDose" placeholder="esim. 1 tabletti aamuisin"></div>
+    <button class="btn-gold full" onclick="saveMed()">Tallenna</button>
+    <button class="modal-x" onclick="closeMed()">Peruuta</button>
+  </div>
+</div>
 
 <!-- ═══ ADD MEASUREMENT MODAL ═══ -->
 <div class="modal-bg" id="addModal">
@@ -891,6 +899,49 @@ function renderPathCard(){
     <div class="stepper" id="miniStepper"></div>
     <button class="btn-gold" style="margin-top:22px" onclick="openPath('${slug}')">Jatka polkua</button>`;
   renderMiniStepper(slug);
+}
+/* Etusivun toinen kortti: seuraava erääntyvä tehtävä oikeasta datasta. */
+function renderNextTaskCard(){
+  const el=$('#nextTaskCard'); if(!el) return;
+  const slug=activePathSlug();
+  const st=slug?pathState(slug):null;
+  const tasks=(st&&st.plan&&st.plan.tasks)||[];
+  const pending=tasks.filter(t=>!isTaskDone(t))
+    .sort((a,b)=>String(a.due_date||'').localeCompare(String(b.due_date||'')));
+  if(!pending.length){
+    el.innerHTML=`
+      <span class="dc-eyebrow">Seuraava tehtävä</span>
+      <h3 style="margin-top:14px">${tasks.length?'Kaikki tehtävät tehty 🎉':'Ei tehtäviä juuri nyt'}</h3>
+      <div class="dc-next">${tasks.length?'Hienoa — lääkäri näkee edistymisesi.':'Tehtävät ilmestyvät tähän kun lääkäri määrittää hoitopolun.'}</div>
+      <button class="btn-dark" style="margin-top:20px;width:100%" onclick="go('hoitopolut')">Avaa hoitopolku</button>`;
+    return;
+  }
+  const t=pending[0];
+  const due=t.due_date?new Date(t.due_date+'T00:00:00'):null;
+  const today=new Date(); today.setHours(0,0,0,0);
+  const late=due&&due<today;
+  el.innerHTML=`
+    <span class="dc-eyebrow">Seuraava tehtävä</span>
+    <div class="appt" style="margin-top:16px">
+      <div class="appt-cal"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 3h3v15H5V6h3z"/><path d="M9 13l2 2 4-4"/></svg></div>
+      <div>
+        <div class="date">${esc(t.label)}</div>
+        <div class="meta">${due?due.toLocaleDateString('fi-FI'):''}${late?' · myöhässä':''}</div>
+      </div>
+    </div>
+    <button class="btn-dark" style="margin-top:20px;width:100%" onclick="go('hoitopolut')">Avaa tehtävät</button>`;
+}
+/* Vastaanotot-näkymä: polun varaustehtävät, ei keksittyjä aikoja. */
+function renderApptTasks(){
+  const el=$('#apptTasks'); if(!el) return;
+  const slug=activePathSlug(); const st=slug?pathState(slug):null;
+  const tasks=((st&&st.plan&&st.plan.tasks)||[]).filter(t=>t.type==='booking'&&!t.done);
+  if(!tasks.length){ el.innerHTML=''; return; }
+  el.innerHTML=`<div class="section-title" style="margin-top:26px">Hoitopolkusi muistuttaa</div>
+    <div class="list">${tasks.map(t=>`
+      <div class="li"><div class="li-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></div>
+        <div class="li-mid"><div class="lt">${esc(t.label)}</div>
+        <div class="ls">${t.due_date?new Date(t.due_date+'T00:00:00').toLocaleDateString('fi-FI'):''}</div></div></div>`).join('')}</div>`;
 }
 function renderMiniStepper(slug){
   const el=$('#miniStepper'); if(!el) return;
@@ -1364,6 +1415,7 @@ function go(view){
   $$('.bn').forEach(b=>b.classList.toggle('on', b.dataset.view===view));
   if(view==='hoitopolut') renderPathDetail();
   if(view==='omahoito') renderOmahoito();
+  if(view==='vastaanotot') renderApptTasks();
   if(view==='mittaukset'){ renderMeasTabs(); renderMeasBlock(); }
   if(view==='laboratoriot') renderLabs();
   window.scrollTo(0,0);
@@ -1379,6 +1431,28 @@ document.addEventListener('click', e=>{
   const lt=e.target.closest('[data-labtab]');
   if(lt){ labCurrent=lt.dataset.labtab; $$('[data-labtab]').forEach(t=>t.classList.toggle('on',t===lt)); renderLabs(); }
 });
+
+/* Lääkelista — potilas ylläpitää itse, lääkäri näkee vastaanotolla. */
+window.openMed=function(){ $('#medBg').classList.add('open'); setTimeout(()=>$('#medName').focus(),60); };
+window.closeMed=function(){ $('#medBg').classList.remove('open'); $('#medName').value=''; $('#medDose').value=''; };
+window.saveMed=async function(){
+  const name=($('#medName').value||'').trim(), dose=($('#medDose').value||'').trim();
+  if(!name){ toast('Kirjoita lääkkeen nimi.'); return; }
+  ME.meds.push({name, dose: dose||'—'});
+  await saveMeds();
+  closeMed(); renderMeds();
+  toast('Lääke lisätty.');
+};
+window.removeMed=async function(i){
+  ME.meds.splice(i,1);
+  await saveMeds(); renderMeds();
+};
+async function saveMeds(){
+  if(!ME.userId) return;
+  const {error}=await sb.from('patient_profiles').upsert({
+    user_id:ME.userId, medications:ME.meds, updated_at:new Date().toISOString()});
+  if(error){ console.error('meds save failed',error); toast('Tallennus epäonnistui.'); }
+}
 
 /* Add-measurement modal — tallentaa oikeasti patient_profiles.measurements-listaan */
 function openAdd(type){ if(typeof type==='string') $('#addType').value=type; $('#addModal').classList.add('open'); document.body.style.overflow='hidden'; setTimeout(()=>$('#addVal').focus(),60); }
@@ -1418,24 +1492,24 @@ function renderProfileBits(){
   $$('.avatar').forEach(a=>a.textContent=ME.initials);
   const nm=$('.who .nm'); if(nm) nm.textContent = ME.firstName ? `${ME.firstName}` : ME.email;
   $('#profName').textContent = ME.name || "Aatami-käyttäjä";
-  $('#profEmail').textContent = `${ME.email} · Aatami Oulu`;
+  $('#profEmail').textContent = ME.email;
   const ap = activePathSlug();
   const apTpl = ap ? pathTemplate(ap) : null;
   $('#profActivePath').textContent = apTpl ? apTpl.name : "Ei aloitettua";
 }
 function renderMeds(){
   const el=$('#medsList'); if(!el) return;
-  if(!ME.meds.length){ el.innerHTML = `<div class="lab-empty" style="padding:26px">Ei lääkkeitä listattuna.<br><span>Lisää lääkkeesi markkinointisivun Omat tiedot -osiossa.</span></div>`; return; }
-  el.innerHTML = ME.meds.map(m=>`
+  if(!ME.meds.length){ el.innerHTML = `<div class="lab-empty" style="padding:26px">Ei lääkkeitä listattuna.<br><span>Lisää lääkkeesi, niin lääkäri näkee ne vastaanotolla.</span></div>`; return; }
+  el.innerHTML = ME.meds.map((m,i)=>`
     <div class="li"><div class="li-ico"><svg viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="11" rx="3"/><path d="M12 9v11"/></svg></div>
       <div class="li-mid"><div class="lt">${esc(m.name)}</div><div class="ls">${esc(m.dose||"")}</div></div>
-      <div class="li-time">Voimassa</div></div>`).join('');
+      <button class="li-x" onclick="removeMed(${i})" aria-label="Poista">×</button></div>`).join('');
 }
 function renderAll(){
   buildMeasurements();
   buildLabs();
   renderProfileBits();
-  renderTiles(); renderPathCard(); renderPathDetail(); renderOmahoito();
+  renderTiles(); renderPathCard(); renderNextTaskCard(); renderApptTasks(); renderPathDetail(); renderOmahoito();
   renderMetricCards(); renderQuick();
   renderMeasTabs(); renderMeasBlock();
   renderLabs(); renderMeds(); renderGrants();

@@ -85,6 +85,17 @@ oikeustarkistus on yhdessä paikassa (`staff_resolve_patient`). Todennettu:
 potilas ei voi lunastaa koodia, toinen lääkäri ei voi käyttää toisen
 myöntöä, ja perumisen jälkeen pääsy katkeaa välittömästi.
 
+**Sovelluksessa ei ole enää demodataa.** Vastaanotot, Viestit ja Profiili
+näyttivät aiemmin kovakoodattua valedataa (keksitty vastaanottoaika,
+valeviestit, "Ikä 42 v"). Kaikille käyttäjille näkyvä keksitty
+vastaanottoaika on terveyspalvelussa vakava — potilas voi luulla, että
+hänellä on oikea aika. Nämä on korvattu oikealla datalla tai rehellisellä
+tyhjällä tilalla. **Älä lisää demodataa käyttöliittymään** — käytä tyhjää
+tilaa tai oikeaa dataa.
+
+Aatamissa ei ole viestintäjärjestelmää eikä ajanvarausta (ne ovat
+Vastaanotto.fi:ssä), ja käyttöliittymä sanoo sen suoraan.
+
 **Vaihe 5:n muistutukset puuttuvat:** tehtävillä on eräpäivät ja
 myöhässä-merkintä, mutta mikään ei muistuta potilasta (ei push-ilmoituksia
 eikä sähköpostia).
