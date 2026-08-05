@@ -102,10 +102,21 @@ eikä sähköpostia).
 
 ## Aloitus: etäpalvelu ensin
 
-Aatami käynnistyy **etäpalveluna**. Myytävät etähoitopolut alussa:
-Verenpaine ja kolesteroli, Mieliala ja jaksaminen, Painonhallinta.
-Toimipisteet ja reaaliaikainen jonotus **säilyvät koodissa** ja otetaan
-käyttöön myöhemmin — niitä ei poisteta.
+Aatami käynnistyy **etäpalveluna**. Etähoitopolut alussa: Verenpaine ja
+kolesteroli, Mieliala ja jaksaminen, Painonhallinta. Toimipisteet ja
+reaaliaikainen jonotus **säilyvät koodissa** ja otetaan käyttöön myöhemmin
+— niitä ei poisteta. Jonoon pääsee yhä toimipistesivun kautta
+(`ldJoinBtn`), mutta se ei ole enää etusivun pääkehotus.
+
+**Toimipisteet eivät ole vielä auki.** `index.html` sanoo tämän suoraan
+(`.coming-note`) — sivu ei saa väittää niiden toimivan. Aiempi teksti
+"Tampere, Oulu ja Seinäjoki jo nyt" oli väärä väite ja on poistettu.
+Samoin App Store-/Google Play -painikkeet: sovellus on PWA, eikä
+kauppalistauksia ole.
+
+**Hinnoittelu:** hoitopolku ja seuranta ovat maksuttomia. Raha tulee
+etävastaanotoista Vastaanotto.fi:n kautta. Hoitopolulle ei siis rakenneta
+ostoa. Omahoito on erikseen maksullinen (moduulihinnat).
 
 ### Kriisiturva mielialapolussa
 
