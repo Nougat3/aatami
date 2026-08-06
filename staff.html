@@ -140,6 +140,17 @@ header.top .row{display:flex;align-items:center;justify-content:space-between;ga
   border-radius:9px;color:var(--stone);padding:10px 12px;font-size:15px;font-family:var(--font-label);
   letter-spacing:.14em;text-transform:uppercase}
 .code-claim-row input:focus{outline:none;border-color:var(--brass)}
+.ib-row{background:var(--panel);border:1px solid rgba(255,255,255,.08);border-radius:12px;
+  padding:12px 14px;margin-bottom:8px}
+.ib-row.unread{border-color:rgba(201,163,92,.45)}
+.ib-main{cursor:pointer}
+.ib-top{display:flex;align-items:center;gap:8px}
+.ib-name{font-size:14px;font-weight:600}
+.ib-time{margin-left:auto;font-size:11.5px;color:var(--muted-d)}
+.ib-prev{font-size:13px;color:var(--muted-d);margin-top:3px;line-height:1.5}
+.ib-badge{background:var(--brass);color:#211a0e;font-size:11px;font-weight:700;
+  min-width:19px;height:19px;border-radius:10px;display:inline-flex;align-items:center;
+  justify-content:center;padding:0 6px}
 .schat{display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;margin-bottom:10px}
 .smsg{max-width:88%;border-radius:12px;padding:9px 12px;font-size:13px;line-height:1.5}
 .smsg.me{align-self:flex-end;background:rgba(201,163,92,.18);border:1px solid rgba(201,163,92,.3)}
@@ -203,6 +214,9 @@ header.top .row{display:flex;align-items:center;justify-content:space-between;ga
         <div class="switch" id="dutySwitch"><div class="knob"></div></div>
       </div>
     </div>
+
+    <div class="section-label">Viestit <span id="inboxCount"></span></div>
+    <div id="inbox"></div>
 
     <div class="section-label">Kutsuttavana</div>
     <div class="code-claim">
@@ -349,6 +363,7 @@ async function loadQueue(){
   }));
 
   renderQueue();
+  loadInbox();
 }
 
 function subscribeRealtime(){
@@ -359,6 +374,11 @@ function subscribeRealtime(){
       { event:"*", schema:"public", table:"queue_entries", filter:`clinic_id=eq.${me.clinic_id}` },
       () => { loadQueue(); }
     )
+    .subscribe();
+
+  sb.channel("staff-messages-"+me.clinic_id)
+    .on("postgres_changes", {event:"INSERT", schema:"public", table:"care_messages"},
+        () => { loadInbox(); })
     .subscribe();
 }
 
@@ -545,6 +565,60 @@ async function reloadAfterChange(entryId){
 const chatCache = {};   // entryId -> viestit
 const chatOpen  = {};   // entryId -> auki?
 
+let inbox = [];
+
+async function loadInbox(){
+  const {data,error}=await sb.rpc("staff_list_message_threads");
+  if(error){ console.error("inbox failed",error); return; }
+  inbox = data || [];
+  renderInbox();
+}
+function renderInbox(){
+  const el=$("inbox"); if(!el) return;
+  const badge=$("inboxCount");
+  const unreadTotal = inbox.reduce((s,t)=>s+(t.unread||0),0);
+  if(badge) badge.innerHTML = unreadTotal ? `<span class="ib-badge">${unreadTotal}</span>` : "";
+
+  if(!inbox.length){
+    el.innerHTML=`<div class="empty">Ei viestejä potilailta.</div>`;
+    return;
+  }
+  el.innerHTML = inbox.map(t=>{
+    const ref = t.grant_id ? "g:"+t.grant_id : t.queue_entry_id;
+    const open = chatOpen[ref];
+    return `<div class="ib-row ${t.unread?'unread':''}">
+      <div class="ib-main" onclick="${open?`closeChat('${ref}')`:`openChat('${ref}')`}">
+        <div class="ib-top">
+          <span class="ib-name">${esc(t.patient_name||"Potilas")}</span>
+          ${t.unread?`<span class="ib-badge">${t.unread}</span>`:""}
+          <span class="ib-time">${new Date(t.last_at).toLocaleString("fi-FI",{day:"numeric",month:"numeric",hour:"2-digit",minute:"2-digit"})}</span>
+        </div>
+        <div class="ib-prev">${esc((t.last_body||"").slice(0,90))}${(t.last_body||"").length>90?"…":""}</div>
+      </div>
+      ${open?chatPanel(ref):""}
+    </div>`;
+  }).join("");
+}
+
+function chatPanel(ref){
+  const msgs = chatCache[ref];
+  const d = planDrafts[ref] || {};
+  const rows = (msgs||[]).map(m=>`
+    <div class="smsg ${m.sender_role==='doctor'?'me':'them'}">
+      <div class="smsg-b">${esc(m.body)}</div>
+      <div class="smsg-t">${m.sender_role==='doctor'?esc(m.sender_name||'Sinä'):'Potilas'} ·
+        ${new Date(m.created_at).toLocaleString('fi-FI',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+    </div>`).join("") || `<div class="smsg-empty">Ei viestejä.</div>`;
+  return `<div class="cp-box" style="margin-top:8px">
+    <div class="schat">${rows}</div>
+    <div class="cp-plan">
+      <textarea placeholder="Vastaa potilaalle. Kliininen kirjaus tehdään potilastietojärjestelmään."
+        oninput="onPlanInput('${ref}','msg',this.value)">${esc(d.msg||"")}</textarea>
+      <button class="btn btn-gold btn-sm" style="margin-top:8px" onclick="sendStaffMsg('${ref}')">Lähetä</button>
+    </div>
+  </div>`;
+}
+
 function chatHtml(e){
   if(!e._profile) return "";
   const msgs = chatCache[e.id];
@@ -579,6 +653,7 @@ window.openChat = async function(entryId){
   if(error){ toast("Viestien haku epäonnistui."); console.error(error); return; }
   chatCache[entryId] = data || [];
   renderAllLists();
+  loadInbox();   // lukumerkit ajan tasalle
 };
 window.closeChat = function(entryId){ chatOpen[entryId]=false; renderAllLists(); };
 window.sendStaffMsg = async function(entryId){
@@ -589,9 +664,10 @@ window.sendStaffMsg = async function(entryId){
   if(error){ toast("Lähetys epäonnistui: "+error.message); return; }
   delete planDrafts[entryId].msg;
   await openChat(entryId);
+  await loadInbox();
   toast("Viesti lähetetty.");
 };
-function renderAllLists(){ renderQueue(); renderGrantCards(); }
+function renderAllLists(){ renderQueue(); renderGrantCards(); renderInbox(); }
 
 window.toggleTask = function(entryId, taskId, included){
   planDrafts[entryId] = planDrafts[entryId] || {};

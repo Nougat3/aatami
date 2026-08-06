@@ -99,6 +99,11 @@ Potilas kirjoittaa suoraan tauluun (RLS: oma rivi), lääkäri RPC:iden
 kautta (`staff_get_care_messages`, `staff_send_care_message`), jotka
 käyttävät samaa `staff_resolve_patient`-tarkistusta kuin muutkin.
 
+Lääkärillä on **postilaatikko** (`staff_list_message_threads`): kaikki
+potilaat joihin hänellä on oikeus ja joilla on viestejä, lukemattomat
+korostettuna. Ilman sitä potilaan viesti jäisi huomaamatta, ellei lääkäri
+satu avaamaan juuri sen potilaan korttia.
+
 **Chat ei ole päivystyskanava eikä potilasasiakirja.** Mikään ei hälytä
 lääkäriä yöllä, joten käyttöliittymä sanoo sen suoraan ja ohjaa 112:een.
 Kliininen kirjaus tehdään edelleen potilastietojärjestelmässä.
