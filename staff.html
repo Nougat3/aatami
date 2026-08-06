@@ -140,6 +140,13 @@ header.top .row{display:flex;align-items:center;justify-content:space-between;ga
   border-radius:9px;color:var(--stone);padding:10px 12px;font-size:15px;font-family:var(--font-label);
   letter-spacing:.14em;text-transform:uppercase}
 .code-claim-row input:focus{outline:none;border-color:var(--brass)}
+.schat{display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;margin-bottom:10px}
+.smsg{max-width:88%;border-radius:12px;padding:9px 12px;font-size:13px;line-height:1.5}
+.smsg.me{align-self:flex-end;background:rgba(201,163,92,.18);border:1px solid rgba(201,163,92,.3)}
+.smsg.them{align-self:flex-start;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)}
+.smsg-b{white-space:pre-wrap;word-break:break-word}
+.smsg-t{font-size:10.5px;color:var(--muted-d);margin-top:4px}
+.smsg-empty{font-size:12.5px;color:var(--muted-d);padding:10px 0}
 .cp-note{font-size:11.5px;line-height:1.55;color:var(--muted-d);background:rgba(255,255,255,.04);
   border-left:2px solid var(--brass);padding:8px 10px;border-radius:0 8px 8px 0;margin-bottom:10px}
 .cp-tpl{font-size:12.5px;color:var(--muted-d);margin-bottom:8px}
@@ -391,6 +398,7 @@ function renderGrantCards(){
         <span class="q-status-chip arrived">Koodilla</span></div>
       ${profileHtml(g.profile)}
       ${carePathHtml({id:"g:"+g.grant_id, _profile:g.profile})}
+      ${chatHtml({id:"g:"+g.grant_id, _profile:g.profile})}
     </div>`).join("");
 }
 
@@ -533,6 +541,58 @@ async function reloadAfterChange(entryId){
   else await loadQueue();
 }
 
+/* Viestit. Haetaan vasta kun lääkäri avaa ketjun — ei joka renderöinnillä. */
+const chatCache = {};   // entryId -> viestit
+const chatOpen  = {};   // entryId -> auki?
+
+function chatHtml(e){
+  if(!e._profile) return "";
+  const msgs = chatCache[e.id];
+  const open = chatOpen[e.id];
+  if(!open){
+    return `<button class="btn btn-line btn-sm" style="margin-top:10px"
+      onclick="openChat('${e.id}')">Näytä viestit${msgs?` (${msgs.length})`:""}</button>`;
+  }
+  const d = planDrafts[e.id] || {};
+  const rows = (msgs||[]).map(m=>`
+    <div class="smsg ${m.sender_role==='doctor'?'me':'them'}">
+      <div class="smsg-b">${esc(m.body)}</div>
+      <div class="smsg-t">${m.sender_role==='doctor'?esc(m.sender_name||'Sinä'):'Potilas'} ·
+        ${new Date(m.created_at).toLocaleString('fi-FI',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+    </div>`).join("") || `<div class="smsg-empty">Ei viestejä.</div>`;
+  return `<div class="cp-box">
+    <div class="cp-head"><span class="cp-title">Viestit</span>
+      <button class="btn btn-line btn-sm" onclick="closeChat('${e.id}')">Piilota</button></div>
+    <div class="schat">${rows}</div>
+    <div class="cp-plan">
+      <textarea placeholder="Vastaa potilaalle. Kliininen kirjaus tehdään potilastietojärjestelmään."
+        oninput="onPlanInput('${e.id}','msg',this.value)">${esc(d.msg||"")}</textarea>
+      <button class="btn btn-gold btn-sm" style="margin-top:8px"
+        onclick="sendStaffMsg('${e.id}')">Lähetä</button>
+    </div>
+  </div>`;
+}
+
+window.openChat = async function(entryId){
+  chatOpen[entryId] = true;
+  const {data,error} = await sb.rpc("staff_get_care_messages", accessRef(entryId));
+  if(error){ toast("Viestien haku epäonnistui."); console.error(error); return; }
+  chatCache[entryId] = data || [];
+  renderAllLists();
+};
+window.closeChat = function(entryId){ chatOpen[entryId]=false; renderAllLists(); };
+window.sendStaffMsg = async function(entryId){
+  const d = planDrafts[entryId] || {};
+  const body = (d.msg||"").trim();
+  if(!body){ toast("Kirjoita viesti."); return; }
+  const {error} = await sb.rpc("staff_send_care_message", {p_body: body, ...accessRef(entryId)});
+  if(error){ toast("Lähetys epäonnistui: "+error.message); return; }
+  delete planDrafts[entryId].msg;
+  await openChat(entryId);
+  toast("Viesti lähetetty.");
+};
+function renderAllLists(){ renderQueue(); renderGrantCards(); }
+
 window.toggleTask = function(entryId, taskId, included){
   planDrafts[entryId] = planDrafts[entryId] || {};
   planDrafts[entryId].excluded = planDrafts[entryId].excluded || {};
@@ -590,6 +650,7 @@ function cardHtml(e){
     </div>
     ${profileHtml(e._profile)}
     ${carePathHtml(e)}
+    ${chatHtml(e)}
     <div class="q-actions">
       ${actionButtons(e)}
     </div>

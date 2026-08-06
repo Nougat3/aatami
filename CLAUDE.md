@@ -93,8 +93,23 @@ hänellä on oikea aika. Nämä on korvattu oikealla datalla tai rehellisellä
 tyhjällä tilalla. **Älä lisää demodataa käyttöliittymään** — käytä tyhjää
 tilaa tai oikeaa dataa.
 
-Aatamissa ei ole viestintäjärjestelmää eikä ajanvarausta (ne ovat
-Vastaanotto.fi:ssä), ja käyttöliittymä sanoo sen suoraan.
+**Viestit (`care_messages`)** on nyt olemassa: potilas ja lääkäri
+keskustelevat samassa ketjussa, potilaalle realtime-päivityksellä.
+Potilas kirjoittaa suoraan tauluun (RLS: oma rivi), lääkäri RPC:iden
+kautta (`staff_get_care_messages`, `staff_send_care_message`), jotka
+käyttävät samaa `staff_resolve_patient`-tarkistusta kuin muutkin.
+
+**Chat ei ole päivystyskanava eikä potilasasiakirja.** Mikään ei hälytä
+lääkäriä yöllä, joten käyttöliittymä sanoo sen suoraan ja ohjaa 112:een.
+Kliininen kirjaus tehdään edelleen potilastietojärjestelmässä.
+
+Ajanvarausta Aatamissa ei ole (se on Vastaanotto.fi:ssä).
+
+**HUOM koodin rakenne:** `app.html`:ssä on tasan yksi `<style>`- ja yksi
+`<script>`-lohko. Kun lisäät JS:ää skriptillä, varmista että ankkuri on
+`<script>`-lohkon puolella — JS on kerran vahingossa päätynyt
+`<style>`-lohkoon, jolloin se ei suoriudu lainkaan eikä mikään ilmoita
+virheestä.
 
 **Vaihe 5:n muistutukset puuttuvat:** tehtävillä on eräpäivät ja
 myöhässä-merkintä, mutta mikään ei muistuta potilasta (ei push-ilmoituksia
