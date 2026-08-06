@@ -134,6 +134,14 @@ reaaliaikainen jonotus **säilyvät koodissa** ja otetaan käyttöön myöhemmin
 Samoin App Store-/Google Play -painikkeet: sovellus on PWA, eikä
 kauppalistauksia ole.
 
+**Nettisivu myy alussa vain hoitopolkuja.** Navigaatiossa aktiivisia ovat
+`Hoitopolut`, `Etävastaanotot` ja `Aatami`. Palvelut, Toimipisteet ja
+Verkkokauppa näkyvät `.nav-soon`-tyylillä ("Tulossa") mutta eivät ole
+klikattavia — sivut ja koodi jäävät paikalleen myöhempää käyttöönottoa
+varten, ja niihin pääsee yhä suoralla hash-osoitteella. Ostoskorin nappi
+on poistettu navigaatiosta (kauppa ei ole käytössä); `openCart`-koodi jää,
+mutta kytkentä on null-suojattu.
+
 **Hinnoittelu:** hoitopolku ja seuranta ovat maksuttomia. Raha tulee
 etävastaanotoista Vastaanotto.fi:n kautta. Hoitopolulle ei siis rakenneta
 ostoa. Omahoito on erikseen maksullinen (moduulihinnat).

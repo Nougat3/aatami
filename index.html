@@ -75,6 +75,16 @@ img,svg{display:block}
 .brand:hover{color:var(--brass-soft)}
 .nav-links{display:flex;gap:36px;list-style:none}
 .nav-links a{position:relative;font-size:13.5px;color:var(--muted-d);padding:6px 0;transition:color .22s}
+.nav-soon{position:relative;font-size:13.5px;color:rgba(239,233,223,.28);padding:6px 0;
+  cursor:default;user-select:none;display:inline-flex;align-items:center;gap:7px}
+.nav-soon i{font-style:normal;font-family:var(--font-label);font-size:8.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--brass);border:1px solid rgba(201,163,92,.35);
+  border-radius:20px;padding:2px 6px;line-height:1}
+.mobile-menu .nav-soon{display:flex;padding:14px 0;font-size:16px}
+/* Kapeilla näytöillä tulossa-merkit veisivät tilan oikeilta linkeiltä ja
+   työntäisivät pääkehotuksen ulos ruudulta. */
+@media(max-width:1340px){ .nav-links .nav-soon i{display:none} }
+@media(max-width:1120px){ .nav-links .nav-soon{display:none} }
 .nav-links a::after{
   content:"";position:absolute;left:0;bottom:0;width:100%;height:1px;background:var(--brass);
   transform:scaleX(0);transform-origin:left;transition:transform .3s var(--ease-out);
@@ -1426,16 +1436,12 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
     <ul class="nav-links">
       <li><a href="#hoitopolut">Hoitopolut</a></li>
       <li><a href="#etavastaanotot">Etävastaanotot</a></li>
-      <li><a href="#palvelut">Palvelut</a></li>
-      <li><a href="#toimipisteet">Toimipisteet</a></li>
       <li><a href="#tietoa">Aatami</a></li>
-      <li><a href="#verkkokauppa">Verkkokauppa</a></li>
+      <li><span class="nav-soon" aria-disabled="true">Palvelut<i>Tulossa</i></span></li>
+      <li><span class="nav-soon" aria-disabled="true">Toimipisteet<i>Tulossa</i></span></li>
+      <li><span class="nav-soon" aria-disabled="true">Verkkokauppa<i>Tulossa</i></span></li>
     </ul>
     <div class="nav-right">
-      <button type="button" class="nav-cart" id="navCart" aria-label="Ostoskori">
-        <svg viewBox="0 0 24 24"><path d="M5 7h14l-1.4 10.5a2 2 0 0 1-2 1.7H8.4a2 2 0 0 1-2-1.7L5 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
-        <span class="nav-cart-count" id="navCartCount" hidden>0</span>
-      </button>
       <a href="./app.html" class="btn btn-line btn-sm nav-desktop-only" id="navLoginLink">Kirjaudu</a>
       <a href="#hoitopolut" class="btn btn-gold btn-sm nav-desktop-only">Aloita hoitopolku</a>
       <button type="button" class="hamburger nav-mobile-only" id="hamburgerBtn" aria-label="Avaa valikko" aria-expanded="false" aria-controls="mobileMenu">
@@ -1446,10 +1452,10 @@ footer{background:var(--black);padding:0;border-top:1px solid var(--brass-dim);p
   <div class="mobile-menu" id="mobileMenu">
     <a href="#hoitopolut">Hoitopolut</a>
     <a href="#etavastaanotot">Etävastaanotot</a>
-    <a href="#palvelut">Palvelut</a>
-    <a href="#toimipisteet">Toimipisteet</a>
     <a href="#tietoa">Aatami</a>
-    <a href="#verkkokauppa">Verkkokauppa</a>
+    <span class="nav-soon" aria-disabled="true">Palvelut<i>Tulossa</i></span>
+    <span class="nav-soon" aria-disabled="true">Toimipisteet<i>Tulossa</i></span>
+    <span class="nav-soon" aria-disabled="true">Verkkokauppa<i>Tulossa</i></span>
     <a href="./app.html" id="navLoginLinkMobile">Kirjaudu</a>
     <a href="#hoitopolut" class="btn btn-gold">Aloita hoitopolku <span class="arr">→</span></a>
   </div>
@@ -4622,7 +4628,9 @@ async function submitOrder(){
   toast(`Kiitos! Tilaus #${data[0].order_number} vastaanotettu.`);
 }
 
-$("navCart").addEventListener("click", openCart);
+// Ostoskorin nappi on poistettu navigaatiosta kauppaa inaktivoitaessa;
+// koodi jää paikalleen myöhempää käyttöönottoa varten.
+{ const cb=$("navCart"); if(cb) cb.addEventListener("click", openCart); }
 $("cartClose").addEventListener("click", closeCart);
 $("cartBackdrop").addEventListener("click", closeCart);
 document.addEventListener("keydown", e=>{ if(e.key==="Escape" && $("cartOverlay").classList.contains("open")) closeCart(); });
