@@ -347,6 +347,29 @@ a{color:inherit;text-decoration:none}
 .qa-q{font-size:12px;color:var(--muted);line-height:1.45}
 .qa-a{font-size:14px;font-weight:600;margin-top:3px}
 .kh-note{font-size:11.5px;line-height:1.6;color:var(--muted);padding:12px 0 2px}
+/* Plus-valinta ja kyselylomake */
+.plus-opt{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:16px;
+  padding:14px 16px;display:flex;align-items:center;gap:13px;cursor:pointer;text-align:left;
+  font-family:inherit;color:var(--ink);margin-bottom:10px}
+.po-ico{width:38px;height:38px;border-radius:11px;flex:none;background:var(--green-100);
+  color:var(--green);display:flex;align-items:center;justify-content:center}
+.po-ico svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.9}
+.po-mid{flex:1;min-width:0}
+.po-mid b{display:block;font-size:14px;font-weight:600}
+.po-mid i{display:block;font-style:normal;font-size:12px;color:var(--muted);margin-top:2px}
+.po-arrow{width:16px;height:16px;flex:none;stroke:var(--muted);fill:none;stroke-width:2.2}
+.modal-tall{max-height:86vh;overflow-y:auto}
+.sv-intro{font-size:12.5px;line-height:1.6;color:var(--ink-soft);margin-bottom:16px}
+.sv-item{padding:14px 0;border-bottom:1px solid var(--line)}
+.sv-q{font-size:13.5px;line-height:1.5;font-weight:600;margin-bottom:9px}
+.sv-opts{display:flex;flex-direction:column;gap:6px}
+.sv-opt{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:11px;
+  border:1px solid var(--line);background:var(--bg);cursor:pointer;font-family:inherit;
+  font-size:13px;color:var(--ink);text-align:left}
+.sv-opt.on{border-color:var(--green);background:var(--green-100);font-weight:600}
+.sv-score{display:flex;align-items:baseline;gap:8px;margin:16px 0 4px}
+.sv-score b{font-family:var(--fd);font-size:28px;font-weight:600}
+.sv-score span{font-size:12.5px;color:var(--muted)}
 .kh-empty{font-size:13px;color:var(--muted);padding:18px 0}
 
 /* ═══════ CHAT ═══════ */
@@ -839,7 +862,7 @@ a{color:inherit;text-decoration:none}
 <nav class="botnav" id="botNav">
   <button class="bn on" data-view="etusivu"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>Etusivu</button>
   <button class="bn" data-view="kehitys"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Kehitys</button>
-  <button class="bn bn-add" onclick="openAdd()" aria-label="Lisää mittaus"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button class="bn bn-add" onclick="openPlus()" aria-label="Lisää"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
   <button class="bn" data-view="viestit"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8A8.5 8.5 0 0 1 12.5 3h.5a8.5 8.5 0 0 1 8 8v.5z"/></svg>Chat</button>
   <button class="bn" data-view="mina"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>Minä</button>
 </nav>
@@ -857,11 +880,36 @@ a{color:inherit;text-decoration:none}
   </div>
 </div>
 
+<!-- ═══ PLUS-VALINTA ═══ -->
+<div class="modal-bg" id="plusBg">
+  <div class="modal">
+    <h3>Mitä haluat lisätä?</h3>
+    <button class="plus-opt" onclick="closePlus();openAdd()">
+      <span class="po-ico"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 3 4-6"/></svg></span>
+      <span class="po-mid"><b>Lisää mittaus</b><i>Verenpaine, paino, uni, verensokeri…</i></span>
+      <svg class="po-arrow" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
+    <button class="plus-opt" onclick="closePlus();openSurvey('phq9')">
+      <span class="po-ico"><svg viewBox="0 0 24 24"><path d="M9 3h6a1 1 0 0 1 1 1v1h2v16H6V5h2V4a1 1 0 0 1 1-1z"/><path d="M9 11l1.5 1.5L13 10M9 16l1.5 1.5L13 15"/></svg></span>
+      <span class="po-mid"><b>Täytä kysely</b><i>Mielialakysely (PHQ-9)</i></span>
+      <svg class="po-arrow" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
+    <button class="modal-x" onclick="closePlus()">Peruuta</button>
+  </div>
+</div>
+
+<!-- ═══ KYSELYLOMAKE ═══ -->
+<div class="modal-bg" id="surveyBg">
+  <div class="modal modal-tall">
+    <h3 id="surveyTitle">Kysely</h3>
+    <div id="surveyBody"></div>
+    <button class="modal-x" onclick="closeSurvey()">Peruuta</button>
+  </div>
+</div>
+
 <!-- ═══ ADD MEASUREMENT MODAL ═══ -->
 <div class="modal-bg" id="addModal">
   <div class="modal">
     <h3>Lisää uusi mittaus</h3>
-    <div class="field"><label>Tyyppi</label><select id="addType"><option>Verenpaine</option><option>Paino</option><option>Uni</option><option>Syke</option></select></div>
+    <div class="field"><label>Tyyppi</label><select id="addType"><option>Verenpaine</option><option>Paino</option><option>Uni</option><option>Verensokeri</option><option>Mieliala</option><option>Syke</option></select></div>
     <div class="field"><label>Arvo</label><input id="addVal" placeholder="esim. 128/82"></div>
     <button class="btn-gold full" onclick="saveAdd()">Tallenna mittaus</button>
     <button class="modal-x" onclick="closeAdd()">Peruuta</button>
@@ -884,7 +932,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 
 /* Potilaan oma data (ladataan Supabasesta kirjautumisen jälkeen).
    omahoito = { purchased, purchased_at, price_paid_eur, goals:[{module,target}], modules:{slug:{week,tasks_done,completed}} } */
-const ME = { userId:null, email:"", name:"", firstName:"", initials:"", meds:[], measurements:[], careState:{}, labs:[], omahoitoModules:[], omahoito:{}, pathTemplates:[], grants:[] };
+const ME = { userId:null, email:"", name:"", firstName:"", initials:"", meds:[], measurements:[], careState:{}, labs:[], omahoitoModules:[], omahoito:{}, pathTemplates:[], grants:[], surveys:[] };
 /* Moduulikohtaiset ikonit (omahoito_modules.slug → svg). Lisää tähän kun uusia moduuleita julkaistaan. */
 const MODULE_ICON = {
   "verenpaine":'<path d="M20.8 8.6a5 5 0 0 0-8.1-1.5L12 7.8l-.7-.7a5 5 0 1 0-7.1 7.1l7.1 7 .7.7.7-.7 7.1-7a5 5 0 0 0 1-5.6z"/><path d="M3 12h4l2-3 3 6 2-3h4"/>',
@@ -921,9 +969,9 @@ function measurementProgress(tpl){
 }
 
 /* Mittaukset ja labrat rakennetaan potilaan omasta datasta (ME) — ks. build*(). */
-const MEAS_TYPES = ["Verenpaine","Paino","Uni","Mieliala","Syke"];
-const MEAS_UNIT = {Verenpaine:"mmHg", Paino:"kg", Uni:"", Mieliala:"/10", Syke:"bpm"};
-const MEAS_COLOR = {Verenpaine:"var(--ok)", Paino:"var(--blue)", Uni:"var(--violet)", Mieliala:"var(--gold)", Syke:"var(--ok)"};
+const MEAS_TYPES = ["Verenpaine","Paino","Uni","Verensokeri","Mieliala","Syke"];
+const MEAS_UNIT = {Verenpaine:"mmHg", Paino:"kg", Uni:"", Verensokeri:"mmol/l", Mieliala:"/10", Syke:"bpm"};
+const MEAS_COLOR = {Verenpaine:"var(--ok)", Paino:"var(--blue)", Uni:"var(--violet)", Verensokeri:"var(--orange)", Mieliala:"var(--gold)", Syke:"var(--ok)"};
 const MEAS_KIND = {Uni:"bar"}; // muut viivakaavioita
 let MEAS = {};
 let LABS = { viim:[], kaikki:[] };
@@ -1651,7 +1699,7 @@ function renderKehitys(){
   const goalMetrics=goals().map(g=>g.metric || cap(g.module)).filter(Boolean);
   const measured=[...new Set((ME.measurements||[]).map(m=>m.type).filter(Boolean))];
   const metrics=[...new Set([...goalMetrics, ...measured])];
-  if(!metrics.length) metrics.push('Verenpaine','Paino','Uni');
+  if(!metrics.length) metrics.push('Verenpaine','Paino','Uni','Verensokeri','Mieliala');
 
   /* ── Mittaukset: oikeaa aikasarjaa, joten graafi on mielekäs ── */
   const measRows = metrics.map(m=>{
@@ -1702,6 +1750,32 @@ function renderKehitys(){
     const a=st[slug]&&st[slug].answers;
     return a && Object.keys(a).length && pathTemplate(slug);
   });
+  /* Pisteytetyt, toistuvat kyselyt (PHQ-9) — näistä syntyy oikea aikasarja. */
+  const bySlug={};
+  (ME.surveys||[]).forEach(r=>{ (bySlug[r.slug]=bySlug[r.slug]||[]).push(r); });
+  const scoredRows = Object.keys(bySlug).map(slug=>{
+    const key='s:'+slug, open=!!KH_OPEN[key];
+    const rows=bySlug[slug];
+    const last=rows[rows.length-1];
+    const nums=rows.map(r=>r.score);
+    const diff = nums.length>1 ? nums[nums.length-1]-nums[0] : null;
+    const nimi = slug==='phq9' ? 'Mielialakysely (PHQ-9)' : slug;
+    const col=getComputedStyle(document.documentElement).getPropertyValue('--violet').trim()||'#806fce';
+    const head=`<button class="kh-row ${open?'open':''}" onclick="toggleKh('${esc(key)}')">
+      <span class="khr-name">${esc(nimi)}<span class="khr-sub">${rows.length} täyttökerta${
+        rows.length===1?'':'a'} · viimeisin ${esc(new Date(last.created_at).toLocaleDateString('fi-FI'))}</span></span>
+      <span class="khr-val">${last.score}</span>
+      ${diff!==null?`<span class="khr-diff ${diff<=0?'':'up'}">${diff>0?'+':''}${diff}</span>`:''}
+      ${arrow}</button>`;
+    if(!open) return head;
+    return head+`<div class="kh-panel">
+      <div class="kh-chart">${lineChart(nums,col,110)}</div>
+      <div class="chart-x">${rows.filter((_,i)=>i%Math.ceil(rows.length/4)===0)
+        .map(r=>`<span>${esc(new Date(r.created_at).toLocaleDateString('fi-FI'))}</span>`).join('')}</div>
+      <div class="kh-note">Pistemäärä on seurantaa varten, ei diagnoosi. Tulkinnan tekee
+      lääkäri vastaanotolla.</div></div>`;
+  }).join('');
+
   const surveyRows = surveys.map(slug=>{
     const key='q:'+slug, open=!!KH_OPEN[key];
     const tpl=pathTemplate(slug), a=st[slug].answers||{};
@@ -1725,9 +1799,9 @@ function renderKehitys(){
   el.innerHTML =
     `<div class="kh-group"><div class="kh-glabel">Mittaukset</div>${measRows}</div>` +
     `<div class="kh-group"><div class="kh-glabel">Kyselyt</div>${
-      surveyRows || `<div class="kh-row" style="cursor:default"><span class="khr-name">
-        Ei täytettyjä kyselyitä<span class="khr-sub">Terveyskysely täytetään hoitopolun alussa</span>
-        </span></div>`}</div>`;
+      (scoredRows + surveyRows) || `<button class="kh-row" onclick="openSurvey('phq9')">
+        <span class="khr-name">Ei täytettyjä kyselyitä<span class="khr-sub">
+        Täytä mielialakysely plus-painikkeesta</span></span>${arrow}</button>`}</div>`;
 }
 
 /* ═══ TAVOITTEET (omahoitosuunnitelma) ═══
@@ -2019,6 +2093,93 @@ async function saveAdd(){
   else toast(`${t} tallennettu: ${v}`);
 }
 window.openAdd=openAdd; window.closeAdd=closeAdd; window.saveAdd=saveAdd;
+
+/* ═══ PLUS-VALINTA ═══ */
+window.openPlus=function(){ $('#plusBg').classList.add('open'); document.body.style.overflow='hidden'; };
+window.closePlus=function(){ $('#plusBg').classList.remove('open'); document.body.style.overflow=''; };
+$('#plusBg').addEventListener('click',e=>{ if(e.target.id==='plusBg') closePlus(); });
+
+/* ═══ KYSELY (PHQ-9 ym.) ═══
+   Sisältö tulee survey_templates-taulusta, ei koodista — lääkäri muokkaa
+   kysymyksiä ilman koodimuutosta. Vastaukset tallentuvat survey_responses-
+   tauluun, yksi rivi per täyttökerta, jotta Kehitys voi piirtää käyrän.
+
+   Kriisiohje johdetaan vastauksesta (crisis_item > 0), EI mallista eikä
+   pistesummasta — sama periaate kuin chatin sanastossa. */
+let SURVEY=null, SV_ANSWERS={};
+const SV_OPTS=[{label:'Ei lainkaan',value:0},{label:'Useana päivänä',value:1},
+  {label:'Suurimpana osana päiviä',value:2},{label:'Lähes joka päivä',value:3}];
+
+window.openSurvey=async function(slug){
+  const {data,error}=await sb.from('survey_templates').select('*').eq('slug',slug).maybeSingle();
+  if(error||!data){ toast('Kyselyä ei löytynyt.'); return; }
+  SURVEY=data; SV_ANSWERS={};
+  $('#surveyTitle').textContent=data.name;
+  $('#surveyBg').classList.add('open'); document.body.style.overflow='hidden';
+  renderSurvey();
+};
+window.closeSurvey=function(){
+  $('#surveyBg').classList.remove('open'); document.body.style.overflow='';
+  SURVEY=null; SV_ANSWERS={};
+};
+$('#surveyBg').addEventListener('click',e=>{ if(e.target.id==='surveyBg') closeSurvey(); });
+
+window.svPick=function(id,val){ SV_ANSWERS[id]=val; renderSurvey(); };
+
+function svScore(){ return Object.values(SV_ANSWERS).reduce((a,b)=>a+b,0); }
+function svCrisis(){
+  const ci=SURVEY&&SURVEY.crisis_item;
+  return !!(ci && (SV_ANSWERS[ci]||0)>0);
+}
+
+function renderSurvey(){
+  const el=$('#surveyBody'); if(!el||!SURVEY) return;
+  const items=SURVEY.items||[];
+  const done=items.filter(q=>SV_ANSWERS[q.id]!=null).length;
+  const all=done===items.length;
+  el.innerHTML=`
+    ${SURVEY.intro?`<div class="sv-intro">${esc(SURVEY.intro)}</div>`:''}
+    ${svCrisis()?`<div class="chat-alert" style="margin-bottom:14px">
+      <h4><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/>
+        <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        Ota yhteyttä nyt</h4>
+      <p>${esc(SURVEY.crisis_note||'')}</p>
+      <div class="ca-btns"><a href="tel:112">Soita 112</a>
+        <a class="sec" href="tel:0925250111">Kriisipuhelin 09 2525 0111</a></div></div>`:''}
+    ${items.map(q=>`<div class="sv-item">
+      <div class="sv-q">${esc(q.label)}</div>
+      <div class="sv-opts">${SV_OPTS.map(o=>`
+        <button class="sv-opt ${SV_ANSWERS[q.id]===o.value?'on':''}"
+          onclick="svPick('${esc(q.id)}',${o.value})">${esc(o.label)}</button>`).join('')}</div>
+    </div>`).join('')}
+    <div class="sv-score"><b>${svScore()}</b><span>/ ${SURVEY.max_score||''} pistettä ·
+      ${done}/${items.length} vastattu</span></div>
+    <button class="btn-gold full" ${all?'':'disabled style="opacity:.45"'}
+      onclick="${all?'saveSurvey()':''}">${all?'Tallenna kysely':'Vastaa kaikkiin kysymyksiin'}</button>`;
+}
+
+window.saveSurvey=async function(){
+  if(!SURVEY) return;
+  const flag = svCrisis() ? 'crisis' : null;
+  const {error}=await sb.from('survey_responses').insert({
+    patient_user_id:ME.userId, slug:SURVEY.slug, answers:SV_ANSWERS,
+    score:svScore(), flag });
+  if(error){ toast('Tallennus epäonnistui.'); console.error(error); return; }
+  const wasCrisis=svCrisis();
+  await loadSurveys();
+  closeSurvey();
+  renderAll();
+  go('kehitys');
+  toast(wasCrisis ? 'Tallennettu — muista ottaa yhteyttä.' : 'Kysely tallennettu.');
+};
+
+async function loadSurveys(){
+  if(!ME.userId){ ME.surveys=[]; return; }
+  const {data,error}=await sb.from('survey_responses')
+    .select('slug, answers, score, flag, created_at').order('created_at');
+  if(error){ console.error('surveys load failed',error); ME.surveys=[]; return; }
+  ME.surveys=data||[];
+}
 $('#addModal').addEventListener('click',e=>{ if(e.target.id==='addModal') closeAdd(); });
 
 let toastT;
@@ -2158,7 +2319,7 @@ async function loadPatient(){
 async function enterApp(){
   const ok = await loadPatient();
   if(!ok){ showGate(true); return; }
-  loadChat();
+  loadChat(); loadSurveys().then(renderKehitys);
   showGate(false);
   renderAll();
   go('etusivu');
