@@ -1684,7 +1684,10 @@ function numOf(v){
   return m ? parseFloat(m[0].replace(',','.')) : null;
 }
 function latestFor(metric){
-  const arr=(ME.measurements||[]).filter(x=>x.type===metric);
+  // Järjestetään ts:n mukaan, ei taulukon järjestyksen: suoraan kantaan syötetty
+  // rivi voi olla väärässä kohdassa, jolloin "viimeisin" olisi väärä arvo.
+  const arr=(ME.measurements||[]).filter(x=>x.type===metric)
+    .sort((a,b)=>(a.ts||0)-(b.ts||0));
   return arr.length ? arr[arr.length-1].value : null;
 }
 /* Palauttaa {current, pct, reached} — pct = matka alusta tavoitteeseen. */

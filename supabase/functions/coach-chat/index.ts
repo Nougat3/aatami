@@ -156,7 +156,10 @@ Deno.serve(async (req: Request) => {
     .eq("patient_user_id", uid).order("created_at", { ascending: false }).limit(HISTORY_LIMIT);
   const prior = (history || []).reverse();
 
-  const measurements = ((profile?.measurements as any[]) || []).slice(-30);
+  // Järjestetään ts:n mukaan ennen leikkausta, jotta mallille menevä "viimeisin"
+  // on sama kuin sovelluksen näyttämä.
+  const measurements = ((profile?.measurements as any[]) || [])
+    .slice().sort((a, b) => (a.ts || 0) - (b.ts || 0)).slice(-30);
   const omahoito = (profile?.omahoito as any) || {};
   // Mallille vain mittaukset ja tavoitteet — ei nimeä, sähköpostia eikä lääkelistaa.
   const context = {
