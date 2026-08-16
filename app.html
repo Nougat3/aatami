@@ -2103,9 +2103,9 @@ function closeAdd(){ $('#addModal').classList.remove('open'); document.body.styl
 const MEAS_FORM = {
   Verenpaine:{ pair:true, a:{label:'Yläpaine (systolinen)', ph:'120', min:60, max:300},
                           b:{label:'Alapaine (diastolinen)', ph:'80', min:30, max:200}, unit:'mmHg' },
-  Paino:      { label:'Paino', ph:'85',  unit:'kg',     min:20, max:400, step:'0.1' },
-  Verensokeri:{ label:'Verensokeri', ph:'6.7', unit:'mmol/l', min:1, max:40, step:'0.1' },
-  Uni:        { label:'Unen pituus', ph:'7.5', unit:'h', min:0, max:24, step:'0.5' },
+  Paino:      { label:'Paino', ph:'85,5',  unit:'kg',     min:20, max:400 },
+  Verensokeri:{ label:'Verensokeri', ph:'6,7', unit:'mmol/l', min:1, max:40 },
+  Uni:        { label:'Unen pituus', ph:'7,5', unit:'h', min:0, max:24 },
   Mieliala:   { label:'Mieliala', ph:'7', unit:'/ 10', min:1, max:10, step:'1' },
   Syke:       { label:'Syke', ph:'62', unit:'bpm', min:20, max:250, step:'1' },
 };
@@ -2115,9 +2115,12 @@ function renderAddFields(){
   const t=$('#addType').value, f=MEAS_FORM[t];
   if(!f){ el.innerHTML=`<div class="field"><label>Arvo</label>
     <input id="addVal" placeholder="Arvo"></div>`; return; }
+  /* type="text" + inputmode="decimal": numeronäppäimistö mobiilissa, mutta pilkku
+     säilyy. type="number" hylkää pilkun ja palauttaa tyhjän — suomalainen
+     kirjoittaa "85,5", jolloin arvo katosi kokonaan. */
   const num=(id,c)=>`<div class="field"><label for="${id}">${esc(c.label)}</label>
-    <div class="in-unit"><input id="${id}" type="number" inputmode="decimal"
-      placeholder="${esc(c.ph)}" step="${c.step||'1'}"><span>${esc(f.unit)}</span></div></div>`;
+    <div class="in-unit"><input id="${id}" type="text" inputmode="decimal"
+      autocomplete="off" placeholder="${esc(c.ph)}"><span>${esc(f.unit)}</span></div></div>`;
   el.innerHTML = f.pair
     ? `<div class="bp-row">${num('addA',{...f.a,step:'1'})}${num('addB',{...f.b,step:'1'})}</div>`
     : num('addVal', f);
