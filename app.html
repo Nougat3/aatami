@@ -2124,7 +2124,16 @@ window.closeSurvey=function(){
 };
 $('#surveyBg').addEventListener('click',e=>{ if(e.target.id==='surveyBg') closeSurvey(); });
 
-window.svPick=function(id,val){ SV_ANSWERS[id]=val; renderSurvey(); };
+window.svPick=function(id,val){
+  const ennen=svCrisis();
+  SV_ANSWERS[id]=val; renderSurvey();
+  // Kriisikortti on lomakkeen yläreunassa, mutta kysymys 9 on alimpana — ilman
+  // vieritystä potilas valitsisi vastauksen näkemättä ohjetta lainkaan.
+  if(!ennen && svCrisis()){
+    const a=$('#surveyBody .chat-alert');
+    if(a) a.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+};
 
 function svScore(){ return Object.values(SV_ANSWERS).reduce((a,b)=>a+b,0); }
 function svCrisis(){
