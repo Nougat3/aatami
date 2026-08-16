@@ -110,6 +110,29 @@ Kliininen kirjaus tehdään edelleen potilastietojärjestelmässä.
 
 Ajanvarausta Aatamissa ei ole (se on Vastaanotto.fi:ssä).
 
+### Aatami-valmentaja (AI) — `supabase/functions/coach`
+
+Sovelluksen Valmentaja-näkymä pyytää lyhyen huomion Claudelta (Edge Function
+`coach`, malli `claude-opus-4-8`, rakenteinen JSON: `havainto`, `vinkki`,
+`seuraava_askel`). Periaatteet:
+
+- **Client ei lähetä dataa.** Funktio lukee potilaan mittaukset itse JWT:llä ja
+  RLS:n läpi (`patient_profiles`), joten kukaan ei voi pyytää huomiota toisen
+  potilaan luvuista. Mallille menee vain mittaukset, tavoitteet ja aktiivisen
+  hoitopolun slug — **ei nimeä, sähköpostia eikä lääkelistaa**.
+- **Valmentaja ei ole ammattihenkilö.** Systeemipromptti kieltää diagnoosit,
+  lääkeohjeet ja hoitopäätökset; huolta herättävässä datassa se ohjaa lääkärille
+  ja 112:een. Sama rajaus on näkyvissä käyttöliittymässä. Älä löysennä
+  systeemipromptin rajoja ilman kliinistä harkintaa.
+- **Vastaus välimuistitetaan selaimeen** (`localStorage`, avaimena mittausten
+  määrä + viimeisin mittaus), jotta näkymän avaus ei tee joka kerta maksullista
+  API-kutsua. Uusi haetaan kun data muuttuu tai potilas painaa "Päivitä huomio".
+- **Ilman mittauksia ei kutsuta mallia lainkaan** (`no_data`) — tyhjä tila
+  ohjaa kirjaamaan mittauksen. Ei keksittyä sisältöä.
+
+Vaatii Supabase-salaisuuden `ANTHROPIC_API_KEY`. Ilman sitä funktio palauttaa
+503 `missing_api_key` ja sovellus näyttää "Valmentaja ei ole vielä käytössä".
+
 **HUOM koodin rakenne:** `app.html`:ssä on tasan yksi `<style>`- ja yksi
 `<script>`-lohko. Kun lisäät JS:ää skriptillä, varmista että ankkuri on
 `<script>`-lohkon puolella — JS on kerran vahingossa päätynyt

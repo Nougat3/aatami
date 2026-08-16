@@ -289,6 +289,30 @@ a{color:inherit;text-decoration:none}
 .sg-done svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.6}
 .sg-ring{flex:none;display:flex}
 
+/* ═══════ VALMENTAJA ═══════ */
+.coach-bubble{background:var(--green-100);border-radius:20px 20px 20px 6px;padding:18px 20px;
+  font-size:14.5px;line-height:1.65;color:var(--ink);margin-top:6px}
+.coach-who{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.coach-av{width:28px;height:28px;border-radius:50%;background:var(--green);flex:none;
+  display:flex;align-items:center;justify-content:center}
+.coach-av svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:1.9}
+.coach-who b{font-size:12px;font-weight:600;letter-spacing:.02em}
+.coach-card{background:var(--card);border:1px solid var(--line);border-radius:18px;
+  padding:16px 18px;margin-top:12px}
+.coach-card .cc-lb{font-family:var(--fl);font-size:10.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:7px}
+.coach-card .cc-lb svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+.coach-card p{font-size:14px;line-height:1.6;margin-top:8px}
+.coach-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-top:16px;font-size:11.5px;color:var(--muted)}
+.coach-refresh{background:none;border:1px solid var(--line);border-radius:999px;
+  padding:8px 16px;font-size:12.5px;font-weight:600;color:var(--ink-soft);cursor:pointer;flex:none}
+.coach-note{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:13px 16px;margin-top:14px;font-size:11.5px;line-height:1.6;color:var(--muted)}
+.coach-skel{height:14px;border-radius:7px;background:var(--green-100);margin-bottom:9px;
+  animation:cpulse 1.2s ease-in-out infinite}
+@keyframes cpulse{0%,100%{opacity:.55}50%{opacity:1}}
+
 .ttask{display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line);font-size:14px}
 .ttask:last-child{border-bottom:none}
 .tt-box{width:24px;height:24px;flex:none;border-radius:50%;border:1.8px solid var(--line);
@@ -1571,6 +1595,128 @@ function measInRange(metric){
   return arr;
 }
 window.setRange=function(d){ RANGE=d; renderKehitys(); };
+
+/* ═══ VALMENTAJA (Claude, coach-Edge Function) ═══
+   Huomio luodaan palvelimella potilaan omista mittauksista. Vastaus välimuistitetaan
+   selaimeen, jotta jokainen näkymän avaus ei tee uutta (maksullista) API-kutsua —
+   uusi haetaan vasta kun mittausdata muuttuu tai potilas painaa "Päivitä huomio". */
+let COACH = { state:'idle', data:null, error:null };
+
+/* Muuttuu kun potilaalla on uutta dataa → välimuisti vanhenee itsestään. */
+function coachKey(){
+  const ms = ME.measurements||[];
+  const last = ms.length ? (ms[ms.length-1].ts||ms[ms.length-1].date||'') : '';
+  return `${ms.length}|${last}|${(goals()||[]).length}`;
+}
+function coachCacheId(){ return `aatami-coach-${ME.userId||'anon'}`; }
+function coachCached(){
+  try{
+    const raw = localStorage.getItem(coachCacheId());
+    if(!raw) return null;
+    const c = JSON.parse(raw);
+    return c && c.key===coachKey() ? c.data : null;
+  }catch{ return null; }
+}
+function coachSave(data){
+  try{ localStorage.setItem(coachCacheId(), JSON.stringify({key:coachKey(), data})); }catch{}
+}
+
+async function loadCoach(force){
+  if(COACH.state==='loading') return;
+  if(!force){
+    const c = coachCached();
+    if(c){ COACH={state:'ok', data:c, error:null}; renderCoach(); return; }
+  }
+  COACH={state:'loading', data:COACH.data, error:null}; renderCoach();
+  try{
+    const { data:{ session } } = await sb.auth.getSession();
+    if(!session){ COACH={state:'error', data:null, error:'unauthorized'}; renderCoach(); return; }
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/coach`, {
+      method:'POST',
+      headers:{ Authorization:`Bearer ${session.access_token}`, apikey:SUPABASE_ANON_KEY,
+                'Content-Type':'application/json' },
+      body:'{}',
+    });
+    const body = await res.json().catch(()=>({}));
+    if(!res.ok){ COACH={state:'error', data:null, error:body.error||'coach_unavailable'}; }
+    else { COACH={state:'ok', data:body, error:null}; coachSave(body); }
+  }catch(e){
+    COACH={state:'error', data:null, error:'network'};
+  }
+  renderCoach();
+}
+window.loadCoach = loadCoach;
+
+const COACH_ERRORS = {
+  no_data: ['Ei vielä tarpeeksi dataa',
+    'Valmentaja lukee omia mittauksiasi. Kirjaa ensin muutama mittaus, niin saat huomion omasta kehityksestäsi.'],
+  missing_api_key: ['Valmentaja ei ole vielä käytössä',
+    'Palvelu otetaan käyttöön pian. Sinun ei tarvitse tehdä mitään.'],
+  unauthorized: ['Kirjaudu uudelleen',
+    'Istuntosi on vanhentunut. Kirjaudu sisään uudelleen ja yritä sitten uudestaan.'],
+};
+
+function renderCoach(){
+  const el = $('#coachBody'); if(!el) return;
+  if(COACH.state==='idle'){ loadCoach(false); return; }
+
+  const note = `<div class="coach-note">Valmentaja on omahoidon tuki, ei terveydenhuollon
+    ammattihenkilö. Se ei tee diagnooseja eikä anna lääke- tai hoito-ohjeita — ne saat
+    lääkäriltäsi. Aatamia ei valvota reaaliaikaisesti; hätätilanteessa soita 112.</div>`;
+
+  if(COACH.state==='loading'){
+    el.innerHTML = `<div class="coach-bubble">
+      <div class="coach-who"><span class="coach-av"><svg viewBox="0 0 24 24">
+        <rect x="4" y="8" width="16" height="12" rx="3"/><circle cx="9" cy="14" r="1.4"/>
+        <circle cx="15" cy="14" r="1.4"/><path d="M12 8V4M9 4h6"/></svg></span>
+        <b>Aatami-valmentaja</b></div>
+      <div class="coach-skel" style="width:92%"></div>
+      <div class="coach-skel" style="width:78%"></div>
+      <div class="coach-skel" style="width:55%;margin-bottom:0"></div>
+    </div>${note}`;
+    return;
+  }
+
+  if(COACH.state==='error'){
+    const [h,p] = COACH_ERRORS[COACH.error] || ['Valmentaja ei juuri nyt vastaa',
+      'Yhteyttä ei saatu. Kokeile hetken kuluttua uudelleen.'];
+    el.innerHTML = `<div class="goal-empty">
+      <h3>${esc(h)}</h3><p>${esc(p)}</p>
+      ${COACH.error==='no_data'
+        ? `<button class="btn-green" onclick="go('mittaukset')">Lisää mittaus</button>`
+        : `<button class="btn-green" onclick="loadCoach(true)">Yritä uudelleen</button>`}
+    </div>${note}`;
+    return;
+  }
+
+  const d = COACH.data || {};
+  const when = d.luotu ? new Date(d.luotu).toLocaleDateString('fi-FI',
+                  {day:'numeric', month:'numeric', year:'numeric'}) : '';
+  el.innerHTML = `
+    <div class="coach-bubble">
+      <div class="coach-who"><span class="coach-av"><svg viewBox="0 0 24 24">
+        <rect x="4" y="8" width="16" height="12" rx="3"/><circle cx="9" cy="14" r="1.4"/>
+        <circle cx="15" cy="14" r="1.4"/><path d="M12 8V4M9 4h6"/></svg></span>
+        <b>Aatami-valmentaja</b></div>
+      ${esc(d.havainto)}
+    </div>
+    <div class="coach-card">
+      <div class="cc-lb"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/>
+        <path d="M12 3a6 6 0 0 0-3.5 10.9c.5.4.8 1 .8 1.6h5.4c0-.6.3-1.2.8-1.6A6 6 0 0 0 12 3z"/>
+        </svg>Vinkki sinulle</div>
+      <p>${esc(d.vinkki)}</p>
+    </div>
+    <div class="coach-card">
+      <div class="cc-lb"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        Seuraava askel</div>
+      <p>${esc(d.seuraava_askel)}</p>
+    </div>
+    <div class="coach-foot">
+      <span>${when?`Luotu ${esc(when)} omista mittauksistasi.`:''}</span>
+      <button class="coach-refresh" onclick="loadCoach(true)">Päivitä huomio</button>
+    </div>
+    ${note}`;
+}
 
 function renderKehitys(){
   const el=$('#kehitysCards'); if(!el) return;
