@@ -619,7 +619,7 @@ a{color:inherit;text-decoration:none}
 }
 @media(max-width:820px){
   .sidebar{display:none}
-  .main{margin-left:0;padding:0 16px 116px}
+  .main{margin-left:0;padding:0 16px calc(116px + env(safe-area-inset-bottom))}
   .topbar{
     display:flex;align-items:center;justify-content:space-between;
     position:sticky;top:0;z-index:30;background:var(--bg);color:var(--ink);
@@ -668,6 +668,20 @@ a{color:inherit;text-decoration:none}
 }
 .hide-desktop{display:none}
 @media(max-width:820px){ .hide-mobile{display:none} .hide-desktop{display:block} }
+
+/* ═══════ MOBIILI / PWA ═══════
+   iOS Safari zoomaa automaattisesti sisään kun fokusoidun kentän fonttikoko on
+   alle 16px — eikä zoomaa takaisin ulos. Sivu jää siis liian lähelle, ja koska
+   alapalkki on position:fixed, zoomattu näkymä työntää sen osittain ruudun
+   ulkopuolelle. Molemmat oireet katoavat kun jokainen syötekenttä on ≥16px.
+   Zoomausta EI saa estää user-scalable=no:lla — se rikkoo saavutettavuuden. */
+@media(max-width:820px){
+  input, select, textarea,
+  .field input, .field select, .auth-field input, .chat-box textarea,
+  .q-item input, .oh-target input, .in-unit input { font-size:16px }
+}
+/* Estää iOS:ää suurentamasta tekstiä vaakatilassa omin päin. */
+html{ -webkit-text-size-adjust:100%; text-size-adjust:100% }
 </style>
 </head>
 <body>

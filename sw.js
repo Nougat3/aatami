@@ -1,6 +1,6 @@
 /* Aatami-sovelluksen service worker — app shell -välimuisti offline-käyttöä ja
    nopeaa avausta varten. Data (Supabase) haetaan aina verkosta. */
-const CACHE = "aatami-app-v29";
+const CACHE = "aatami-app-v30";
 const SHELL = [
   "./app.html",
   "./manifest.webmanifest",
