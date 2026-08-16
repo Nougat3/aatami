@@ -1977,6 +1977,16 @@ function renderChatAlert(){
         <a class="sec" href="./index.html#etavastaanotot" target="_blank" rel="noopener">Varaa etävastaanotto</a></div></div>`;
 }
 
+/* Malli kirjoittaa kevyttä markdownia. Escapetaan ensin, ja vasta sen jälkeen
+   muunnetaan **lihavointi** ja "- " -listat — näin lisätyt tagit ovat aina
+   omiamme eikä mallin tekstistä voi tulla HTML:ää. */
+function mdLite(t){
+  return esc(t)
+    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/^[ \t]*[-•*][ \t]+/gm, '• ')
+    .replace(/\n{3,}/g, '\n\n');
+}
+
 function renderChat(){
   const el=$('#chatList'); if(!el) return;
   renderChatAlert();
@@ -1995,7 +2005,7 @@ function renderChat(){
     const mine=m.role==='patient';
     return `${sep}<div class="msg ${mine?'me':'them'}">
       ${!mine?`<div class="msg-who">Aatami-valmentaja</div>`:''}
-      <div class="msg-b">${esc(m.body)}</div>
+      <div class="msg-b">${mine?esc(m.body):mdLite(m.body)}</div>
       <div class="msg-t">${d.toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit'})}</div>
     </div>`;
   }).join('') + (chatBusy
