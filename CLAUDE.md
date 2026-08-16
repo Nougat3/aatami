@@ -129,6 +129,34 @@ Viestit-näkymä on keskustelu Claudella toteutetun valmentajan kanssa
 
 Vaatii Supabase-salaisuuden `ANTHROPIC_API_KEY`.
 
+### Kyselyt: kertaluonteinen vs. toistuva
+
+Kaksi eri asiaa, eri tauluissa — älä sekoita niitä:
+
+| | Hoitopolun terveyskysely | Pisteytetty seurantakysely |
+|---|---|---|
+| Missä | `patient_profiles.care_paths[slug].answers` | `survey_responses` (rivi per täyttökerta) |
+| Milloin | Kerran polun alussa | Toistuvasti |
+| Sisältö | Sanoja ("Kyllä", "3-4 kertaa viikossa") | Pisteitä (0-3 per kysymys) |
+| Kehitys-sivulla | Vastauslista | **Käyrä** |
+
+Kertaluonteisesta kyselystä **ei voi piirtää käyrää** — siitä ei synny aikasarjaa
+eivätkä vastaukset ole lukuja. Älä yritä; se tarkoittaisi datan keksimistä.
+
+**PHQ-9 (`survey_templates.slug='phq9'`)**: kysymykset ovat dataa, ei koodia —
+lääkäri muokkaa niitä ilman koodimuutosta. Huomioitavaa:
+
+- **Kysymys 9 on itsetuhoisuuskysymys.** `crisis_item='q9'`: nollaa suurempi
+  vastaus pakottaa kriisiohjeen näkyviin **heti täytön aikana**, johdettuna
+  vastauksesta — ei pistesummasta eikä mallista. Kortti vieritetään näkyviin,
+  koska kysymys 9 on lomakkeen alimpana.
+- **Potilaalle ei näytetä tulkintaa.** Pistemäärä ja suunta näkyvät, mutta ei
+  vaikeusastetta ("keskivaikea masennus") — se on kliininen arvio ja kuuluu
+  lääkärille. Sama raja kuin verenpaineessa: luku näytetään, tulkinta ei.
+- **Sanamuodot ovat LUONNOS.** Ne on tarkistettava virallista suomenkielistä
+  PHQ-9-lomaketta vasten ennen potilaskäyttöä: löyhästi käännetyn validoidun
+  mittarin pisteitä ei voi verrata validoituihin raja-arvoihin.
+
 **HUOM koodin rakenne:** `app.html`:ssä on tasan yksi `<style>`- ja yksi
 `<script>`-lohko. Kun lisäät JS:ää skriptillä, varmista että ankkuri on
 `<script>`-lohkon puolella — JS on kerran vahingossa päätynyt
