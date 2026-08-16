@@ -160,8 +160,11 @@ Deno.serve(async (req: Request) => {
   const omahoito = (profile?.omahoito as any) || {};
   // Mallille vain mittaukset ja tavoitteet — ei nimeä, sähköpostia eikä lääkelistaa.
   const context = {
+    // Tavoitteista on kannassa kaksi muotoa: vanha {module,target} ja uudempi
+    // {metric,label,start}. Ilman fallbackia mallille menisi mittarina null.
     tavoitteet: (omahoito.goals || []).map((g: any) => ({
-      mittari: g.metric, tavoite: g.target, lahtoarvo: g.start, otsikko: g.label })),
+      mittari: g.metric || g.module, tavoite: g.target,
+      lahtoarvo: g.start, otsikko: g.label || g.module })),
     mittaukset: measurements.map((m: any) => ({ tyyppi: m.type, arvo: m.value, pvm: m.date })),
     paivamaara: new Date().toISOString().slice(0, 10),
   };
