@@ -93,45 +93,41 @@ hänellä on oikea aika. Nämä on korvattu oikealla datalla tai rehellisellä
 tyhjällä tilalla. **Älä lisää demodataa käyttöliittymään** — käytä tyhjää
 tilaa tai oikeaa dataa.
 
-**Viestit (`care_messages`)** on nyt olemassa: potilas ja lääkäri
-keskustelevat samassa ketjussa, potilaalle realtime-päivityksellä.
-Potilas kirjoittaa suoraan tauluun (RLS: oma rivi), lääkäri RPC:iden
-kautta (`staff_get_care_messages`, `staff_send_care_message`), jotka
-käyttävät samaa `staff_resolve_patient`-tarkistusta kuin muutkin.
-
-Lääkärillä on **postilaatikko** (`staff_list_message_threads`): kaikki
-potilaat joihin hänellä on oikeus ja joilla on viestejä, lukemattomat
-korostettuna. Ilman sitä potilaan viesti jäisi huomaamatta, ellei lääkäri
-satu avaamaan juuri sen potilaan korttia.
-
-**Chat ei ole päivystyskanava eikä potilasasiakirja.** Mikään ei hälytä
-lääkäriä yöllä, joten käyttöliittymä sanoo sen suoraan ja ohjaa 112:een.
-Kliininen kirjaus tehdään edelleen potilastietojärjestelmässä.
+**Viestit = keskustelu AI-valmentajan kanssa**, ei lääkärin ketju. Lääkäriin
+otetaan yhteys erikseen etävastaanotolla (Vastaanotto.fi). Potilaan ja lääkärin
+viestintä `care_messages`-taulussa on **purettu käyttöliittymistä** (app.html ja
+staff.html); taulu ja `staff_*_care_message*`-RPC:t ovat yhä kannassa mutta
+kytkemättä mihinkään — älä lisää niitä takaisin ilman että lääkärille syntyy
+oikea tapa huomata viesti, muuten potilaan viesti katoaa mustaan aukkoon.
 
 Ajanvarausta Aatamissa ei ole (se on Vastaanotto.fi:ssä).
 
-### Aatami-valmentaja (AI) — `supabase/functions/coach`
+### Aatami-valmentaja (AI) — `supabase/functions/coach-chat`
 
-Sovelluksen Valmentaja-näkymä pyytää lyhyen huomion Claudelta (Edge Function
-`coach`, malli `claude-opus-4-8`, rakenteinen JSON: `havainto`, `vinkki`,
-`seuraava_askel`). Periaatteet:
+Viestit-näkymä on keskustelu Claudella toteutetun valmentajan kanssa
+(`claude-opus-4-8`). Periaatteet:
 
-- **Client ei lähetä dataa.** Funktio lukee potilaan mittaukset itse JWT:llä ja
-  RLS:n läpi (`patient_profiles`), joten kukaan ei voi pyytää huomiota toisen
-  potilaan luvuista. Mallille menee vain mittaukset, tavoitteet ja aktiivisen
-  hoitopolun slug — **ei nimeä, sähköpostia eikä lääkelistaa**.
-- **Valmentaja ei ole ammattihenkilö.** Systeemipromptti kieltää diagnoosit,
-  lääkeohjeet ja hoitopäätökset; huolta herättävässä datassa se ohjaa lääkärille
-  ja 112:een. Sama rajaus on näkyvissä käyttöliittymässä. Älä löysennä
-  systeemipromptin rajoja ilman kliinistä harkintaa.
-- **Vastaus välimuistitetaan selaimeen** (`localStorage`, avaimena mittausten
-  määrä + viimeisin mittaus), jotta näkymän avaus ei tee joka kerta maksullista
-  API-kutsua. Uusi haetaan kun data muuttuu tai potilas painaa "Päivitä huomio".
-- **Ilman mittauksia ei kutsuta mallia lainkaan** (`no_data`) — tyhjä tila
-  ohjaa kirjaamaan mittauksen. Ei keksittyä sisältöä.
+- **Hätäohje ei ole mallin vastuulla.** Potilaan viesti tarkistetaan
+  deterministisellä sanastolla *ennen* mallia (`triage()`), ja osuma pakottaa
+  112- tai kriisikortin näkyviin **riippumatta mallin vastauksesta**. Malli voi
+  epäonnistua, sanasto ei. Sama periaate kuin kyselyn `crisis_if`-listassa.
+  Sanasto on testattu: `supabase/functions/coach-chat/triage.test.mjs`.
+- **Suomen sanajärjestys on vapaa** — monisanaisia fraaseja ei saa käyttää
+  sanastossa ("puristaa rinnassa" ei osu tekstiin "rinnassa puristaa"). Käytä
+  vartalopareja: molempien ryhmien sanan on esiinnyttävä, järjestyksellä ei väliä.
+- **Potilas ei voi kirjoittaa `coach_messages`-tauluun** (RLS: vain select ja
+  delete). Kaikki rivit syntyvät Edge Functionin kautta, joten valmentajan
+  vastausta ei voi väärentää eikä hätätarkistusta ohittaa.
+- **Client ei lähetä dataa** — funktio lukee mittaukset ja tavoitteet itse
+  JWT:llä RLS:n läpi. Mallille ei mene nimeä, sähköpostia eikä lääkelistaa.
+- **Raja: yleinen terveystieto sallittu, henkilökohtainen arvio ei.** Malli ei
+  saa arvioida potilaan omia arvoja, tehdä diagnoosia, antaa lääkeohjeita eikä
+  triagea. Raja on liukas — älä löysennä sitä ilman kliinistä harkintaa.
+- **Kustannuskatto:** 40 viestiä/vrk/potilas ja historiasta viimeiset 20 viestiä.
+  Endpoint on autentikoitu, mutta ilman rajaa kuka tahansa rekisteröitynyt voisi
+  käyttää sitä ilmaisena mallikutsuna.
 
-Vaatii Supabase-salaisuuden `ANTHROPIC_API_KEY`. Ilman sitä funktio palauttaa
-503 `missing_api_key` ja sovellus näyttää "Valmentaja ei ole vielä käytössä".
+Vaatii Supabase-salaisuuden `ANTHROPIC_API_KEY`.
 
 **HUOM koodin rakenne:** `app.html`:ssä on tasan yksi `<style>`- ja yksi
 `<script>`-lohko. Kun lisäät JS:ää skriptillä, varmista että ankkuri on

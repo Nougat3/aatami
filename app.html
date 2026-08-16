@@ -297,28 +297,9 @@ a{color:inherit;text-decoration:none}
 .coach-entry .ce-mid b{display:block;font-size:14px;font-weight:600}
 .coach-entry .ce-mid i{display:block;font-style:normal;font-size:12px;color:var(--ink-soft);margin-top:2px}
 .coach-entry .ce-arrow{width:18px;height:18px;flex:none;stroke:var(--green);fill:none;stroke-width:2}
-.coach-bubble{background:var(--green-100);border-radius:20px 20px 20px 6px;padding:18px 20px;
-  font-size:14.5px;line-height:1.65;color:var(--ink);margin-top:6px}
-.coach-who{display:flex;align-items:center;gap:9px;margin-bottom:10px}
 .coach-av{width:28px;height:28px;border-radius:50%;background:var(--green);flex:none;
   display:flex;align-items:center;justify-content:center}
 .coach-av svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:1.9}
-.coach-who b{font-size:12px;font-weight:600;letter-spacing:.02em}
-.coach-card{background:var(--card);border:1px solid var(--line);border-radius:18px;
-  padding:16px 18px;margin-top:12px}
-.coach-card .cc-lb{font-family:var(--fl);font-size:10.5px;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:7px}
-.coach-card .cc-lb svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
-.coach-card p{font-size:14px;line-height:1.6;margin-top:8px}
-.coach-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;
-  margin-top:16px;font-size:11.5px;color:var(--muted)}
-.coach-refresh{background:none;border:1px solid var(--line);border-radius:999px;
-  padding:8px 16px;font-size:12.5px;font-weight:600;color:var(--ink-soft);cursor:pointer;flex:none}
-.coach-note{background:var(--card);border:1px solid var(--line);border-radius:14px;
-  padding:13px 16px;margin-top:14px;font-size:11.5px;line-height:1.6;color:var(--muted)}
-.coach-skel{height:14px;border-radius:7px;background:var(--green-100);margin-bottom:9px;
-  animation:cpulse 1.2s ease-in-out infinite}
-@keyframes cpulse{0%,100%{opacity:.55}50%{opacity:1}}
 
 .ttask{display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line);font-size:14px}
 .ttask:last-child{border-bottom:none}
@@ -363,8 +344,23 @@ a{color:inherit;text-decoration:none}
 .msg-who{font-size:11px;font-weight:700;color:var(--gold-soft);margin-bottom:3px}
 .msg-b{font-size:14px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
 .msg-t{font-size:10px;margin-top:5px;opacity:.6;text-align:right}
+/* Hätäkortti. Näytetään deterministisen sanastotarkistuksen perusteella, EI mallin
+   vastauksen perusteella — malli voi epäonnistua, sanasto ei. */
+.chat-alert{border-radius:16px;padding:16px 18px;margin-bottom:14px;
+  background:rgba(209,90,60,.10);border:1px solid rgba(209,90,60,.35)}
+.chat-alert h4{font-size:14.5px;font-weight:700;color:#a33d24;display:flex;
+  align-items:center;gap:8px}
+.chat-alert h4 svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2}
+.chat-alert p{font-size:13px;line-height:1.6;color:var(--ink-soft);margin-top:7px}
+.chat-alert .ca-btns{display:flex;gap:9px;margin-top:12px;flex-wrap:wrap}
+.chat-alert a{background:#a33d24;color:#fff;border-radius:999px;padding:10px 18px;
+  font-size:13.5px;font-weight:600;text-decoration:none}
+.chat-alert a.sec{background:none;color:#a33d24;border:1px solid rgba(209,90,60,.45)}
+.chat-doc{display:block;text-align:center;margin-top:14px;font-size:12.5px;
+  color:var(--green-700);text-decoration:none;font-weight:600}
+.msg.typing .msg-b{color:var(--muted)}
 .chat-empty{text-align:center;padding:34px 20px;color:var(--ink-soft)}
-.chat-empty-t{font-family:var(--fd);font-size:17px;color:var(--cream);margin-bottom:7px}
+.chat-empty-t{font-family:var(--fd);font-size:17px;color:var(--ink);margin-bottom:7px}
 .chat-empty p{font-size:13px;line-height:1.65;max-width:320px;margin:0 auto}
 .chat-box{display:flex;gap:9px;align-items:flex-end;margin-top:14px;
   background:var(--card);border:1px solid var(--line);border-radius:18px;padding:8px 8px 8px 15px}
@@ -647,7 +643,6 @@ a{color:inherit;text-decoration:none}
     <nav class="sb-nav" id="sbNav">
       <a class="sb-link on" data-view="etusivu"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>Etusivu</a>
       <a class="sb-link" data-view="kehitys"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Kehitys</a>
-      <a class="sb-link" data-view="valmentaja"><svg viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="3"/><circle cx="9" cy="14" r="1.4"/><circle cx="15" cy="14" r="1.4"/><path d="M12 8V4M9 4h6"/></svg>Valmentaja</a>
       <a class="sb-link" data-view="hoitopolut"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.5 6H15a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h6.5"/></svg>Hoitopolku</a>
       <a class="sb-link" data-view="omahoito"><svg viewBox="0 0 24 24"><path d="M9 3h6a1 1 0 0 1 1 1v1h2v16H6V5h2V4a1 1 0 0 1 1-1z"/><path d="M9 5h6M9 11l1.5 1.5L13 10M9 16l1.5 1.5L13 15"/></svg>Omahoito</a>
       <a class="sb-link" data-view="mittaukset"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 3 4-6"/></svg>Mittaukset</a>
@@ -692,11 +687,11 @@ a{color:inherit;text-decoration:none}
 
       <!-- Valmentajan sisäänkäynti. Sivupalkki on piilossa mobiilissa, joten
            ilman tätä korttia näkymään ei pääsisi puhelimella lainkaan. -->
-      <button class="coach-entry" onclick="go('valmentaja')">
+      <button class="coach-entry" onclick="go('viestit')">
         <span class="coach-av"><svg viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="3"/>
           <circle cx="9" cy="14" r="1.4"/><circle cx="15" cy="14" r="1.4"/><path d="M12 8V4M9 4h6"/></svg></span>
         <span class="ce-mid"><b>Aatami-valmentaja</b>
-          <i>Huomio omista mittauksistasi</i></span>
+          <i>Keskustele omahoidosta</i></span>
         <svg class="ce-arrow" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg>
       </button>
 
@@ -715,11 +710,6 @@ a{color:inherit;text-decoration:none}
       <div id="kehitysCards"></div>
     </section>
 
-    <!-- ═══════════ VALMENTAJA ═══════════ -->
-    <section class="view" data-view="valmentaja">
-      <div class="head"><div><h1>Aatami-valmentajasi</h1><div class="sub">Huomioita omista mittauksistasi.</div></div></div>
-      <div id="coachBody"></div>
-    </section>
 
     <!-- ═══════════ HOITOPOLKU (lääkärin luoma) ═══════════ -->
     <section class="view" data-view="hoitopolut">
@@ -773,19 +763,23 @@ a{color:inherit;text-decoration:none}
 
     <!-- ═══════════ VIESTIT ═══════════ -->
     <section class="view" data-view="viestit">
-      <div class="head"><div><h1>Viestit</h1><div class="sub">Yhteys hoitotiimiisi.</div></div></div>
+      <div class="head"><div><h1>Aatami-valmentaja</h1>
+        <div class="sub">Omahoidon tuki — käytettävissä aina.</div></div></div>
       <div class="chat-note">
-        <b>Ei päivystyskanava.</b> Vastaamme arkisin — älä käytä viestejä kiireellisissä
-        asioissa. Hätätilanteessa soita <a href="tel:112">112</a>. Kliiniset päätökset ja
-        kirjaukset tehdään vastaanotolla, eivät viesteissä.
+        <b>Valmentaja ei ole lääkäri.</b> Se ei tee diagnooseja, ei arvioi omia arvojasi
+        eikä anna lääkeohjeita. Lääkärin arvion saat etävastaanotolla. Aatamia ei valvota
+        reaaliaikaisesti — hätätilanteessa soita <a href="tel:112">112</a>.
       </div>
+      <div id="chatAlert"></div>
       <div class="chat" id="chatList"></div>
       <div class="chat-box">
-        <textarea id="chatInput" rows="1" placeholder="Kirjoita viesti…"></textarea>
-        <button class="chat-send" onclick="sendChat()" aria-label="Lähetä">
+        <textarea id="chatInput" rows="1" placeholder="Kysy omahoidosta…"></textarea>
+        <button class="chat-send" id="chatSend" onclick="sendChat()" aria-label="Lähetä">
           <svg viewBox="0 0 24 24"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg>
         </button>
       </div>
+      <a class="chat-doc" href="./index.html#etavastaanotot" target="_blank" rel="noopener">
+        Tarvitsetko lääkäriä? Varaa etävastaanotto →</a>
     </section>
 
     <!-- ═══════════ PROFIILI ═══════════ -->
@@ -1563,7 +1557,6 @@ function go(view){
   if(view==='omahoito') renderOmahoito();
   if(view==='vastaanotot') renderApptTasks();
   if(view==='kehitys') renderKehitys();
-  if(view==='valmentaja') renderCoach();
   if(view==='viestit'){ renderChat(); markChatRead(); }
   if(view==='mittaukset'){ renderMeasTabs(); renderMeasBlock(); }
   if(view==='laboratoriot') renderLabs();
@@ -1613,128 +1606,6 @@ function measInRange(metric){
   return arr;
 }
 window.setRange=function(d){ RANGE=d; renderKehitys(); };
-
-/* ═══ VALMENTAJA (Claude, coach-Edge Function) ═══
-   Huomio luodaan palvelimella potilaan omista mittauksista. Vastaus välimuistitetaan
-   selaimeen, jotta jokainen näkymän avaus ei tee uutta (maksullista) API-kutsua —
-   uusi haetaan vasta kun mittausdata muuttuu tai potilas painaa "Päivitä huomio". */
-let COACH = { state:'idle', data:null, error:null };
-
-/* Muuttuu kun potilaalla on uutta dataa → välimuisti vanhenee itsestään. */
-function coachKey(){
-  const ms = ME.measurements||[];
-  const last = ms.length ? (ms[ms.length-1].ts||ms[ms.length-1].date||'') : '';
-  return `${ms.length}|${last}|${(goals()||[]).length}`;
-}
-function coachCacheId(){ return `aatami-coach-${ME.userId||'anon'}`; }
-function coachCached(){
-  try{
-    const raw = localStorage.getItem(coachCacheId());
-    if(!raw) return null;
-    const c = JSON.parse(raw);
-    return c && c.key===coachKey() ? c.data : null;
-  }catch{ return null; }
-}
-function coachSave(data){
-  try{ localStorage.setItem(coachCacheId(), JSON.stringify({key:coachKey(), data})); }catch{}
-}
-
-async function loadCoach(force){
-  if(COACH.state==='loading') return;
-  if(!force){
-    const c = coachCached();
-    if(c){ COACH={state:'ok', data:c, error:null}; renderCoach(); return; }
-  }
-  COACH={state:'loading', data:COACH.data, error:null}; renderCoach();
-  try{
-    const { data:{ session } } = await sb.auth.getSession();
-    if(!session){ COACH={state:'error', data:null, error:'unauthorized'}; renderCoach(); return; }
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/coach`, {
-      method:'POST',
-      headers:{ Authorization:`Bearer ${session.access_token}`, apikey:SUPABASE_ANON_KEY,
-                'Content-Type':'application/json' },
-      body:'{}',
-    });
-    const body = await res.json().catch(()=>({}));
-    if(!res.ok){ COACH={state:'error', data:null, error:body.error||'coach_unavailable'}; }
-    else { COACH={state:'ok', data:body, error:null}; coachSave(body); }
-  }catch(e){
-    COACH={state:'error', data:null, error:'network'};
-  }
-  renderCoach();
-}
-window.loadCoach = loadCoach;
-
-const COACH_ERRORS = {
-  no_data: ['Ei vielä tarpeeksi dataa',
-    'Valmentaja lukee omia mittauksiasi. Kirjaa ensin muutama mittaus, niin saat huomion omasta kehityksestäsi.'],
-  missing_api_key: ['Valmentaja ei ole vielä käytössä',
-    'Palvelu otetaan käyttöön pian. Sinun ei tarvitse tehdä mitään.'],
-  unauthorized: ['Kirjaudu uudelleen',
-    'Istuntosi on vanhentunut. Kirjaudu sisään uudelleen ja yritä sitten uudestaan.'],
-};
-
-function renderCoach(){
-  const el = $('#coachBody'); if(!el) return;
-  if(COACH.state==='idle'){ loadCoach(false); return; }
-
-  const note = `<div class="coach-note">Valmentaja on omahoidon tuki, ei terveydenhuollon
-    ammattihenkilö. Se ei tee diagnooseja eikä anna lääke- tai hoito-ohjeita — ne saat
-    lääkäriltäsi. Aatamia ei valvota reaaliaikaisesti; hätätilanteessa soita 112.</div>`;
-
-  if(COACH.state==='loading'){
-    el.innerHTML = `<div class="coach-bubble">
-      <div class="coach-who"><span class="coach-av"><svg viewBox="0 0 24 24">
-        <rect x="4" y="8" width="16" height="12" rx="3"/><circle cx="9" cy="14" r="1.4"/>
-        <circle cx="15" cy="14" r="1.4"/><path d="M12 8V4M9 4h6"/></svg></span>
-        <b>Aatami-valmentaja</b></div>
-      <div class="coach-skel" style="width:92%"></div>
-      <div class="coach-skel" style="width:78%"></div>
-      <div class="coach-skel" style="width:55%;margin-bottom:0"></div>
-    </div>${note}`;
-    return;
-  }
-
-  if(COACH.state==='error'){
-    const [h,p] = COACH_ERRORS[COACH.error] || ['Valmentaja ei juuri nyt vastaa',
-      'Yhteyttä ei saatu. Kokeile hetken kuluttua uudelleen.'];
-    el.innerHTML = `<div class="goal-empty">
-      <h3>${esc(h)}</h3><p>${esc(p)}</p>
-      ${COACH.error==='no_data'
-        ? `<button class="btn-green" onclick="go('mittaukset')">Lisää mittaus</button>`
-        : `<button class="btn-green" onclick="loadCoach(true)">Yritä uudelleen</button>`}
-    </div>${note}`;
-    return;
-  }
-
-  const d = COACH.data || {};
-  const when = d.luotu ? new Date(d.luotu).toLocaleDateString('fi-FI',
-                  {day:'numeric', month:'numeric', year:'numeric'}) : '';
-  el.innerHTML = `
-    <div class="coach-bubble">
-      <div class="coach-who"><span class="coach-av"><svg viewBox="0 0 24 24">
-        <rect x="4" y="8" width="16" height="12" rx="3"/><circle cx="9" cy="14" r="1.4"/>
-        <circle cx="15" cy="14" r="1.4"/><path d="M12 8V4M9 4h6"/></svg></span>
-        <b>Aatami-valmentaja</b></div>
-      ${esc(d.havainto)}
-    </div>
-    <div class="coach-card">
-      <div class="cc-lb"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/>
-        <path d="M12 3a6 6 0 0 0-3.5 10.9c.5.4.8 1 .8 1.6h5.4c0-.6.3-1.2.8-1.6A6 6 0 0 0 12 3z"/>
-        </svg>Vinkki sinulle</div>
-      <p>${esc(d.vinkki)}</p>
-    </div>
-    <div class="coach-card">
-      <div class="cc-lb"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        Seuraava askel</div>
-      <p>${esc(d.seuraava_askel)}</p>
-    </div>
-    <div class="coach-foot">
-      <span>${when?`Luotu ${esc(when)} omista mittauksistasi.`:''}</span>
-      <button class="coach-refresh" onclick="loadCoach(true)">Päivitä huomio</button>
-    </div>
-    ${note}`;
-}
 
 function renderKehitys(){
   const el=$('#kehitysCards'); if(!el) return;
@@ -1914,26 +1785,53 @@ function renderTodayTasks(){
   }).join('')}</div>`;
 }
 
-/* ═══ VIESTIT ═══
-   Ei päivystyskanava: viesti tallentuu, mutta mikään ei hälytä lääkäriä yöllä.
-   Käyttöliittymä sanoo tämän suoraan. */
-let CHAT=[]; let chatChannel=null;
+/* ═══ VALMENTAJACHAT (Claude, coach-chat-Edge Function) ═══
+   Keskustelu AI-valmentajan kanssa — EI lääkärin ketju. Lääkärikontakti tapahtuu
+   erikseen etävastaanotolla. Potilas ei voi kirjoittaa riviä suoraan tauluun
+   (RLS: vain luku ja poisto) — kaikki rivit syntyvät funktion kautta, jotta
+   valmentajan vastausta ei voi väärentää eikä hätätarkistusta ohittaa. */
+let CHAT=[]; let chatBusy=false;
 
 async function loadChat(){
   if(!ME.userId) return;
-  const {data,error}=await sb.from('care_messages').select('*').order('created_at');
+  const {data,error}=await sb.from('coach_messages')
+    .select('role, body, flag, created_at').order('created_at');
   if(error){ console.error('chat load failed',error); return; }
   CHAT=data||[];
   renderChat();
-  markChatRead();
+  // Tyhjä keskustelu → valmentaja avaa sen huomiolla omista mittauksista.
+  if(!CHAT.length && !chatBusy) askCoach(null);
 }
+
+/* Viimeisin hätäosuma ohjaa kortin näkyviin. Tila johdetaan datasta, ei DOM:ista —
+   muuten uudelleenrenderöinti pyyhkisi ilmoituksen (sama vika korjattiin
+   aiemmin mielialakyselyn kriisiohjeesta). */
+function renderChatAlert(){
+  const el=$('#chatAlert'); if(!el) return;
+  const last=[...CHAT].reverse().find(m=>m.role==='patient'&&m.flag);
+  if(!last){ el.innerHTML=''; return; }
+  const warn=`<svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/>
+    <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>`;
+  el.innerHTML = last.flag==='crisis'
+    ? `<div class="chat-alert"><h4>${warn}Et ole yksin</h4>
+        <p>Valmentaja ei ole kriisiapua eikä kukaan valvo tätä keskustelua. Jos ajatuksesi
+        ovat itsetuhoisia, ota yhteyttä heti — apua on saatavilla ympäri vuorokauden.</p>
+        <div class="ca-btns"><a href="tel:112">Soita 112</a>
+        <a class="sec" href="tel:0925250111">Kriisipuhelin 09 2525 0111</a></div></div>`
+    : `<div class="chat-alert"><h4>${warn}Tämä voi vaatia kiireellistä apua</h4>
+        <p>Valmentaja ei voi arvioida oireita eikä kukaan valvo tätä keskustelua.
+        Jos oire on äkillinen tai voimakas, soita hätänumeroon.</p>
+        <div class="ca-btns"><a href="tel:112">Soita 112</a>
+        <a class="sec" href="./index.html#etavastaanotot" target="_blank" rel="noopener">Varaa etävastaanotto</a></div></div>`;
+}
+
 function renderChat(){
   const el=$('#chatList'); if(!el) return;
-  if(!CHAT.length){
+  renderChatAlert();
+  if(!CHAT.length && !chatBusy){
     el.innerHTML=`<div class="chat-empty">
-      <div class="chat-empty-t">Ei vielä viestejä</div>
-      <p>Voit kysyä hoitopolkuusi liittyvistä asioista. Lääkäri näkee viestisi
-      seuraavan kerran ollessaan Aatamissa.</p></div>`;
+      <div class="chat-empty-t">Valmentaja aloittaa hetken kuluttua</div>
+      <p>Se lukee omat mittauksesi ja kirjoittaa niistä huomion.</p></div>`;
     return;
   }
   let lastDay='';
@@ -1942,56 +1840,68 @@ function renderChat(){
     const day=d.toLocaleDateString('fi-FI');
     const sep = day!==lastDay ? `<div class="chat-day">${day}</div>` : '';
     lastDay=day;
-    const mine=m.sender_role==='patient';
+    const mine=m.role==='patient';
     return `${sep}<div class="msg ${mine?'me':'them'}">
-      ${!mine?`<div class="msg-who">${esc(m.sender_name||'Hoitotiimi')}</div>`:''}
+      ${!mine?`<div class="msg-who">Aatami-valmentaja</div>`:''}
       <div class="msg-b">${esc(m.body)}</div>
       <div class="msg-t">${d.toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit'})}</div>
     </div>`;
-  }).join('');
+  }).join('') + (chatBusy
+    ? `<div class="msg them typing"><div class="msg-who">Aatami-valmentaja</div>
+       <div class="msg-b">kirjoittaa…</div></div>` : '');
   el.scrollTop=el.scrollHeight;
 }
-async function markChatRead(){
-  const unread=CHAT.filter(m=>m.sender_role==='doctor'&&!m.read_by_patient);
-  if(!unread.length) return;
-  unread.forEach(m=>m.read_by_patient=true);   // paikallinen tila heti
-  updateChatBadge();
-  const {error}=await sb.from('care_messages').update({read_by_patient:true})
-    .in('id',unread.map(m=>m.id));
-  if(error){ console.error('read mark failed',error); }
+
+const CHAT_ERRORS = {
+  missing_api_key:'Valmentaja ei ole vielä käytössä.',
+  rate_limited:'Olet lähettänyt paljon viestejä tänään. Jatka huomenna.',
+  message_too_long:'Viesti on liian pitkä — tiivistä hieman.',
+  unauthorized:'Istuntosi vanheni. Kirjaudu uudelleen.',
+};
+
+/* message=null → pyytää avausviestin. */
+async function askCoach(message){
+  if(chatBusy) return;
+  chatBusy=true; renderChat();
+  try{
+    const { data:{ session } } = await sb.auth.getSession();
+    if(!session) throw Object.assign(new Error(),{code:'unauthorized'});
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/coach-chat`, {
+      method:'POST',
+      headers:{ Authorization:`Bearer ${session.access_token}`, apikey:SUPABASE_ANON_KEY,
+                'Content-Type':'application/json' },
+      body: JSON.stringify(message ? {message} : {}),
+    });
+    const body = await res.json().catch(()=>({}));
+    if(!res.ok) throw Object.assign(new Error(),{code:body.error||'coach_unavailable'});
+    chatBusy=false;
+    // Luetaan rivit kannasta, jotta aikaleimat ja hätämerkinnät tulevat palvelimelta.
+    await loadChat();
+    return;
+  }catch(e){
+    chatBusy=false;
+    toast(CHAT_ERRORS[e.code] || 'Valmentaja ei juuri nyt vastaa.');
+    renderChat();
+  }
 }
-function unreadCount(){ return CHAT.filter(m=>m.sender_role==='doctor'&&!m.read_by_patient).length; }
-function updateChatBadge(){
-  const n=unreadCount();
-  // Vain näkyvissä oleviin navigaatioelementteihin, muuten merkki jää kellumaan.
-  $$('.sb-link[data-view="viestit"], .bn[data-view="viestit"]').forEach(el=>{
-    let b=el.querySelector('.nav-badge');
-    if(n){ if(!b){ b=document.createElement('span'); b.className='nav-badge'; el.appendChild(b); } b.textContent=n; }
-    else if(b) b.remove();
-  });
-}
+
 window.sendChat=async function(){
   const ta=$('#chatInput'); const body=(ta.value||'').trim();
-  if(!body) return;
+  if(!body || chatBusy) return;
   ta.value=''; ta.style.height='auto';
-  const {error}=await sb.from('care_messages').insert({
-    patient_user_id:ME.userId, sender_role:'patient', body, read_by_patient:true});
-  if(error){ toast('Viestin lähetys epäonnistui.'); console.error(error); return; }
-  await loadChat();
+  // Oma viesti näkyviin heti; palvelin kirjoittaa lopullisen rivin.
+  CHAT.push({role:'patient', body, flag:null, created_at:new Date().toISOString()});
+  renderChat();
+  await askCoach(body);
 };
-function subscribeChat(){
-  if(chatChannel) sb.removeChannel(chatChannel);
-  chatChannel=sb.channel('care-messages-'+ME.userId)
-    .on('postgres_changes',
-      {event:'INSERT',schema:'public',table:'care_messages',filter:`patient_user_id=eq.${ME.userId}`},
-      payload=>{
-        if(!CHAT.some(m=>m.id===payload.new.id)) CHAT.push(payload.new);
-        renderChat(); updateChatBadge();
-        const cur=document.querySelector('.view.on');
-        if(cur&&cur.dataset.view==='viestit') markChatRead();
-      })
-    .subscribe();
-}
+
+/* Potilas voi tyhjentää oman keskustelunsa (RLS: delete omiin riveihin). */
+window.clearChat=async function(){
+  if(!confirm('Tyhjennetäänkö keskustelu? Tätä ei voi perua.')) return;
+  const {error}=await sb.from('coach_messages').delete().eq('patient_user_id',ME.userId);
+  if(error){ toast('Tyhjennys epäonnistui.'); return; }
+  CHAT=[]; renderChat(); askCoach(null);
+};
 
 /* Lääkelista — potilas ylläpitää itse, lääkäri näkee vastaanotolla. */
 window.openMed=function(){ $('#medBg').classList.add('open'); setTimeout(()=>$('#medName').focus(),60); };
@@ -2074,7 +1984,7 @@ function renderAll(){
   renderTiles(); renderPathCard(); renderNextTaskCard(); renderApptTasks(); renderPathDetail(); renderOmahoito();
   renderMetricCards(); renderQuick();
   renderMeasTabs(); renderMeasBlock();
-  renderLabs(); renderMeds(); renderGrants(); renderChat(); updateChatBadge();
+  renderLabs(); renderMeds(); renderGrants(); renderChat();
 }
 
 /* ═══ AUTH ═══ */
@@ -2171,7 +2081,7 @@ async function loadPatient(){
 async function enterApp(){
   const ok = await loadPatient();
   if(!ok){ showGate(true); return; }
-  loadChat(); subscribeChat();
+  loadChat();
   showGate(false);
   renderAll();
   go('etusivu');
