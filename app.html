@@ -1683,7 +1683,7 @@ function renderKehitys(){
     const kind=MEAS_KIND[m]||'line';
     const col=getComputedStyle(document.documentElement).getPropertyValue('--green-700').trim()||'#0a6357';
     const head=`<button class="kh-row ${open?'open':''}" onclick="toggleKh('${esc(key)}')">
-      <span class="khr-name">${esc(m)}<span class="khr-sub">${arr.length} mittausta${
+      <span class="khr-name">${esc(m)}<span class="khr-sub">${arr.length} mittaus${arr.length===1?'':'ta'}${
         m==='Verenpaine'?' · keskiarvo':''}</span></span>
       <span class="khr-val">${esc(withUnit(arr[arr.length-1].value, unit))}</span>
       ${diffTxt!==null?`<span class="khr-diff ${(diffNum??0)<=0?'':'up'}">${esc(diffTxt)}</span>`:''}
