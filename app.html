@@ -1643,9 +1643,15 @@ function renderKehitys(){
     `<button class="rg ${r.d===RANGE?'on':''}" onclick="setRange(${r.d})">${r.t}</button>`).join('');
 
   const arrow=`<svg class="khr-arrow" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg>`;
-  const metrics = goals().length
-    ? [...new Set(goals().map(g=>g.metric).filter(Boolean))]
-    : ['Verenpaine','Paino','Uni'];
+  /* Mittarit: sekä tavoitteista että siitä mitä potilas on oikeasti mitannut.
+     Pelkkien tavoitteiden varassa lista jäi tyhjäksi, koska vanhan muotoiset
+     tavoitteet ({module,target}) eivät sisällä metric-kenttää lainkaan —
+     jolloin koko Mittaukset-osio katosi vaikka mittauksia oli. */
+  const cap=x=>x ? x.charAt(0).toUpperCase()+x.slice(1) : x;
+  const goalMetrics=goals().map(g=>g.metric || cap(g.module)).filter(Boolean);
+  const measured=[...new Set((ME.measurements||[]).map(m=>m.type).filter(Boolean))];
+  const metrics=[...new Set([...goalMetrics, ...measured])];
+  if(!metrics.length) metrics.push('Verenpaine','Paino','Uni');
 
   /* ── Mittaukset: oikeaa aikasarjaa, joten graafi on mielekäs ── */
   const measRows = metrics.map(m=>{
