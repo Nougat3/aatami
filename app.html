@@ -370,6 +370,11 @@ a{color:inherit;text-decoration:none}
 .sv-score{display:flex;align-items:baseline;gap:8px;margin:16px 0 4px}
 .sv-score b{font-family:var(--fd);font-size:28px;font-weight:600}
 .sv-score span{font-size:12.5px;color:var(--muted)}
+.in-unit{display:flex;align-items:center;gap:8px}
+.in-unit input{flex:1;min-width:0}
+.in-unit span{flex:none;font-size:13px;color:var(--muted);font-weight:600}
+.bp-row{display:flex;gap:12px}
+.bp-row .field{flex:1;min-width:0}
 .kh-empty{font-size:13px;color:var(--muted);padding:18px 0}
 
 /* ═══════ CHAT ═══════ */
@@ -909,8 +914,8 @@ a{color:inherit;text-decoration:none}
 <div class="modal-bg" id="addModal">
   <div class="modal">
     <h3>Lisää uusi mittaus</h3>
-    <div class="field"><label>Tyyppi</label><select id="addType"><option>Verenpaine</option><option>Paino</option><option>Uni</option><option>Verensokeri</option><option>Mieliala</option><option>Syke</option></select></div>
-    <div class="field"><label>Arvo</label><input id="addVal" placeholder="esim. 128/82"></div>
+    <div class="field"><label>Tyyppi</label><select id="addType" onchange="renderAddFields()"><option>Verenpaine</option><option>Paino</option><option>Uni</option><option>Verensokeri</option><option>Mieliala</option><option>Syke</option></select></div>
+    <div id="addFields"></div>
     <button class="btn-gold full" onclick="saveAdd()">Tallenna mittaus</button>
     <button class="modal-x" onclick="closeAdd()">Peruuta</button>
   </div>
@@ -970,7 +975,7 @@ function measurementProgress(tpl){
 
 /* Mittaukset ja labrat rakennetaan potilaan omasta datasta (ME) — ks. build*(). */
 const MEAS_TYPES = ["Verenpaine","Paino","Uni","Verensokeri","Mieliala","Syke"];
-const MEAS_UNIT = {Verenpaine:"mmHg", Paino:"kg", Uni:"", Verensokeri:"mmol/l", Mieliala:"/10", Syke:"bpm"};
+const MEAS_UNIT = {Verenpaine:"mmHg", Paino:"kg", Uni:"h", Verensokeri:"mmol/l", Mieliala:"/10", Syke:"bpm"};
 const MEAS_COLOR = {Verenpaine:"var(--ok)", Paino:"var(--blue)", Uni:"var(--violet)", Verensokeri:"var(--orange)", Mieliala:"var(--gold)", Syke:"var(--ok)"};
 const MEAS_KIND = {Uni:"bar"}; // muut viivakaavioita
 let MEAS = {};
@@ -2088,19 +2093,75 @@ async function saveMeds(){
 }
 
 /* Add-measurement modal — tallentaa oikeasti patient_profiles.measurements-listaan */
-function openAdd(type){ if(typeof type==='string') $('#addType').value=type; $('#addModal').classList.add('open'); document.body.style.overflow='hidden'; setTimeout(()=>$('#addVal').focus(),60); }
-function closeAdd(){ $('#addModal').classList.remove('open'); document.body.style.overflow=''; }
+function openAdd(type){ if(typeof type==='string') $('#addType').value=type;
+  renderAddFields();
+  $('#addModal').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeAdd(){ $('#addModal').classList.remove('open'); document.body.style.overflow=''; renderAddFields(); }
+/* Mittaustyypin kentät ja järkevät rajat. Rajat ovat karkeita: ne on tarkoitettu
+   nappaamaan näppäilyvirhe (1200/80, paino 6), eivät rajaamaan kliinisiä
+   ääriarvoja pois. Datassa oli aiemmin "Paino: 6" juuri tämän puuttuessa. */
+const MEAS_FORM = {
+  Verenpaine:{ pair:true, a:{label:'Yläpaine (systolinen)', ph:'120', min:60, max:300},
+                          b:{label:'Alapaine (diastolinen)', ph:'80', min:30, max:200}, unit:'mmHg' },
+  Paino:      { label:'Paino', ph:'85',  unit:'kg',     min:20, max:400, step:'0.1' },
+  Verensokeri:{ label:'Verensokeri', ph:'6.7', unit:'mmol/l', min:1, max:40, step:'0.1' },
+  Uni:        { label:'Unen pituus', ph:'7.5', unit:'h', min:0, max:24, step:'0.5' },
+  Mieliala:   { label:'Mieliala', ph:'7', unit:'/ 10', min:1, max:10, step:'1' },
+  Syke:       { label:'Syke', ph:'62', unit:'bpm', min:20, max:250, step:'1' },
+};
+
+function renderAddFields(){
+  const el=$('#addFields'); if(!el) return;
+  const t=$('#addType').value, f=MEAS_FORM[t];
+  if(!f){ el.innerHTML=`<div class="field"><label>Arvo</label>
+    <input id="addVal" placeholder="Arvo"></div>`; return; }
+  const num=(id,c)=>`<div class="field"><label for="${id}">${esc(c.label)}</label>
+    <div class="in-unit"><input id="${id}" type="number" inputmode="decimal"
+      placeholder="${esc(c.ph)}" step="${c.step||'1'}"><span>${esc(f.unit)}</span></div></div>`;
+  el.innerHTML = f.pair
+    ? `<div class="bp-row">${num('addA',{...f.a,step:'1'})}${num('addB',{...f.b,step:'1'})}</div>`
+    : num('addVal', f);
+  const first=el.querySelector('input'); if(first) setTimeout(()=>first.focus(),40);
+}
+window.renderAddFields=renderAddFields;
+
+/* Palauttaa {value} tai {error} — ei tallenneta puolivalmista arvoa. */
+function readAddValue(){
+  const t=$('#addType').value, f=MEAS_FORM[t]||{};
+  const numOfField=id=>{
+    const el=$('#'+id); if(!el) return null;
+    const raw=(el.value||'').trim().replace(',','.');
+    if(!raw) return null;
+    const n=parseFloat(raw);
+    return isNaN(n) ? null : n;
+  };
+  if(f.pair){
+    const a=numOfField('addA'), b=numOfField('addB');
+    if(a===null||b===null) return {error:'Täytä sekä ylä- että alapaine.'};
+    if(a<f.a.min||a>f.a.max) return {error:`Yläpaine ${a} vaikuttaa virheelliseltä.`};
+    if(b<f.b.min||b>f.b.max) return {error:`Alapaine ${b} vaikuttaa virheelliseltä.`};
+    if(a<=b) return {error:'Yläpaineen pitää olla alapainetta suurempi.'};
+    return {value:`${Math.round(a)}/${Math.round(b)}`};
+  }
+  const n=numOfField('addVal');
+  if(n===null) return {error:'Kirjoita arvo.'};
+  if(f.min!=null && (n<f.min||n>f.max)) return {error:`${t} ${String(n).replace('.',',')} vaikuttaa virheelliseltä.`};
+  return {value:String(n).replace('.',',')};
+}
+
 async function saveAdd(){
-  const t=$('#addType').value, v=$('#addVal').value.trim();
-  if(!v){ $('#addVal').focus(); return; }
+  const t=$('#addType').value;
+  const res=readAddValue();
+  if(res.error){ toast(res.error); return; }
+  const v=res.value;
   const today=new Date();
   const date=String(today.getDate()).padStart(2,"0")+"."+String(today.getMonth()+1).padStart(2,"0")+".";
   ME.measurements.push({ type:t, value:v, date, ts:Date.now() });
-  closeAdd(); $('#addVal').value='';
+  closeAdd();
   renderAll();
   const {error}=await sb.from("patient_profiles").upsert({ user_id:ME.userId, measurements:ME.measurements, updated_at:new Date().toISOString() });
   if(error){ console.error("measurement save failed", error); toast("Tallennus ei onnistunut — yritä uudelleen."); }
-  else toast(`${t} tallennettu: ${v}`);
+  else toast(`${t} tallennettu: ${withUnit(v, MEAS_UNIT[t]||'')}`);
 }
 window.openAdd=openAdd; window.closeAdd=closeAdd; window.saveAdd=saveAdd;
 
