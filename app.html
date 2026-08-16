@@ -324,6 +324,29 @@ a{color:inherit;text-decoration:none}
 .kh-diff.up{color:var(--orange)}
 .kh-diff span{display:block;font-size:11px;font-weight:500;color:var(--muted)}
 .kh-chart{margin-top:12px}
+/* Kehityssivun ryhmät: mittaukset ja kyselyt erikseen, rivi auki klikkaamalla. */
+.kh-group{margin-top:22px}
+.kh-glabel{font-family:var(--fl);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:10px}
+.kh-row{width:100%;background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;
+  font-family:inherit;color:var(--ink);text-align:left;margin-bottom:10px}
+.kh-row.open{border-radius:16px 16px 0 0;margin-bottom:0;border-bottom-color:transparent}
+.khr-name{flex:1;min-width:0;font-size:14px;font-weight:600}
+.khr-sub{display:block;font-size:11.5px;font-weight:400;color:var(--muted);margin-top:2px}
+.khr-val{font-size:15px;font-weight:600;flex:none}
+.khr-diff{font-size:12.5px;font-weight:700;color:var(--green-500);flex:none}
+.khr-diff.up{color:var(--orange)}
+.khr-arrow{width:16px;height:16px;flex:none;stroke:var(--muted);fill:none;stroke-width:2.2;
+  transition:transform .18s}
+.kh-row.open .khr-arrow{transform:rotate(90deg)}
+.kh-panel{background:var(--card);border:1px solid var(--line);border-top:none;
+  border-radius:0 0 16px 16px;padding:4px 16px 16px;margin-bottom:10px}
+.qa-row{padding:11px 0;border-bottom:1px solid var(--line)}
+.qa-row:last-child{border-bottom:none}
+.qa-q{font-size:12px;color:var(--muted);line-height:1.45}
+.qa-a{font-size:14px;font-weight:600;margin-top:3px}
+.kh-note{font-size:11.5px;line-height:1.6;color:var(--muted);padding:12px 0 2px}
 .kh-empty{font-size:13px;color:var(--muted);padding:18px 0}
 
 /* ═══════ CHAT ═══════ */
@@ -1609,6 +1632,8 @@ function measInRange(metric){
   if(RANGE>0 && arr.length>RANGE) arr=arr.slice(-RANGE);
   return arr;
 }
+let KH_OPEN={};
+window.toggleKh=function(k){ KH_OPEN[k]=!KH_OPEN[k]; renderKehitys(); };
 window.setRange=function(d){ RANGE=d; renderKehitys(); };
 
 function renderKehitys(){
@@ -1617,13 +1642,22 @@ function renderKehitys(){
   if(rt) rt.innerHTML=RANGES.map(r=>
     `<button class="rg ${r.d===RANGE?'on':''}" onclick="setRange(${r.d})">${r.t}</button>`).join('');
 
+  const arrow=`<svg class="khr-arrow" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg>`;
   const metrics = goals().length
     ? [...new Set(goals().map(g=>g.metric).filter(Boolean))]
     : ['Verenpaine','Paino','Uni'];
-  const cards = metrics.map(m=>{
+
+  /* ── Mittaukset: oikeaa aikasarjaa, joten graafi on mielekäs ── */
+  const measRows = metrics.map(m=>{
+    const key='m:'+m, open=!!KH_OPEN[key];
     const arr=measInRange(m);
-    if(!arr.length) return `<div class="card kh"><div class="kh-top"><h4>${esc(m)}</h4></div>
-      <div class="kh-empty">Ei mittauksia tällä aikavälillä.</div></div>`;
+    const g=goals().find(x=>x.metric===m);
+    const unit=(g&&g.unit)||MEAS_UNIT[m]||'';
+    if(!arr.length){
+      return `<button class="kh-row" onclick="toggleKh('${esc(key)}')">
+        <span class="khr-name">${esc(m)}<span class="khr-sub">Ei mittauksia tällä aikavälillä</span></span>
+        ${arrow}</button>`;
+    }
     const nums=arr.map(x=>numOf(x.value)).filter(n=>n!==null);
     const pair=v=>String(v).split('/').map(x=>parseFloat(String(x).replace(',','.')));
     const isBP = m==='Verenpaine' && String(arr[0].value).includes('/');
@@ -1640,23 +1674,54 @@ function renderKehitys(){
       }
     }
     const diffNum = nums.length>1 ? nums[nums.length-1]-nums[0] : null;
-    const g=goals().find(x=>x.metric===m);
-    const unit=(g&&g.unit)||MEAS_UNIT[m]||'';
     const kind=MEAS_KIND[m]||'line';
     const col=getComputedStyle(document.documentElement).getPropertyValue('--green-700').trim()||'#0a6357';
-    return `<div class="card kh">
-      <div class="kh-top">
-        <div><h4>${esc(m)}${m==='Verenpaine'?' <small>(keskiarvo)</small>':''}</h4>
-          <div class="kh-val">${esc(withUnit(arr[arr.length-1].value, unit))}</div></div>
-        ${diffTxt!==null?`<div class="kh-diff ${(diffNum??0)<=0?'good':'up'}">
-          ${esc(diffTxt)}<span>muutos</span></div>`:''}
-      </div>
+    const head=`<button class="kh-row ${open?'open':''}" onclick="toggleKh('${esc(key)}')">
+      <span class="khr-name">${esc(m)}<span class="khr-sub">${arr.length} mittausta${
+        m==='Verenpaine'?' · keskiarvo':''}</span></span>
+      <span class="khr-val">${esc(withUnit(arr[arr.length-1].value, unit))}</span>
+      ${diffTxt!==null?`<span class="khr-diff ${(diffNum??0)<=0?'':'up'}">${esc(diffTxt)}</span>`:''}
+      ${arrow}</button>`;
+    if(!open) return head;
+    return head+`<div class="kh-panel">
       <div class="kh-chart">${kind==='bar'?barChart(nums,col,110):lineChart(nums,col,110)}</div>
       <div class="chart-x">${arr.filter((_,i)=>i%Math.ceil(arr.length/4)===0)
-        .map(x=>`<span>${esc(x.date||'')}</span>`).join('')}</div>
-    </div>`;
+        .map(x=>`<span>${esc(x.date||'')}</span>`).join('')}</div></div>`;
   }).join('');
-  el.innerHTML=cards;
+
+  /* ── Kyselyt: vastauksia on yksi sarja per hoitopolku, eikä ne ole lukuja.
+     Graafia ei siis piirretä — se vaatisi toistuvan kyselyn ja pisteytyksen. ── */
+  const st=ME.careState||{};
+  const surveys = Object.keys(st).filter(slug=>{
+    const a=st[slug]&&st[slug].answers;
+    return a && Object.keys(a).length && pathTemplate(slug);
+  });
+  const surveyRows = surveys.map(slug=>{
+    const key='q:'+slug, open=!!KH_OPEN[key];
+    const tpl=pathTemplate(slug), a=st[slug].answers||{};
+    const when=st[slug].started_at
+      ? new Date(st[slug].started_at).toLocaleDateString('fi-FI') : '';
+    const head=`<button class="kh-row ${open?'open':''}" onclick="toggleKh('${esc(key)}')">
+      <span class="khr-name">${esc(tpl.name||slug)}<span class="khr-sub">Terveyskysely${
+        when?` · täytetty ${esc(when)}`:''}</span></span>
+      <span class="khr-val">${Object.keys(a).length}</span>
+      ${arrow}</button>`;
+    if(!open) return head;
+    const rows=(tpl.questionnaire||[]).filter(q=>a[q.id]!=null && a[q.id]!=='' &&
+        !(Array.isArray(a[q.id])&&!a[q.id].length))
+      .map(q=>`<div class="qa-row"><div class="qa-q">${esc(q.label)}</div>
+        <div class="qa-a">${esc(Array.isArray(a[q.id])?a[q.id].join(', '):a[q.id])}</div></div>`).join('');
+    return head+`<div class="kh-panel">${rows}
+      <div class="kh-note">Kysely täytetään kerran hoitopolun alussa, joten siitä ei
+      piirretä kehityskäyrää. Vastauksesi näkyvät lääkärille vastaanotolla.</div></div>`;
+  }).join('');
+
+  el.innerHTML =
+    `<div class="kh-group"><div class="kh-glabel">Mittaukset</div>${measRows}</div>` +
+    `<div class="kh-group"><div class="kh-glabel">Kyselyt</div>${
+      surveyRows || `<div class="kh-row" style="cursor:default"><span class="khr-name">
+        Ei täytettyjä kyselyitä<span class="khr-sub">Terveyskysely täytetään hoitopolun alussa</span>
+        </span></div>`}</div>`;
 }
 
 /* ═══ TAVOITTEET (omahoitosuunnitelma) ═══
