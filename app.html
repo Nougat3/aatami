@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <!-- PWA -->
 <link rel="manifest" href="./manifest.webmanifest">
-<meta name="theme-color" content="#100e0b">
+<meta name="theme-color" content="#f5f7f7">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -21,30 +21,39 @@
 <style>
 /* Yhtenäinen tumma teema: tausta, kortit ja palkit samasta sävyasteikosta,
    kulta ainoana korostusvärinä. */
+/* Aatami Omahoito — vaalea ilme, syvä vihreä korostuksena.
+   Värit poimittu suoraan suunnittelumallista. */
 :root{
-  --bg:#0d0b08;
-  --bg-2:#221d16;
-  --card:#16120d;
-  --dark:#12100d;
-  --dark-2:#1b1712;
-  --dark-3:#251f17;
-  --sidebar:#100e0b;
-  --gold:#c9a35c;
-  --gold-hi:#e6c886;
-  --gold-soft:#dcbf85;
-  --ink:#efe9df;
-  --ink-soft:#a79e8e;
-  --muted:#8f8676;
-  --line:rgba(255,255,255,.09);
-  --line-d:rgba(255,255,255,.09);
-  --cream:#efe9df;
-  --cream-d:#b8b0a1;
-  --ok:#6fa585;
-  --ok-soft:#9ad0ae;
-  --warn:#d19559;
-  --warn-soft:#e0a86e;
-  --violet:#a99cd2;
-  --blue:#83a4d0;
+  --bg:#f5f7f7;
+  --bg-2:#eaefed;
+  --card:#ffffff;
+  --green:#014644;        /* päätavoite, alapalkin aktiivi, footer */
+  --green-700:#0a6357;
+  --green-500:#26b046;    /* onnistuminen, kuittaukset */
+  --green-100:#e6f2ec;    /* valmentajan kupla, pehmeät täytöt */
+  --orange:#f27028;
+  --yellow:#f2b919;
+  --purple:#806fce;
+  --blue:#3b82c4;
+  --ink:#12211d;
+  --ink-soft:#55655e;
+  --muted:#8a958f;
+  --line:rgba(1,70,68,.10);
+  --line-d:rgba(255,255,255,.14);
+  --cream:#ffffff;
+  --cream-d:rgba(255,255,255,.72);
+  --dark:#014644;
+  --dark-2:#0a6357;
+  --dark-3:#0f7a68;
+  --sidebar:#014644;
+  --gold:#014644;         /* vanhat gold-viittaukset osoittavat nyt vihreään */
+  --gold-hi:#0a6357;
+  --gold-soft:#2f7d6a;
+  --ok:#26b046;
+  --ok-soft:#1e8f3a;
+  --warn:#f27028;
+  --warn-soft:#d95d18;
+  --violet:#806fce;
   --sb:240px;
   --fd:'Playfair Display',serif;
   --fb:'Inter',sans-serif;
@@ -113,34 +122,34 @@ a{color:inherit;text-decoration:none}
 /* Omahoitosuunnitelman tiili — yksi täysleveä kortti, luetaan vaakasuunnassa. */
 .tiles{margin-bottom:30px}
 .tile{
-  background:linear-gradient(165deg,var(--dark-2),var(--dark));border:1px solid rgba(201,163,92,.14);
-  border-radius:18px;padding:18px 20px;color:var(--cream);
+  background:var(--card);border:1px solid var(--line);
+  border-radius:18px;padding:18px 20px;color:var(--ink);
   cursor:pointer;transition:transform .25s var(--ease),border-color .25s;
   display:flex;align-items:center;gap:16px;
 }
 .tile:hover{transform:translateY(-3px);border-color:rgba(201,163,92,.4)}
-.tile.active-tile{border-color:rgba(201,163,92,.5);background:linear-gradient(165deg,#2a2116,#171009)}
-.tile-ico{width:46px;height:46px;border-radius:13px;background:rgba(201,163,92,.14);display:flex;align-items:center;justify-content:center;flex:none}
-.tile-ico svg{width:24px;height:24px;stroke:var(--gold-hi);fill:none;stroke-width:1.6}
+.tile.active-tile{border-color:var(--green);background:var(--card)}
+.tile-ico{width:46px;height:46px;border-radius:13px;background:var(--green-100);display:flex;align-items:center;justify-content:center;flex:none}
+.tile-ico svg{width:24px;height:24px;stroke:var(--green);fill:none;stroke-width:1.6}
 .tile-txt{flex:1;min-width:0}
 .tile h3{font-size:15px;font-weight:600;line-height:1.3}
-.tile .st{font-size:12px;color:var(--gold-soft);margin-top:4px}
-.tile .go{width:32px;height:32px;border-radius:50%;background:var(--gold);color:#211a0e;display:flex;align-items:center;justify-content:center;flex:none}
+.tile .st{font-size:12px;color:var(--muted);margin-top:4px}
+.tile .go{width:32px;height:32px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
 .tile .go svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2}
 
 /* Row: care path + appointment */
 .row2{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;margin-bottom:16px}
 
-.dcard{background:linear-gradient(160deg,var(--dark-2),var(--dark));border:1px solid var(--line-d);border-radius:18px;padding:22px 24px;color:var(--cream)}
+.dcard{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px 24px;color:var(--ink)}
 .dcard .dc-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .dc-eyebrow{font-family:var(--fl);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-soft)}
 .dc-phase{font-size:12px;color:var(--cream-d)}
 .dcard h3{font-family:var(--fd);font-size:21px;font-weight:600;margin:12px 0 3px}
 .dcard .dc-next{font-size:13px;color:var(--cream-d)}
-.btn-gold{background:linear-gradient(180deg,var(--gold-hi),var(--gold));color:#211a0e;border:none;border-radius:999px;padding:10px 20px;font-weight:600;font-size:13.5px;transition:transform .15s}
+.btn-gold{background:var(--green);color:#fff;border:none;border-radius:999px;padding:10px 20px;font-weight:600;font-size:13.5px;transition:transform .15s}
 .btn-gold:active{transform:scale(.97)}
 .btn-gold.full{width:100%;padding:13px;font-size:14.5px}
-.btn-dark{background:var(--dark-3);color:var(--cream);border:1px solid var(--line-d);border-radius:999px;padding:11px 18px;font-weight:600;font-size:13.5px}
+.btn-dark{background:var(--bg-2);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:11px 18px;font-weight:600;font-size:13.5px}
 .btn-line{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:11px 18px;font-weight:600;font-size:13.5px}
 
 /* Stepper (mini, on dashboard) */
@@ -244,6 +253,67 @@ a{color:inherit;text-decoration:none}
 .grant-row b{display:block;font-size:13.5px;font-weight:600}
 .grant-row span{font-size:11.5px;color:var(--muted)}
 .grant-row .btn-line{padding:7px 14px;font-size:12.5px}
+/* ═══════ TAVOITTEET (mallin mukainen ilme) ═══════ */
+.goal-main{background:var(--green);color:#fff;border-radius:20px;padding:22px 24px;
+  display:flex;align-items:center;gap:18px;margin-top:6px}
+.gm-txt{flex:1;min-width:0}
+.gm-eyebrow{font-family:var(--fl);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:rgba(255,255,255,.62)}
+.goal-main h2{font-size:22px;font-weight:600;line-height:1.25;margin-top:8px;color:#fff}
+.gm-prog{margin-top:14px;font-size:12.5px;color:rgba(255,255,255,.62)}
+.gm-prog b{display:block;color:#fff;font-size:15px;font-weight:600;margin-top:2px}
+.gm-ring{position:relative;flex:none;display:flex;align-items:center;justify-content:center}
+.gm-ring span{position:absolute;font-size:22px;font-weight:700;color:#fff}
+.gm-ring span i{font-style:normal;font-size:12px;font-weight:600}
+.goal-empty{background:var(--card);border:1px solid var(--line);border-radius:20px;
+  padding:30px 26px;text-align:center;margin-top:6px}
+.goal-empty h3{font-family:var(--fd);font-size:20px;font-weight:600}
+.goal-empty p{font-size:13.5px;color:var(--ink-soft);line-height:1.65;margin:8px auto 18px;max-width:340px}
+.btn-green{background:var(--green);color:#fff;border:none;border-radius:999px;
+  padding:12px 24px;font-weight:600;font-size:14px;text-decoration:none;display:inline-block}
+
+.sec-head{font-family:var(--fl);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);margin:26px 0 10px;display:flex;align-items:center;justify-content:space-between}
+.sec-count{color:var(--green-500);font-weight:600;letter-spacing:.06em}
+.sec-list{padding:6px 18px}
+.sgoal{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.sgoal:last-child{border-bottom:none}
+.sg-ico{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;
+  justify-content:center;flex:none}
+.sg-ico svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9}
+.sg-mid{flex:1;min-width:0}
+.sg-lb{font-size:14px;font-weight:600}
+.sg-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.sg-done{width:30px;height:30px;border-radius:50%;background:var(--green-500);flex:none;
+  display:flex;align-items:center;justify-content:center}
+.sg-done svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.6}
+.sg-ring{flex:none;display:flex}
+
+.ttask{display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line);font-size:14px}
+.ttask:last-child{border-bottom:none}
+.tt-box{width:24px;height:24px;flex:none;border-radius:50%;border:1.8px solid var(--line);
+  background:none;display:flex;align-items:center;justify-content:center;padding:0}
+.ttask.done .tt-box{background:var(--green-500);border-color:transparent}
+.tt-box svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2.8}
+.ttask.done span{color:var(--muted)}
+
+/* ═══════ KEHITYS ═══════ */
+.range{display:flex;gap:4px;background:var(--bg-2);border-radius:12px;padding:4px;margin-bottom:18px}
+.rg{flex:1;border:none;background:none;border-radius:9px;padding:9px 6px;font-size:13px;
+  font-weight:600;color:var(--ink-soft);font-family:inherit}
+.rg.on{background:var(--green);color:#fff}
+.kh{margin-bottom:14px}
+.kh-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.kh-top h4{font-size:14px;font-weight:600;color:var(--ink-soft)}
+.kh-top h4 small{font-weight:400;color:var(--muted)}
+.kh-val{font-family:var(--fd);font-size:30px;font-weight:600;margin-top:4px}
+.kh-val small{font-size:14px;color:var(--muted);font-family:var(--fb)}
+.kh-diff{text-align:right;font-size:19px;font-weight:700;color:var(--green-500)}
+.kh-diff.up{color:var(--orange)}
+.kh-diff span{display:block;font-size:11px;font-weight:500;color:var(--muted)}
+.kh-chart{margin-top:12px}
+.kh-empty{font-size:13px;color:var(--muted);padding:18px 0}
+
 /* ═══════ CHAT ═══════ */
 .chat-note{background:rgba(209,149,89,.10);border-left:2px solid var(--warn);
   border-radius:0 12px 12px 0;padding:12px 15px;font-size:12px;line-height:1.65;
@@ -255,7 +325,7 @@ a{color:inherit;text-decoration:none}
 .chat-day{align-self:center;font-size:10.5px;font-family:var(--fl);letter-spacing:.1em;
   text-transform:uppercase;color:var(--muted);margin:10px 0 2px}
 .msg{max-width:82%;border-radius:16px;padding:11px 14px;position:relative}
-.msg.me{align-self:flex-end;background:linear-gradient(180deg,var(--gold-hi),var(--gold));color:#211a0e;
+.msg.me{align-self:flex-end;background:var(--green);color:#fff;
   border-bottom-right-radius:5px}
 .msg.them{align-self:flex-start;background:var(--card);border:1px solid var(--line);
   border-bottom-left-radius:5px}
@@ -271,9 +341,9 @@ a{color:inherit;text-decoration:none}
   font-size:14.5px;line-height:1.5;resize:none;max-height:120px;padding:8px 0}
 .chat-box textarea:focus{outline:none}
 .chat-send{width:40px;height:40px;flex:none;border:none;border-radius:50%;
-  background:linear-gradient(180deg,var(--gold-hi),var(--gold));display:flex;
+  background:var(--green);display:flex;
   align-items:center;justify-content:center}
-.chat-send svg{width:19px;height:19px;stroke:#211a0e;fill:none;stroke-width:1.8;
+.chat-send svg{width:19px;height:19px;stroke:#fff;fill:none;stroke-width:1.8;
   stroke-linejoin:round;margin-left:-2px}
 .nav-badge{background:var(--warn);color:#fff;font-size:10px;font-weight:700;
   min-width:18px;height:18px;border-radius:9px;display:inline-flex;align-items:center;
@@ -289,11 +359,11 @@ a{color:inherit;text-decoration:none}
 .ctrl-row:last-child{border-bottom:none}
 
 /* Nykyinen vaihe — oma kortti, jossa varsinainen tekeminen tapahtuu */
-.now-card{background:linear-gradient(165deg,#221a11,#161009);border:1px solid rgba(201,163,92,.4);
+.now-card{background:var(--green-100);border:1px solid rgba(1,70,68,.18);
   border-radius:18px;padding:22px;margin-top:18px}
 .now-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
-.now-eyebrow{font-family:var(--fl);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-soft)}
-.now-card h2{font-family:var(--fd);font-size:21px;font-weight:600;color:var(--cream);line-height:1.25}
+.now-eyebrow{font-family:var(--fl);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--green-700)}
+.now-card h2{font-family:var(--fd);font-size:21px;font-weight:600;color:var(--ink);line-height:1.25}
 .now-card p{font-size:13.5px;color:var(--ink-soft);line-height:1.65;margin-top:8px}
 
 /* ═══════ HOITOPOLUN KYSELY JA MITTAUSVAIHE ═══════ */
@@ -305,19 +375,19 @@ a{color:inherit;text-decoration:none}
 .crisis-acts a{text-decoration:none;font-size:13px;padding:9px 16px}
 .q-form{margin-top:10px}
 .q-item{margin-bottom:16px}
-.q-item label{display:block;font-size:13px;font-weight:600;color:var(--cream);margin-bottom:8px;line-height:1.4}
+.q-item label{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:8px;line-height:1.4}
 .q-opt-tag{font-weight:400;color:var(--muted)}
 .q-opts{display:flex;flex-wrap:wrap;gap:7px}
 .q-opt{background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink-soft);
   border-radius:999px;padding:8px 14px;font-size:12.5px;font-weight:600;transition:all .18s}
 .q-opt:hover{border-color:rgba(201,163,92,.4)}
-.q-opt.on{background:rgba(201,163,92,.20);border-color:var(--gold);color:var(--gold-hi)}
+.q-opt.on{background:var(--green-100);border-color:var(--green);color:var(--green)}
 .q-item input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;
   padding:10px 13px;color:var(--ink);font-size:14px;font-family:inherit}
 .q-item input:focus{outline:none;border-color:var(--gold)}
 .q-meas{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:13px;padding:13px 15px;margin-top:10px}
 .q-meas.ok{border-color:rgba(111,165,133,.45);background:rgba(111,165,133,.08)}
-.q-meas-t{font-size:13px;font-weight:600;color:var(--cream)}
+.q-meas-t{font-size:13px;font-weight:600;color:var(--ink)}
 .q-meas-s{font-size:11.5px;color:var(--ink-soft);line-height:1.55;margin-top:4px}
 .q-labs{margin:8px 0 0 16px;font-size:12px;color:var(--ink-soft);line-height:1.7}
 
@@ -326,13 +396,13 @@ a{color:inherit;text-decoration:none}
 .oh-sec-t + .oh-grid{margin-bottom:26px}
 .oh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
 .oh-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column}
-.oh-card.active{border-color:rgba(201,163,92,.45);background:linear-gradient(165deg,#221a11,#161009)}
-.oh-card.active h3{color:var(--cream)}
-.oh-card.active .oh-desc{color:var(--cream-d,#c9c2b4)}
+.oh-card.active{border-color:var(--green);background:var(--green-100)}
+.oh-card.active h3{color:var(--ink)}
+.oh-card.active .oh-desc{color:var(--ink-soft)}
 .oh-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.oh-ico{width:46px;height:46px;border-radius:13px;background:rgba(201,163,92,.14);display:flex;align-items:center;justify-content:center}
-.oh-ico svg{width:24px;height:24px;stroke:var(--gold-hi);fill:none;stroke-width:1.6}
-.oh-badge{font-family:var(--fl);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#211a0e;background:linear-gradient(180deg,var(--gold-hi),var(--gold));padding:5px 11px;border-radius:999px;font-weight:700}
+.oh-ico{width:46px;height:46px;border-radius:13px;background:var(--green-100);display:flex;align-items:center;justify-content:center}
+.oh-ico svg{width:24px;height:24px;stroke:var(--green);fill:none;stroke-width:1.6}
+.oh-badge{font-family:var(--fl);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:var(--green);padding:5px 11px;border-radius:999px;font-weight:700}
 .oh-price{font-family:var(--fd);font-size:18px;font-weight:600;color:var(--gold-hi)}
 .oh-card h3{font-size:15.5px;font-weight:600;line-height:1.25}
 .oh-desc{font-size:12.5px;color:var(--ink-soft);line-height:1.6;margin-top:8px;flex:1}
@@ -349,7 +419,7 @@ a{color:inherit;text-decoration:none}
 .oh-intake-head p{font-size:13.5px;color:var(--ink-soft);line-height:1.6;margin-top:8px}
 .oh-check{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:500;margin-top:14px;cursor:pointer}
 .oh-check input{width:17px;height:17px;accent-color:var(--gold)}
-.oh-card.active .oh-check{color:var(--cream)}
+.oh-card.active .oh-check{color:var(--ink)}
 .oh-card.active .btn-line{color:var(--cream);border-color:rgba(239,233,223,.32)}
 .oh-tasks{display:flex;flex-direction:column;gap:2px;margin-top:14px}
 .oh-tasks .oh-check{margin-top:8px}
@@ -471,14 +541,15 @@ a{color:inherit;text-decoration:none}
   .main{margin-left:0;padding:0 16px 116px}
   .topbar{
     display:flex;align-items:center;justify-content:space-between;
-    position:sticky;top:0;z-index:30;background:var(--sidebar);color:var(--cream);
+    position:sticky;top:0;z-index:30;background:var(--bg);color:var(--ink);
+    border-bottom:1px solid var(--line);
     margin:0 -16px 18px;padding:14px 18px;
   }
-  .topbar .logo{font-family:var(--fd);font-size:20px;letter-spacing:.16em;color:var(--cream)}
+  .topbar .logo{font-family:var(--fd);font-size:20px;letter-spacing:.16em;color:var(--green)}
   .topbar .tb-right{display:flex;align-items:center;gap:12px}
-  .topbar .bell{background:rgba(255,255,255,.06);border-color:var(--line-d)}
-  .topbar .bell svg{stroke:var(--cream-d)}
-  .topbar .bell .dot{border-color:var(--sidebar)}
+  .topbar .bell{background:var(--card);border-color:var(--line)}
+  .topbar .bell svg{stroke:var(--ink-soft)}
+  .topbar .bell .dot{border-color:var(--bg)}
   .head{margin-top:6px}
   .head .head-right{display:none}
   .head h1{font-size:25px}
@@ -493,21 +564,21 @@ a{color:inherit;text-decoration:none}
   .botnav{
     display:flex;position:fixed;z-index:40;
     left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));
-    background:rgba(22,18,13,.86);
+    background:rgba(255,255,255,.92);
     -webkit-backdrop-filter:blur(20px) saturate(150%);backdrop-filter:blur(20px) saturate(150%);
-    border:1px solid rgba(255,255,255,.09);border-radius:999px;
+    border:1px solid var(--line);border-radius:999px;
     padding:6px;gap:2px;justify-content:space-between;align-items:center;
-    box-shadow:0 14px 36px -10px rgba(0,0,0,.65);
+    box-shadow:0 12px 32px -10px rgba(1,70,68,.28);
   }
   .bn{
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-    color:var(--cream-d);font-size:9.5px;font-weight:600;background:none;border:none;
+    color:var(--muted);font-size:9.5px;font-weight:600;background:none;border:none;
     padding:9px 6px;flex:1;border-radius:999px;transition:background .2s,color .2s;
   }
   .bn svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7}
-  .bn.on{color:var(--gold-hi);background:rgba(255,255,255,.09)}
-  .bn-add{background:linear-gradient(180deg,var(--gold-hi),var(--gold));color:#211a0e;width:44px;height:44px;border-radius:50%;justify-content:center;flex:none;padding:0;box-shadow:0 6px 16px -4px rgba(201,163,92,.5)}
-  .bn-add svg{width:23px;height:23px;stroke-width:2.2}
+  .bn.on{color:var(--green);background:var(--green-100)}
+  .bn-add{background:var(--green);color:#fff;width:44px;height:44px;border-radius:50%;justify-content:center;flex:none;padding:0;box-shadow:0 6px 16px -4px rgba(201,163,92,.5)}
+  .bn-add svg{width:23px;height:23px;stroke-width:2.2;stroke:#fff}
   .appt-hero .ah-act{margin-left:0;width:100%}
   .stp .lb{font-size:9px;max-width:48px}
 }
@@ -544,6 +615,8 @@ a{color:inherit;text-decoration:none}
     </div>
     <nav class="sb-nav" id="sbNav">
       <a class="sb-link on" data-view="etusivu"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>Etusivu</a>
+      <a class="sb-link" data-view="kehitys"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Kehitys</a>
+      <a class="sb-link" data-view="valmentaja"><svg viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="3"/><circle cx="9" cy="14" r="1.4"/><circle cx="15" cy="14" r="1.4"/><path d="M12 8V4M9 4h6"/></svg>Valmentaja</a>
       <a class="sb-link" data-view="hoitopolut"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.5 6H15a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h6.5"/></svg>Hoitopolku</a>
       <a class="sb-link" data-view="omahoito"><svg viewBox="0 0 24 24"><path d="M9 3h6a1 1 0 0 1 1 1v1h2v16H6V5h2V4a1 1 0 0 1 1-1z"/><path d="M9 5h6M9 11l1.5 1.5L13 10M9 16l1.5 1.5L13 15"/></svg>Omahoito</a>
       <a class="sb-link" data-view="mittaukset"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 3 4-6"/></svg>Mittaukset</a>
@@ -551,7 +624,7 @@ a{color:inherit;text-decoration:none}
       <a class="sb-link" data-view="vastaanotot"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/></svg>Vastaanotot</a>
       <a class="sb-link" data-view="laakitys"><svg viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="11" rx="3"/><path d="M12 9v11M8 5h8l-1 4H9z"/></svg>Lääkitys</a>
       <a class="sb-link" data-view="viestit"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>Viestit</a>
-      <a class="sb-link" data-view="profiili"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>Profiili</a>
+      <a class="sb-link" data-view="mina"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>Profiili</a>
     </nav>
     <div class="sb-help">
       <svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 16 0v5a3 3 0 0 1-3 3h-1v-6h4M8 20H7a3 3 0 0 1-3-3v-5h4z"/></svg>
@@ -583,21 +656,27 @@ a{color:inherit;text-decoration:none}
         </div>
       </div>
 
-      <div class="section-title first">Oma omahoitosuunnitelma</div>
-      <div class="tiles" id="tiles"></div>
+      <div id="primaryGoal"></div>
+      <div id="secondaryGoals"></div>
+      <div id="todayTasks"></div>
 
-      <div class="row2">
-        <!-- Active care path (dynaaminen) -->
+      <div class="row2" style="margin-top:22px">
         <div class="dcard" id="pathCard"></div>
-        <!-- Seuraava tehtävä (dynaaminen) -->
         <div class="dcard" id="nextTaskCard"></div>
       </div>
+    </section>
 
-      <!-- Metric cards (desktop) -->
-      <div class="metrics hide-mobile" id="metricCards"></div>
+    <!-- ═══════════ KEHITYS ═══════════ -->
+    <section class="view" data-view="kehitys">
+      <div class="head"><div><h1>Kehitykseni</h1><div class="sub">Seuraa arvojasi ajan yli.</div></div></div>
+      <div class="range" id="rangeTabs"></div>
+      <div id="kehitysCards"></div>
+    </section>
 
-      <!-- Pikakatsaus (mobile) -->
-      <div class="quick" id="quick"></div>
+    <!-- ═══════════ VALMENTAJA ═══════════ -->
+    <section class="view" data-view="valmentaja">
+      <div class="head"><div><h1>Aatami-valmentajasi</h1><div class="sub">Huomioita omista mittauksistasi.</div></div></div>
+      <div id="coachBody"></div>
     </section>
 
     <!-- ═══════════ HOITOPOLKU (lääkärin luoma) ═══════════ -->
@@ -668,7 +747,7 @@ a{color:inherit;text-decoration:none}
     </section>
 
     <!-- ═══════════ PROFIILI ═══════════ -->
-    <section class="view" data-view="profiili">
+    <section class="view" data-view="mina">
       <div class="head"><div><h1>Profiili</h1><div class="sub">Omat tietosi ja asetukset.</div></div></div>
       <div class="profile-head">
         <div class="avatar"></div>
@@ -696,10 +775,10 @@ a{color:inherit;text-decoration:none}
 <!-- ═══ BOTTOM NAV (mobile) ═══ -->
 <nav class="botnav" id="botNav">
   <button class="bn on" data-view="etusivu"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>Etusivu</button>
-  <button class="bn" data-view="hoitopolut"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.5 6H15a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h6.5"/></svg>Hoitopolku</button>
+  <button class="bn" data-view="kehitys"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Kehitys</button>
   <button class="bn bn-add" onclick="openAdd()" aria-label="Lisää mittaus"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
   <button class="bn" data-view="viestit"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>Viestit</button>
-  <button class="bn" data-view="profiili"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>Profiili</button>
+  <button class="bn" data-view="mina"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>Minä</button>
 </nav>
 
 <!-- ═══ ADD MEDICATION MODAL ═══ -->
@@ -974,8 +1053,9 @@ function renderMiniStepper(slug){
   }).join('');
 }
 function renderMetricCards(){
+  const el=$('#metricCards'); if(!el) return;   // etusivu korvattu tavoitenäkymällä
   const keys=['Verenpaine','Paino','Uni'];
-  $('#metricCards').innerHTML = keys.map(k=>{
+  el.innerHTML = keys.map(k=>{
     const m=MEAS[k];
     if(!m || m.empty){
       return `<div class="metric"><div class="m-top"><span class="m-name">${k}</span></div>
@@ -991,6 +1071,7 @@ function renderMetricCards(){
   }).join('');
 }
 function renderQuick(){
+  if(!$('#quick')) return;   // etusivu korvattu tavoitenäkymällä
   const newLabs = (ME.labs||[]).filter(l=>l.is_new).length;
   const items = ['Verenpaine','Paino','Uni'].map(k=>{
     const m=MEAS[k];
@@ -1439,6 +1520,8 @@ function go(view){
   if(view==='hoitopolut') renderPathDetail();
   if(view==='omahoito') renderOmahoito();
   if(view==='vastaanotot') renderApptTasks();
+  if(view==='kehitys') renderKehitys();
+  if(view==='valmentaja') renderCoach();
   if(view==='viestit'){ renderChat(); markChatRead(); }
   if(view==='mittaukset'){ renderMeasTabs(); renderMeasBlock(); }
   if(view==='laboratoriot') renderLabs();
@@ -1476,6 +1559,195 @@ async function saveMeds(){
   const {error}=await sb.from('patient_profiles').upsert({
     user_id:ME.userId, medications:ME.meds, updated_at:new Date().toISOString()});
   if(error){ console.error('meds save failed',error); toast('Tallennus epäonnistui.'); }
+}
+
+/* ═══ KEHITYS ═══ Aikaväli rajaa mittaukset; kortit tulevat tavoitteista. */
+let RANGE = 28; // päivää
+const RANGES=[{d:7,t:'7 pv'},{d:28,t:'4 vk'},{d:84,t:'12 vk'},{d:0,t:'Kaikki'}];
+
+function measInRange(metric){
+  let arr=(ME.measurements||[]).filter(x=>x.type===metric);
+  if(RANGE>0 && arr.length>RANGE) arr=arr.slice(-RANGE);
+  return arr;
+}
+window.setRange=function(d){ RANGE=d; renderKehitys(); };
+
+function renderKehitys(){
+  const el=$('#kehitysCards'); if(!el) return;
+  const rt=$('#rangeTabs');
+  if(rt) rt.innerHTML=RANGES.map(r=>
+    `<button class="rg ${r.d===RANGE?'on':''}" onclick="setRange(${r.d})">${r.t}</button>`).join('');
+
+  const metrics = goals().length
+    ? [...new Set(goals().map(g=>g.metric).filter(Boolean))]
+    : ['Verenpaine','Paino','Uni'];
+  const cards = metrics.map(m=>{
+    const arr=measInRange(m);
+    if(!arr.length) return `<div class="card kh"><div class="kh-top"><h4>${esc(m)}</h4></div>
+      <div class="kh-empty">Ei mittauksia tällä aikavälillä.</div></div>`;
+    const nums=arr.map(x=>numOf(x.value)).filter(n=>n!==null);
+    const pair=v=>String(v).split('/').map(x=>parseFloat(String(x).replace(',','.')));
+    const isBP = m==='Verenpaine' && String(arr[0].value).includes('/');
+    let diffTxt=null;
+    if(arr.length>1){
+      if(isBP){
+        const a=pair(arr[0].value), b=pair(arr[arr.length-1].value);
+        if(a.length>1&&b.length>1&&!isNaN(a[1])&&!isNaN(b[1]))
+          diffTxt=`${b[0]-a[0]>0?'+':''}${Math.round(b[0]-a[0])} / ${b[1]-a[1]>0?'+':''}${Math.round(b[1]-a[1])}`;
+      }
+      if(diffTxt===null && nums.length>1){
+        const d=nums[nums.length-1]-nums[0];
+        diffTxt=`${d>0?'+':''}${Math.round(d*10)/10}`;
+      }
+    }
+    const diffNum = nums.length>1 ? nums[nums.length-1]-nums[0] : null;
+    const g=goals().find(x=>x.metric===m);
+    const unit=(g&&g.unit)||MEAS_UNIT[m]||'';
+    const kind=MEAS_KIND[m]||'line';
+    const col=getComputedStyle(document.documentElement).getPropertyValue('--green-700').trim()||'#0a6357';
+    return `<div class="card kh">
+      <div class="kh-top">
+        <div><h4>${esc(m)}${m==='Verenpaine'?' <small>(keskiarvo)</small>':''}</h4>
+          <div class="kh-val">${esc(withUnit(arr[arr.length-1].value, unit))}</div></div>
+        ${diffTxt!==null?`<div class="kh-diff ${(diffNum??0)<=0?'good':'up'}">
+          ${esc(diffTxt)}<span>muutos</span></div>`:''}
+      </div>
+      <div class="kh-chart">${kind==='bar'?barChart(nums,col,110):lineChart(nums,col,110)}</div>
+      <div class="chart-x">${arr.filter((_,i)=>i%Math.ceil(arr.length/4)===0)
+        .map(x=>`<span>${esc(x.date||'')}</span>`).join('')}</div>
+    </div>`;
+  }).join('');
+  el.innerHTML=cards;
+}
+
+/* ═══ TAVOITTEET (omahoitosuunnitelma) ═══
+   Muoto: omahoito.goals = [{id, primary, label, metric, target, op, unit,
+   start, icon, color}]. Edistyminen lasketaan OIKEASTA mittausdatasta —
+   ei erillistä itseraportoitua lukua. */
+const GOAL_ICON = {
+  heart:'<path d="M20.8 8.6a5 5 0 0 0-8.1-1.5L12 7.8l-.7-.7a5 5 0 1 0-7.1 7.1l7.1 7 .7.7.7-.7 7.1-7a5 5 0 0 0 1-5.6z"/>',
+  scale:'<circle cx="12" cy="12" r="9"/><path d="M12 12l4-4"/><path d="M12 3v2"/>',
+  run:'<circle cx="15" cy="4.5" r="2"/><path d="M8 21l3-5-2.5-3 1-5 3.5 2 2.5 2M6 11l3-2M14 21l2-4"/>',
+  moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+  drop:'<path d="M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11z"/>',
+};
+/* Arvo voi sisältää yksikön valmiiksi ("7 h 22 min") — ei lisätä toista. */
+function withUnit(v,unit){
+  const sv=String(v);
+  return (!unit || /[a-zA-ZäöÄÖ]/.test(sv)) ? sv : sv+' '+unit;
+}
+function goals(){ return ((ME.omahoito||{}).goals)||[]; }
+
+/* Verenpaine vertaillaan systolisesta; muut suoraan luvusta. */
+function numOf(v){
+  if(v==null) return null;
+  const m=String(v).match(/-?\d+([.,]\d+)?/);
+  return m ? parseFloat(m[0].replace(',','.')) : null;
+}
+function latestFor(metric){
+  const arr=(ME.measurements||[]).filter(x=>x.type===metric);
+  return arr.length ? arr[arr.length-1].value : null;
+}
+/* Palauttaa {current, pct, reached} — pct = matka alusta tavoitteeseen. */
+function goalProgress(g){
+  const cur = latestFor(g.metric);
+  if(cur==null) return {current:null, pct:0, reached:false};
+  const c=numOf(cur), t=numOf(g.target), st=numOf(g.start);
+  if(c==null||t==null) return {current:cur, pct:0, reached:false};
+  const lower = (g.op||'lte')==='lte';
+  const reached = lower ? c<=t : c>=t;
+  let pct=0;
+  if(st!=null && st!==t){
+    pct = Math.round(((st-c)/(st-t))*100);
+  } else {
+    pct = reached?100:Math.round((lower? t/c : c/t)*100);
+  }
+  return {current:cur, pct:Math.max(0,Math.min(100,pct)), reached};
+}
+function ring(pct, size, stroke, color, track){
+  const r=(size-stroke)/2, C=2*Math.PI*r;
+  return `<svg viewBox="0 0 ${size} ${size}" style="width:${size}px;height:${size}px">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${track||'rgba(1,70,68,.13)'}" stroke-width="${stroke}"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}"
+      stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct/100)}"
+      transform="rotate(-90 ${size/2} ${size/2})"/></svg>`;
+}
+
+function renderPrimaryGoal(){
+  const el=$('#primaryGoal'); if(!el) return;
+  const g=goals().find(x=>x.primary);
+  if(!g){
+    el.innerHTML=`<div class="goal-empty">
+      <h3>Ei omahoitosuunnitelmaa</h3>
+      <p>Lääkärisi asettaa tavoitteesi etävastaanotolla. Sen jälkeen näet tästä
+      edistymisesi ja päivän tehtävät.</p>
+      <a class="btn-green" href="./index.html#etavastaanotot" target="_blank" rel="noopener">Varaa etävastaanotto →</a>
+    </div>`;
+    return;
+  }
+  const p=goalProgress(g);
+  el.innerHTML=`<div class="goal-main">
+    <div class="gm-txt">
+      <span class="gm-eyebrow">Päätavoite</span>
+      <h2>${esc(g.label)}</h2>
+      ${g.start&&p.current?`<div class="gm-prog"><span>Edistyminen</span>
+        <b>${esc(g.start)} → ${esc(p.current)}</b></div>`:''}
+    </div>
+    <div class="gm-ring">${ring(p.pct,96,9,'#7ee0a8','rgba(255,255,255,.18)')}<span>${p.pct}<i>%</i></span></div>
+  </div>`;
+}
+
+function renderSecondaryGoals(){
+  const el=$('#secondaryGoals'); if(!el) return;
+  const list=goals().filter(g=>!g.primary);
+  if(!list.length){ el.innerHTML=''; return; }
+  el.innerHTML=`<div class="sec-head">Toissijaiset tavoitteet</div>
+  <div class="card sec-list">${list.map(g=>{
+    const p=goalProgress(g);
+    const col=`var(--${g.color||'green-500'})`;
+    return `<div class="sgoal">
+      <div class="sg-ico" style="background:${col}1f;color:${col}">
+        <svg viewBox="0 0 24 24">${GOAL_ICON[g.icon]||GOAL_ICON.heart}</svg></div>
+      <div class="sg-mid">
+        <div class="sg-lb">${esc(g.label)}</div>
+        <div class="sg-sub">${p.current!=null?esc(withUnit(p.current,g.unit)):'Ei mittausta'}${
+          g.target?` / ${esc(withUnit(g.target,g.unit))}`:''}</div>
+      </div>
+      ${p.reached
+        ? `<div class="sg-done"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></div>`
+        : `<div class="sg-ring">${ring(p.pct,30,3.5,col)}</div>`}
+    </div>`;
+  }).join('')}</div>`;
+}
+
+/* Päivän tehtävät: lääkärin hoitopolun tehtävistä, jotka erääntyvät tänään
+   tai ovat myöhässä. Ei erillistä keksittyä listaa. */
+function todaysTasks(){
+  const slug=activePathSlug(); if(!slug) return [];
+  const st=pathState(slug); const tasks=((st.plan||{}).tasks)||[];
+  const today=new Date(); today.setHours(0,0,0,0);
+  return tasks.filter(t=>{
+    if(isTaskDone(t)) return true;
+    if(!t.due_date) return true;
+    return new Date(t.due_date+'T00:00:00')<=today;
+  });
+}
+function renderTodayTasks(){
+  const el=$('#todayTasks'); if(!el) return;
+  const list=todaysTasks();
+  if(!list.length){ el.innerHTML=''; return; }
+  const done=list.filter(isTaskDone).length;
+  el.innerHTML=`<div class="sec-head">Tänään <span class="sec-count">${done} / ${list.length} tehtävästä</span></div>
+  <div class="card sec-list">${list.map(t=>{
+    const d=isTaskDone(t);
+    const auto=t.type==='measurement'&&t.meas_type;
+    return `<div class="ttask ${d?'done':''}">
+      <button class="tt-box" ${auto?'disabled':''} onclick="toggleCareTask('${t.id}')"
+        aria-label="${d?'Tehty':'Merkitse tehdyksi'}">
+        ${d?'<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>':''}</button>
+      <span>${esc(t.label)}</span>
+    </div>`;
+  }).join('')}</div>`;
 }
 
 /* ═══ VIESTIT ═══
@@ -1634,6 +1906,7 @@ function renderAll(){
   buildMeasurements();
   buildLabs();
   renderProfileBits();
+  renderPrimaryGoal(); renderSecondaryGoals(); renderTodayTasks();
   renderTiles(); renderPathCard(); renderNextTaskCard(); renderApptTasks(); renderPathDetail(); renderOmahoito();
   renderMetricCards(); renderQuick();
   renderMeasTabs(); renderMeasBlock();
