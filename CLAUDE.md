@@ -215,9 +215,15 @@ Tämä jako on perustavanlaatuinen eikä pelkkä UI-yksityiskohta:
   (hoitosuunnitelma) sekä vaiheissa 8–9 (kontrolli, päätös). Palvelin
   pakottaa tämän rajan: `advance_care_path` heittää virheen jos potilas
   yrittää edetä vaiheesta 5 eteenpäin.
-- **Omahoito** = lääkkeetön, potilaan itse ostama ja etenevä ohjelma:
-  liikunta, ravitsemus, stressinhallinta, uni. Turvallista tarjota suoraan
-  ilman lääkärin väliintuloa, koska ei sisällä kliinistä päätöksentekoa.
+- **Omahoito** = potilaan itse ostama ja etenevä ohjelma: liikunta,
+  ravitsemus, stressinhallinta, uni — ja **päätöksellä 2026-08-17** myös
+  potilaan oma raportointi käytössä olevasta lääkkeestä ja sen koetusta
+  vaikutuksesta (esim. "erektiolääke tuntui auttavan tänään": kyllä/ei/
+  jonkin verran). Raja ei ole "lääkkeetön" vaan **ei kliinistä
+  päätöksentekoa**: potilas voi *kirjata* lääkkeen ja oman kokemuksensa
+  siitä, mutta omahoito ei koskaan **aloita, lopeta, vaihda tai annostele**
+  lääkitystä — se on aina hoitopolku ja lääkärin päätös. Sama raja kuin
+  `patient_profiles.medications`-listalla: potilas listaa, lääkäri päättää.
 
 Sama potilas voi olla yhtä aikaa sekä aktiivisessa hoitopolussa (esim.
 Verenpaine: lääkäri seuraa verikokeita ja lääkitystä) että vastaavassa
@@ -328,6 +334,41 @@ Näiden sulkeminen tekee "lääkäri näkee kaiken ja voi luoda hoitopolun"
 **Silmukka on nyt kokonainen**: potilas valitsee polun → kysely →
 mittaukset → etävastaanotto → lääkäri kirjoittaa suunnitelman → seuranta
 → kontrolli → polku päättyy tai jatkuu.
+
+## Uudelleenpositiointi: miesten terveys (päätetty 2026-08-17, kesken)
+
+Aatami siirtyy yleislääkäripalvelusta **miesten terveyden** (n. 30–70 v.)
+digipalveluksi — "Seuraa. Ymmärrä. Hoida." Päätös on tehty, mutta
+**toteutus on kesken**: nettisivun (`index.html`) yleiskuvaus, otsikot ja
+palvelukuvaus ovat yhä vanhalla yleislääkäri-sanamuodolla eivätkä ole vielä
+päivittyneet tähän. Älä oleta positiointia valmiiksi vain siksi että tämä
+rivi on kirjoitettu — tarkista `index.html` erikseen. Positioinnin ja markkinointitekstin lopullinen sanamuoto kuuluu alla olevan
+"Sisältöperiaate"-kohdan alle: käyttäjä (lääkäri) kirjoittaa sen itse.
+
+Kuusi pääaluetta ja niiden nykyinen arkkitehtuurikartoitus:
+
+| Alue | Malli | Tila |
+|---|---|---|
+| Verenpaine | Hoitopolku + Omahoito | Valmis |
+| Paino | Omahoito | Valmis (moduuli), lääkitysseuranta puuttuu |
+| Jaksaminen | `survey_templates` (slug `jaksaminen`) | Valmis — 5 osa-aluetta, asteikko 1–5, ei kriisitarkistusta |
+| Erektio | Uusi omahoito-tyylinen oireseuranta + lääkevaikutuksen itseraportointi | Ei aloitettu |
+| Eturauhanen/virtsaaminen | `survey_templates`, validoitu **IPSS**-mittari | Ei aloitettu — IPSS:n kysymykset ja pisteytys on tarkistettava virallisesta lähteestä, ei arvattava |
+| Hiustenlähtö | Valokuvaseuranta | Ei aloitettu — vaatii uuden kyvykkyyden (kuvatallennus), ei istu kysely- tai mittausmalliin sellaisenaan |
+
+Rakennusjärjestys päätetty: Jaksaminen ensin (valmis), sitten
+Eturauhanen/IPSS ja Erektio, Hiustenlähtö erikseen omana, isompana
+tehtävänään.
+
+### Kyselymoottori on nyt geneerinen (`survey_templates.options`)
+
+PHQ-9:n kiinteä "kuinka usein" -asteikko ei sovi kaikkiin kyselyihin.
+Vastausvaihtoehdot ovat nyt `survey_templates.options`-sarakkeessa (jsonb),
+ei koodissa — jokainen kysely voi määritellä oman asteikkonsa. Uusi kysely
+(esim. tuleva IPSS) ilmestyy potilaan plus-valikon kyselyvalitsimeen heti
+kun rivi lisätään `survey_templates`-tauluun, ei vaadi koodimuutosta.
+`crisis_item`/`crisis_note` on edelleen vain PHQ-9:n kaltaisille kyselyille
+joissa on itsetuhoisuuskysymys — muut kyselyt jättävät sen tyhjäksi.
 
 ## Omahoidon seuraavat laajennukset (kun runko on validoitu)
 
