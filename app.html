@@ -976,7 +976,18 @@ function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,
 let viewingPathSlug = null;
 
 function pathTemplate(slug){ return ME.pathTemplates.find(t=>t.slug===slug); }
-function pathState(slug){ return (ME.careState||{})[slug]; }
+/* Kannassa on kahden sukupolven hoitopolkurivejä: nykyinen {step, answers, ...}
+   ja vanha {current, started} 7-vaiheisen mallin ajalta. Ilman normalisointia
+   käyttöliittymä näytti "vaihe undefined/9". Vanhan rivin vaihetta EI arvata
+   uudeksi — puuttuva vaihe on 1, eli polku alkaa alusta uudessa mallissa. */
+function pathState(slug){
+  const st=(ME.careState||{})[slug];
+  if(!st) return st;
+  if(typeof st.step!=='number' || !isFinite(st.step)){
+    return { ...st, step:1, _legacy:true };
+  }
+  return st;
+}
 function activePathSlug(){
   const st=ME.careState||{};
   return Object.keys(st).find(k => (st[k].status||'active')==='active' && pathTemplate(k)) || null;
