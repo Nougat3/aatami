@@ -909,11 +909,20 @@ html{ -webkit-text-size-adjust:100%; text-size-adjust:100% }
       <span class="po-ico"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 3 4-6"/></svg></span>
       <span class="po-mid"><b>Lisää mittaus</b><i>Verenpaine, paino, uni, verensokeri…</i></span>
       <svg class="po-arrow" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
-    <button class="plus-opt" onclick="closePlus();openSurvey('phq9')">
+    <button class="plus-opt" onclick="closePlus();openSurveyPicker()">
       <span class="po-ico"><svg viewBox="0 0 24 24"><path d="M9 3h6a1 1 0 0 1 1 1v1h2v16H6V5h2V4a1 1 0 0 1 1-1z"/><path d="M9 11l1.5 1.5L13 10M9 16l1.5 1.5L13 15"/></svg></span>
-      <span class="po-mid"><b>Täytä kysely</b><i>Mielialakysely (PHQ-9)</i></span>
+      <span class="po-mid"><b>Täytä kysely</b><i>Mieliala, jaksaminen…</i></span>
       <svg class="po-arrow" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
     <button class="modal-x" onclick="closePlus()">Peruuta</button>
+  </div>
+</div>
+
+<!-- ═══ KYSELYVALITSIN ═══ -->
+<div class="modal-bg" id="surveyPickBg">
+  <div class="modal">
+    <h3>Mikä kysely?</h3>
+    <div id="surveyPickList"></div>
+    <button class="modal-x" onclick="closeSurveyPicker()">Peruuta</button>
   </div>
 </div>
 
@@ -953,7 +962,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 
 /* Potilaan oma data (ladataan Supabasesta kirjautumisen jälkeen).
    omahoito = { purchased, purchased_at, price_paid_eur, goals:[{module,target}], modules:{slug:{week,tasks_done,completed}} } */
-const ME = { userId:null, email:"", name:"", firstName:"", initials:"", meds:[], measurements:[], careState:{}, labs:[], omahoitoModules:[], omahoito:{}, pathTemplates:[], grants:[], surveys:[] };
+const ME = { userId:null, email:"", name:"", firstName:"", initials:"", meds:[], measurements:[], careState:{}, labs:[], omahoitoModules:[], omahoito:{}, pathTemplates:[], grants:[], surveys:[], surveyTemplates:[] };
 /* Moduulikohtaiset ikonit (omahoito_modules.slug → svg). Lisää tähän kun uusia moduuleita julkaistaan. */
 const MODULE_ICON = {
   "verenpaine":'<path d="M20.8 8.6a5 5 0 0 0-8.1-1.5L12 7.8l-.7-.7a5 5 0 1 0-7.1 7.1l7.1 7 .7.7.7-.7 7.1-7a5 5 0 0 0 1-5.6z"/><path d="M3 12h4l2-3 3 6 2-3h4"/>',
@@ -1791,7 +1800,7 @@ function renderKehitys(){
     const last=rows[rows.length-1];
     const nums=rows.map(r=>r.score);
     const diff = nums.length>1 ? nums[nums.length-1]-nums[0] : null;
-    const nimi = slug==='phq9' ? 'Mielialakysely (PHQ-9)' : slug;
+    const nimi = (ME.surveyTemplates||[]).find(t=>t.slug===slug)?.name || slug;
     const col=getComputedStyle(document.documentElement).getPropertyValue('--violet').trim()||'#806fce';
     const head=`<button class="kh-row ${open?'open':''}" onclick="toggleKh('${esc(key)}')">
       <span class="khr-name">${esc(nimi)}<span class="khr-sub">${rows.length} täyttökerta${
@@ -1831,9 +1840,9 @@ function renderKehitys(){
   el.innerHTML =
     `<div class="kh-group"><div class="kh-glabel">Mittaukset</div>${measRows}</div>` +
     `<div class="kh-group"><div class="kh-glabel">Kyselyt</div>${
-      (scoredRows + surveyRows) || `<button class="kh-row" onclick="openSurvey('phq9')">
+      (scoredRows + surveyRows) || `<button class="kh-row" onclick="openSurveyPicker()">
         <span class="khr-name">Ei täytettyjä kyselyitä<span class="khr-sub">
-        Täytä mielialakysely plus-painikkeesta</span></span>${arrow}</button>`}</div>`;
+        Täytä kysely plus-painikkeesta</span></span>${arrow}</button>`}</div>`;
 }
 
 /* ═══ TAVOITTEET (omahoitosuunnitelma) ═══
@@ -2208,8 +2217,26 @@ $('#plusBg').addEventListener('click',e=>{ if(e.target.id==='plusBg') closePlus(
    Kriisiohje johdetaan vastauksesta (crisis_item > 0), EI mallista eikä
    pistesummasta — sama periaate kuin chatin sanastossa. */
 let SURVEY=null, SV_ANSWERS={};
-const SV_OPTS=[{label:'Ei lainkaan',value:0},{label:'Useana päivänä',value:1},
-  {label:'Suurimpana osana päiviä',value:2},{label:'Lähes joka päivä',value:3}];
+
+
+/* Kyselyvalitsin: lista aktiivisista kyselymalleista. Uusi kysely (esim.
+   tuleva IPSS) ilmestyy tähän automaattisesti kun rivi lisätään
+   survey_templates-tauluun — ei vaadi koodimuutosta. */
+window.openSurveyPicker=function(){
+  const el=$('#surveyPickList');
+  const list=ME.surveyTemplates||[];
+  el.innerHTML = list.length ? list.map(t=>`
+    <button class="plus-opt" onclick="closeSurveyPicker();openSurvey('${esc(t.slug)}')">
+      <span class="po-ico"><svg viewBox="0 0 24 24"><path d="M9 3h6a1 1 0 0 1 1 1v1h2v16H6V5h2V4a1 1 0 0 1 1-1z"/><path d="M9 11l1.5 1.5L13 10M9 16l1.5 1.5L13 15"/></svg></span>
+      <span class="po-mid"><b>${esc(t.name)}</b></span>
+      <svg class="po-arrow" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>`).join('')
+    : `<p style="font-size:13px;color:var(--ink-soft)">Ei kyselyitä saatavilla juuri nyt.</p>`;
+  $('#surveyPickBg').classList.add('open'); document.body.style.overflow='hidden';
+};
+window.closeSurveyPicker=function(){
+  $('#surveyPickBg').classList.remove('open'); document.body.style.overflow='';
+};
+$('#surveyPickBg').addEventListener('click',e=>{ if(e.target.id==='surveyPickBg') closeSurveyPicker(); });
 
 window.openSurvey=async function(slug){
   const {data,error}=await sb.from('survey_templates').select('*').eq('slug',slug).maybeSingle();
@@ -2258,7 +2285,7 @@ function renderSurvey(){
         <a class="sec" href="tel:0925250111">Kriisipuhelin 09 2525 0111</a></div></div>`:''}
     ${items.map(q=>`<div class="sv-item">
       <div class="sv-q">${esc(q.label)}</div>
-      <div class="sv-opts">${SV_OPTS.map(o=>`
+      <div class="sv-opts">${(SURVEY.options||[]).map(o=>`
         <button class="sv-opt ${SV_ANSWERS[q.id]===o.value?'on':''}"
           onclick="svPick('${esc(q.id)}',${o.value})">${esc(o.label)}</button>`).join('')}</div>
     </div>`).join('')}
@@ -2424,6 +2451,8 @@ async function loadPatient(){
   ME.pathTemplates=paths||[];
   const {data:grants}=await sb.from("care_access_grants").select("*").order("created_at",{ascending:false});
   ME.grants=grants||[];
+  const {data:surveyTpls}=await sb.from("survey_templates").select("slug,name,sort_order").order("sort_order");
+  ME.surveyTemplates=surveyTpls||[];
   return true;
 }
 async function enterApp(){
