@@ -993,7 +993,13 @@ function pathState(slug){
   const st=(ME.careState||{})[slug];
   if(!st) return st;
   if(typeof st.step!=='number' || !isFinite(st.step)){
-    return { ...st, step:1, _legacy:true };
+    // start_care_path asettaa uuden polun aina suoraan vaiheeseen 3 — vaiheet
+    // 1-2 (valinta, tunnistautuminen) eivät koskaan ole tallennettuja arvoja,
+    // ne katsotaan valmiiksi heti aloitushetkellä. advance_care_path olettaa
+    // saman: coalesce((v_cur->>'step')::int, 3). Oletusarvo 1 (aiempi versio
+    // tästä korjauksesta) jätti potilaan jumiin vaiheeseen jolla ei ole
+    // yhtään toimintopainiketta — polku ei edennyt koskaan.
+    return { ...st, step:3, _legacy:true };
   }
   return st;
 }
