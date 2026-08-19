@@ -290,18 +290,56 @@ Sekä vaihe 4 että `measurement`-tyyppiset tehtävät kuittautuvat **oikeasta
 mittausdatasta** (lasketaan `measurements`-listasta), ei potilaan rastista.
 
 `omahoito_modules` (julkinen luku aktiivisille): `slug, name, goal_label,
-target_unit, default_target, price_eur, weeks jsonb, is_active,
-sort_order`. `weeks` on 12 alkion taulukko: `{week, theme, body,
-tasks:[{id,label}]}` per viikko — tähän lääkäri kirjoittaa/muokkaa
-sisällön suoraan (SQL tai myöhempi editori), ei koodimuutosta.
+target_unit, default_target, price_eur, weeks jsonb, is_active, sort_order,
+goal_kind, goal_metric, goal_unit, goal_op`. `weeks` on 12 alkion taulukko:
+`{week, theme, body, tasks:[{id,label}]}` per viikko — tähän lääkäri
+kirjoittaa/muokkaa sisällön suoraan (SQL tai myöhempi editori), ei
+koodimuutosta.
+
+**`goal_kind`** (`'metric' | 'frequency' | 'habit'`, oletus `'metric'`)
+määrää miten moduulin tavoitteen edistymistä lasketaan (`goalProgress()`
+app.html:ssä):
+- `metric` — mittarin viimeisin arvo vs. tavoite (Verenpaine, Paino, Uni).
+  `goal_metric` on mittaustyypin nimi (esim. `'Verenpaine'`), `goal_op`
+  `'lte'`/`'gte'` kertoo kumpi suunta on parempi.
+- `frequency` — tämän kalenteriviikon (ma–su) `goal_metric`-mittausten
+  summa vs. viikkotavoite (esim. "Liikunta 150 min/vko"). Patient syöttää
+  viikkotavoitteen `target`-kenttään ostohetkellä samalla tavalla kuin
+  metric-moduulien kohdearvon.
+- `habit` — päiviä `since`-päivämäärästä, **ei prosenttilukua**. Mikään
+  kiinteä "valmis"-piste (esim. "30 päivää savuton") ei olisi kliinisesti
+  perusteltu ilman lääkärin arviota, joten sitä ei keksitä UI:hin.
+  `overallGoalProgress()` jättää habit-tavoitteet pois keskiarvosta.
+
+Toistaiseksi vain `verenpaine`-rivillä on `goal_kind='metric'` asetettu.
+**Liikunta- ja habit-tyyppisiä moduuleja (esim. tupakoinnin lopetus) ei ole
+vielä olemassa** — tekninen tuki on valmis, mutta niiden sisällön
+(nimi, viikko-ohjelma, hinta) kirjoittaa lääkäri samaan tapaan kuin
+Verenpaine oli alussa ainoa täytetty rivi.
 
 `purchase_omahoito_plan(p_modules)`-RPC (SECURITY DEFINER) laskee hinnan
-palvelimella `omahoito_modules`-taulusta ja kirjoittaa
-`patient_profiles.omahoito`:n — sama luottamusperiaate kuin
-`place_order`:ssa, client ei koskaan päätä hintaa. Tehtävien
-kuittaus/viikon eteneminen sen jälkeen on suora client-side
-`patient_profiles`-päivitys (RLS: owner-only update), sama malli kuin
-hoitopolun `saveCareState()`.
+palvelimella `omahoito_modules`-taulusta, kopioi moduulin
+`goal_kind/goal_metric/goal_unit/goal_op/goal_label`-kentät jokaiseen
+tavoitteeseen, ja kirjoittaa `patient_profiles.omahoito`:n — sama
+luottamusperiaate kuin `place_order`:ssa, client ei koskaan päätä hintaa.
+**HUOM: kirjoittaa `omahoito`-kentän kokonaan uudelleen (upsert korvaa, ei
+yhdistä)** — uusi ostos pyyhkii pois olemassa olevat tavoitteet ja
+moduulien edistymisen (`tasks_done`, `week`). Tämä on todennettu aukko
+(ei vielä korjattu): korjaus vaatisi olemassa olevien `goals`/`modules`
+säilyttämisen ja uusien liittämisen niiden joukkoon.
+
+Tehtävien kuittaus/viikon eteneminen ostohetken jälkeen on suora
+client-side `patient_profiles`-päivitys (RLS: owner-only update), sama
+malli kuin hoitopolun `saveCareState()`.
+
+**Vanhat `goals`-rivit** (ostettu ennen `goal_kind`-sarakkeita) sisältävät
+vain `{module, target}` — ei `metric`-kenttää. `goalMetric(g)` app.html:ssä
+palauttaa `g.metric || capFirst(g.module)` fallbackina, jotta nämä rivit
+eivät jää pysyvästi 0 %:iin. **Tämä oli todellinen tuotantobugi**: ennen
+tätä korjausta *jokainen* oikean ostopolun kautta syntynyt tavoite oli
+edistymiseltään pysyvästi tyhjä, koska demolla nähty toimiva
+`{metric,label,start,...}`-muoto oli käsin siemennettyä dataa, ei koskaan
+`purchase_omahoito_plan`:n oikeasti tuottamaa.
 
 `products` (julkinen luku): `slug, name, category, description, price_eur,
 badge, sort_order, is_active, ingredients jsonb, billing`. Vanha
@@ -369,6 +407,30 @@ ei koodissa — jokainen kysely voi määritellä oman asteikkonsa. Uusi kysely
 kun rivi lisätään `survey_templates`-tauluun, ei vaadi koodimuutosta.
 `crisis_item`/`crisis_note` on edelleen vain PHQ-9:n kaltaisille kyselyille
 joissa on itsetuhoisuuskysymys — muut kyselyt jättävät sen tyhjäksi.
+
+### Omahoidon ydinsilmukka (päätetty 2026-08-18)
+
+Sovellus toimii käyttäjän kuvaaman logiikan mukaan: **Mittaukset → Tavoite
+→ Muutos → Edistyminen**. Kolme vaihetta oli jo rakennettu (mittaukset,
+päivätehtävät, AI-valmennus); Tavoite ja Edistyminen tarvitsivat
+laajennuksen — ks. `omahoito_modules`-kuvaus yllä (`goal_kind`) ja
+`overallGoalProgress()` app.html:ssä (Kehitys-sivun "Tavoitteista
+saavutettu keskimäärin" -kortti, jättää habit-tavoitteet pois koska niillä
+ei ole prosenttia).
+
+**Mittaustyypit laajennettu** (`MEAS_TYPES` app.html:ssä): `Liikunta`
+(minuutteina, syöttää frequency-tavoitteen datan) ja `Oireet`
+(vapaamuotoinen loki — `MEAS_KIND['Oireet']='text'`, ei kaaviota, näytetään
+aikajärjestyksessä uusin ylimpänä sekä Mittaukset-välilehdellä että
+Kehitys-sivulla).
+
+**HUOM `measInRange()` ja `latestFor()` vaativat `.sort by ts`** — mittaus
+saattaa päätyä `patient_profiles.measurements`-taulukkoon eri kohtaan kuin
+aikajärjestys (siemennetty data, käsin tehty SQL-korjaus), jolloin
+taulukon lisäysjärjestykseen luottava koodi näyttää väärän "uusimman"
+arvon tai väärän diffin. Kumpikin funktio on korjattu tähän kertaalleen —
+jos lisäät uuden mittausdataa lukevan funktion, järjestä se ts:n mukaan
+äläkä luota valmiiksi järjestettyyn syötteeseen.
 
 ## Omahoidon seuraavat laajennukset (kun runko on validoitu)
 
