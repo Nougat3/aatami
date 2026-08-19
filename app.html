@@ -267,6 +267,10 @@ a{color:inherit;text-decoration:none}
 .gm-ring{position:relative;flex:none;display:flex;align-items:center;justify-content:center}
 .gm-ring span{position:absolute;font-size:22px;font-weight:700;color:#fff}
 .gm-ring span i{font-style:normal;font-size:12px;font-weight:600}
+/* Habit-tavoitteet (esim. "Tupakoinnin lopettaminen"): ei prosenttirengasta,
+   koska mikään kiinteä "valmis"-piste ei ole kliinisesti perusteltu. */
+.gm-streak{flex:none;background:rgba(255,255,255,.14);border-radius:16px;
+  padding:14px 18px;text-align:center;font-weight:700;font-size:15px;color:#fff}
 .goal-empty{background:var(--card);border:1px solid var(--line);border-radius:20px;
   padding:30px 26px;text-align:center;margin-top:6px}
 .goal-empty h3{font-family:var(--fd);font-size:20px;font-weight:600}
@@ -290,6 +294,8 @@ a{color:inherit;text-decoration:none}
   display:flex;align-items:center;justify-content:center}
 .sg-done svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.6}
 .sg-ring{flex:none;display:flex}
+.sg-streak{flex:none;background:var(--green-100);color:var(--green-700);border-radius:999px;
+  padding:6px 12px;font-size:12.5px;font-weight:700}
 
 /* ═══════ VALMENTAJA ═══════ */
 .coach-entry{width:100%;margin-top:16px;background:var(--green-100);border:none;border-radius:18px;
@@ -330,6 +336,11 @@ a{color:inherit;text-decoration:none}
 .kh-group{margin-top:22px}
 .kh-glabel{font-family:var(--fl);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
   color:var(--muted);margin-bottom:10px}
+.kh-overall{background:var(--green);border-radius:18px;padding:18px 20px;margin-bottom:22px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px}
+.kh-overall .ko-lb{font-size:13px;color:rgba(255,255,255,.75);line-height:1.4;max-width:200px}
+.kh-overall .ko-val{font-family:var(--fd);font-size:30px;font-weight:600;color:#fff;flex:none}
+.kh-overall .ko-val i{font-style:normal;font-size:15px;font-weight:600}
 .kh-row{width:100%;background:var(--card);border:1px solid var(--line);border-radius:16px;
   padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;
   font-family:inherit;color:var(--ink);text-align:left;margin-bottom:10px}
@@ -530,6 +541,12 @@ a{color:inherit;text-decoration:none}
 .bm-empty-t{font-size:16px;font-weight:600}
 .bm-empty p{font-size:13.5px;color:var(--muted);margin-top:6px}
 .bm-single{font-size:13px;color:var(--muted);margin-top:18px;text-align:center}
+/* Oireet: vapaamuotoinen loki, uusin ylimpänä — ei kaaviota. */
+.oire-list{display:flex;flex-direction:column;gap:2px}
+.oire-row{padding:12px 0;border-bottom:1px solid var(--line)}
+.oire-row:last-child{border-bottom:none}
+.oire-d{font-size:11px;color:var(--muted);font-weight:600}
+.oire-t{font-size:14px;margin-top:3px;line-height:1.5}
 .m-empty{font-size:13px;color:var(--muted);padding:16px 0 4px;line-height:1.6}
 .link-btn{background:none;border:none;color:#8a6a2e;font-weight:600;font-size:13px;padding:0;text-decoration:underline;text-underline-offset:2px}
 .lab-empty{text-align:center;color:var(--ink-soft);font-size:14px;padding:36px 10px;line-height:1.7}
@@ -1016,10 +1033,10 @@ function measurementProgress(tpl){
 }
 
 /* Mittaukset ja labrat rakennetaan potilaan omasta datasta (ME) — ks. build*(). */
-const MEAS_TYPES = ["Verenpaine","Paino","Uni","Verensokeri","Mieliala","Syke"];
-const MEAS_UNIT = {Verenpaine:"mmHg", Paino:"kg", Uni:"h", Verensokeri:"mmol/l", Mieliala:"/10", Syke:"bpm"};
-const MEAS_COLOR = {Verenpaine:"var(--ok)", Paino:"var(--blue)", Uni:"var(--violet)", Verensokeri:"var(--orange)", Mieliala:"var(--gold)", Syke:"var(--ok)"};
-const MEAS_KIND = {Uni:"bar"}; // muut viivakaavioita
+const MEAS_TYPES = ["Verenpaine","Paino","Uni","Verensokeri","Mieliala","Syke","Liikunta","Oireet"];
+const MEAS_UNIT = {Verenpaine:"mmHg", Paino:"kg", Uni:"h", Verensokeri:"mmol/l", Mieliala:"/10", Syke:"bpm", Liikunta:"min", Oireet:""};
+const MEAS_COLOR = {Verenpaine:"var(--ok)", Paino:"var(--blue)", Uni:"var(--violet)", Verensokeri:"var(--orange)", Mieliala:"var(--gold)", Syke:"var(--ok)", Liikunta:"var(--blue)", Oireet:"var(--muted)"};
+const MEAS_KIND = {Uni:"bar", Oireet:"text"}; // "text": vapaamuotoinen loki, ei kaaviota
 let MEAS = {};
 let LABS = { viim:[], kaikki:[] };
 
@@ -1035,7 +1052,14 @@ function buildMeasurements(){
   Object.values(byType).forEach(arr=>arr.sort((a,b)=>(a.ts||0)-(b.ts||0)));
   MEAS_TYPES.forEach(t=>{
     const arr = byType[t] || [];
-    if(!arr.length){ MEAS[t] = {empty:true, unit:MEAS_UNIT[t]}; return; }
+    if(!arr.length){ MEAS[t] = {empty:true, unit:MEAS_UNIT[t], isText:MEAS_KIND[t]==='text'}; return; }
+    if(MEAS_KIND[t]==='text'){
+      // Vapaamuotoinen loki (Oireet): ei numeroa, ei kaaviota — uusin ylimpänä.
+      const entries=[...arr].reverse();
+      MEAS[t] = { empty:false, isText:true, entries,
+        val:entries[0].value, sub:`Viimeisin merkintä ${entries[0].date||''}`.trim() };
+      return;
+    }
     const nums = arr.map(m=>numFromValue(m.value)).filter(n=>n!==null);
     const latest = arr[arr.length-1];
     const valStr = String(latest.value);
@@ -1636,9 +1660,17 @@ function renderMeasBlock(){
   const m=MEAS[measCurrent];
   if(!m || m.empty){
     $('#measBlock').innerHTML = `<div class="bm-empty">
-      <div class="bm-empty-t">Ei vielä ${measCurrent.toLowerCase()}-mittauksia</div>
-      <p>Lisää ensimmäinen mittaus, niin näet kehityksen kaaviona.</p>
+      <div class="bm-empty-t">Ei vielä ${measCurrent.toLowerCase()}-${
+        m&&m.isText?'merkintöjä':'mittauksia'}</div>
+      <p>${m&&m.isText?'Kirjaa ensimmäinen oire, niin näet ne täällä.'
+        :'Lisää ensimmäinen mittaus, niin näet kehityksen kaaviona.'}</p>
     </div>`;
+    return;
+  }
+  if(m.isText){
+    $('#measBlock').innerHTML = `<div class="oire-list">${m.entries.map(e=>`
+      <div class="oire-row"><div class="oire-d">${esc(e.date||'')}</div>
+        <div class="oire-t">${esc(e.value)}</div></div>`).join('')}</div>`;
     return;
   }
   $('#measBlock').innerHTML = `
@@ -1742,8 +1774,7 @@ function renderKehitys(){
      Pelkkien tavoitteiden varassa lista jäi tyhjäksi, koska vanhan muotoiset
      tavoitteet ({module,target}) eivät sisällä metric-kenttää lainkaan —
      jolloin koko Mittaukset-osio katosi vaikka mittauksia oli. */
-  const cap=x=>x ? x.charAt(0).toUpperCase()+x.slice(1) : x;
-  const goalMetrics=goals().map(g=>g.metric || cap(g.module)).filter(Boolean);
+  const goalMetrics=goals().map(goalMetric).filter(Boolean);
   const measured=[...new Set((ME.measurements||[]).map(m=>m.type).filter(Boolean))];
   const metrics=[...new Set([...goalMetrics, ...measured])];
   if(!metrics.length) metrics.push('Verenpaine','Paino','Uni','Verensokeri','Mieliala');
@@ -1752,13 +1783,27 @@ function renderKehitys(){
   const measRows = metrics.map(m=>{
     const key='m:'+m, open=!!KH_OPEN[key];
     const arr=measInRange(m);
-    const g=goals().find(x=>x.metric===m);
-    const unit=(g&&g.unit)||MEAS_UNIT[m]||'';
+    const isText=MEAS_KIND[m]==='text';
     if(!arr.length){
       return `<button class="kh-row" onclick="toggleKh('${esc(key)}')">
-        <span class="khr-name">${esc(m)}<span class="khr-sub">Ei mittauksia tällä aikavälillä</span></span>
+        <span class="khr-name">${esc(m)}<span class="khr-sub">Ei ${isText?'merkintöjä':'mittauksia'} tällä aikavälillä</span></span>
         ${arrow}</button>`;
     }
+    /* Oireet: vapaamuotoinen loki, ei numeroa eikä kaaviota — sama peruste
+       kuin kertaluonteisella terveyskyselyllä alla. */
+    if(isText){
+      const rev=[...arr].reverse();
+      const head=`<button class="kh-row ${open?'open':''}" onclick="toggleKh('${esc(key)}')">
+        <span class="khr-name">${esc(m)}<span class="khr-sub">${arr.length} merkintä${arr.length===1?'':'ä'}</span></span>
+        <span class="khr-val">${esc(rev[0].value)}</span>
+        ${arrow}</button>`;
+      if(!open) return head;
+      return head+`<div class="kh-panel"><div class="oire-list">${rev.map(e=>`
+        <div class="oire-row"><div class="oire-d">${esc(e.date||'')}</div>
+          <div class="oire-t">${esc(e.value)}</div></div>`).join('')}</div></div>`;
+    }
+    const g=goals().find(x=>goalMetric(x)===m);
+    const unit=(g&&g.unit)||MEAS_UNIT[m]||'';
     const nums=arr.map(x=>numOf(x.value)).filter(n=>n!==null);
     const pair=v=>String(v).split('/').map(x=>parseFloat(String(x).replace(',','.')));
     const isBP = m==='Verenpaine' && String(arr[0].value).includes('/');
@@ -1843,7 +1888,15 @@ function renderKehitys(){
       piirretä kehityskäyrää. Vastauksesi näkyvät lääkärille vastaanotolla.</div></div>`;
   }).join('');
 
-  el.innerHTML =
+  /* "Edistyminen"-yhteenveto: kaikkien tavoitteiden keskiarvo. Vain kun
+     tavoitteita on — muuten tyhjä sovellus väittäisi 0% edistymistä vaikka
+     mitään ei ole vielä asetettu. */
+  const overall=overallGoalProgress();
+  const overallHtml = overall!=null ? `<div class="kh-overall">
+    <span class="ko-lb">Tavoitteista saavutettu keskimäärin</span>
+    <span class="ko-val">${overall}<i>%</i></span></div>` : '';
+
+  el.innerHTML = overallHtml +
     `<div class="kh-group"><div class="kh-glabel">Mittaukset</div>${measRows}</div>` +
     `<div class="kh-group"><div class="kh-glabel">Kyselyt</div>${
       (scoredRows + surveyRows) || `<button class="kh-row" onclick="openSurveyPicker()">
@@ -1875,6 +1928,10 @@ function numOf(v){
   const m=String(v).match(/-?\d+([.,]\d+)?/);
   return m ? parseFloat(m[0].replace(',','.')) : null;
 }
+function capFirst(x){ return x ? x.charAt(0).toUpperCase()+x.slice(1) : x; }
+/* Vanhat rivit (ostettu ennen kind/metric-sarakkeita) kantavat vain module-kentän;
+   uudet ostot kirjoittavat metric-kentän suoraan (ks. purchase_omahoito_plan). */
+function goalMetric(g){ return g.metric || capFirst(g.module); }
 function latestFor(metric){
   // Järjestetään ts:n mukaan, ei taulukon järjestyksen: suoraan kantaan syötetty
   // rivi voi olla väärässä kohdassa, jolloin "viimeisin" olisi väärä arvo.
@@ -1882,9 +1939,37 @@ function latestFor(metric){
     .sort((a,b)=>(a.ts||0)-(b.ts||0));
   return arr.length ? arr[arr.length-1].value : null;
 }
-/* Palauttaa {current, pct, reached} — pct = matka alusta tavoitteeseen. */
+/* Viikon alku (maanantai 00:00) — frequency-tavoitteiden ("Liikunta 150 min/vko")
+   laskentaikkuna. */
+function weekStart(d){
+  const x=new Date(d); const day=(x.getDay()+6)%7;
+  x.setHours(0,0,0,0); x.setDate(x.getDate()-day);
+  return x;
+}
+/* Palauttaa {current, pct, reached} kolmelle tavoitelajille:
+   - metric (oletus): matka alusta tavoitteeseen, esim. verenpaine ja paino.
+   - frequency: tämän viikon mittausten summa vs. viikkotavoite, esim. liikunta.
+   - habit: päiviä aloituspäivästä — ei prosenttilukua, koska mikään kiinteä
+     "valmis"-piste ei olisi kliinisesti perusteltu (esim. tupakoinnin lopetus). */
 function goalProgress(g){
-  const cur = latestFor(g.metric);
+  const kind = g.kind || 'metric';
+  if(kind==='habit'){
+    const since = g.since || g.start;
+    if(!since) return {current:null, pct:null, reached:false, isHabit:true};
+    const days = Math.max(0, Math.floor((Date.now()-new Date(since).getTime())/86400000));
+    return {current:`${days} pv`, pct:null, reached:false, isHabit:true};
+  }
+  if(kind==='frequency'){
+    const metric = goalMetric(g);
+    const ws = weekStart(new Date()).getTime();
+    const sum = (ME.measurements||[]).filter(m=>m.type===metric && (m.ts||0)>=ws)
+      .reduce((s,m)=>s+(numOf(m.value)||0),0);
+    const target = numOf(g.target);
+    if(!target) return {current:sum||null, pct:0, reached:false};
+    const pct = Math.max(0,Math.min(100, Math.round(sum/target*100)));
+    return {current:sum, pct, reached: sum>=target};
+  }
+  const cur = latestFor(goalMetric(g));
   if(cur==null) return {current:null, pct:0, reached:false};
   const c=numOf(cur), t=numOf(g.target), st=numOf(g.start);
   if(c==null||t==null) return {current:cur, pct:0, reached:false};
@@ -1897,6 +1982,13 @@ function goalProgress(g){
     pct = reached?100:Math.round((lower? t/c : c/t)*100);
   }
   return {current:cur, pct:Math.max(0,Math.min(100,pct)), reached};
+}
+/* Kaikkien tavoitteiden keskimääräinen edistyminen — "Edistyminen"-vaihe
+   silmukassa. Habit-tavoitteet jätetään pois, koska niillä ei ole prosenttia. */
+function overallGoalProgress(){
+  const list = goals().map(goalProgress).filter(p=>p.pct!=null);
+  if(!list.length) return null;
+  return Math.round(list.reduce((s,p)=>s+p.pct,0)/list.length);
 }
 function ring(pct, size, stroke, color, track){
   const r=(size-stroke)/2, C=2*Math.PI*r;
@@ -1924,10 +2016,13 @@ function renderPrimaryGoal(){
     <div class="gm-txt">
       <span class="gm-eyebrow">Päätavoite</span>
       <h2>${esc(g.label)}</h2>
-      ${g.start&&p.current?`<div class="gm-prog"><span>Edistyminen</span>
-        <b>${esc(g.start)} → ${esc(p.current)}</b></div>`:''}
+      ${p.isHabit?`<div class="gm-prog"><span>Käynnissä</span><b>${esc(p.current)}</b></div>`
+        :(g.start&&p.current?`<div class="gm-prog"><span>Edistyminen</span>
+        <b>${esc(g.start)} → ${esc(p.current)}</b></div>`:'')}
     </div>
-    <div class="gm-ring">${ring(p.pct,96,9,'#7ee0a8','rgba(255,255,255,.18)')}<span>${p.pct}<i>%</i></span></div>
+    ${p.isHabit
+      ? `<div class="gm-streak">${esc(p.current)}</div>`
+      : `<div class="gm-ring">${ring(p.pct,96,9,'#7ee0a8','rgba(255,255,255,.18)')}<span>${p.pct}<i>%</i></span></div>`}
   </div>`;
 }
 
@@ -1935,21 +2030,27 @@ function renderSecondaryGoals(){
   const el=$('#secondaryGoals'); if(!el) return;
   const list=goals().filter(g=>!g.primary);
   if(!list.length){ el.innerHTML=''; return; }
-  el.innerHTML=`<div class="sec-head">Toissijaiset tavoitteet</div>
+  const overall=overallGoalProgress();
+  el.innerHTML=`<div class="sec-head">Toissijaiset tavoitteet${overall!=null?
+    `<span class="sec-count">Yhteensä ${overall} %</span>`:''}</div>
   <div class="card sec-list">${list.map(g=>{
     const p=goalProgress(g);
     const col=`var(--${g.color||'green-500'})`;
+    const sub = p.isHabit ? 'Käynnissä'
+      : (p.current!=null?esc(withUnit(p.current,g.unit)):'Ei mittausta') +
+        (g.target?` / ${esc(withUnit(g.target,g.unit))}`:'');
     return `<div class="sgoal">
       <div class="sg-ico" style="background:${col}1f;color:${col}">
         <svg viewBox="0 0 24 24">${GOAL_ICON[g.icon]||GOAL_ICON.heart}</svg></div>
       <div class="sg-mid">
         <div class="sg-lb">${esc(g.label)}</div>
-        <div class="sg-sub">${p.current!=null?esc(withUnit(p.current,g.unit)):'Ei mittausta'}${
-          g.target?` / ${esc(withUnit(g.target,g.unit))}`:''}</div>
+        <div class="sg-sub">${sub}</div>
       </div>
-      ${p.reached
-        ? `<div class="sg-done"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></div>`
-        : `<div class="sg-ring">${ring(p.pct,30,3.5,col)}</div>`}
+      ${p.isHabit
+        ? `<div class="sg-streak">${esc(p.current)}</div>`
+        : p.reached
+          ? `<div class="sg-done"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></div>`
+          : `<div class="sg-ring">${ring(p.pct,30,3.5,col)}</div>`}
     </div>`;
   }).join('')}</div>`;
 }
@@ -2150,6 +2251,10 @@ const MEAS_FORM = {
   Uni:        { label:'Unen pituus', ph:'7,5', unit:'h', min:0, max:24 },
   Mieliala:   { label:'Mieliala', ph:'7', unit:'/ 10', min:1, max:10, step:'1' },
   Syke:       { label:'Syke', ph:'62', unit:'bpm', min:20, max:250, step:'1' },
+  Liikunta:   { label:'Liikunta', ph:'30', unit:'min', min:0, max:600, step:'1' },
+  /* Oireet on vapaamuotoinen loki, ei mitattava luku — text:true ohittaa
+     numeerisen tarkistuksen renderAddFields()issa ja readAddValue()issa. */
+  Oireet:     { label:'Oire', ph:'esim. Päänsärkyä iltapäivällä', text:true },
 };
 
 function renderAddFields(){
@@ -2163,9 +2268,11 @@ function renderAddFields(){
   const num=(id,c)=>`<div class="field"><label for="${id}">${esc(c.label)}</label>
     <div class="in-unit"><input id="${id}" type="text" inputmode="decimal"
       autocomplete="off" placeholder="${esc(c.ph)}"><span>${esc(f.unit)}</span></div></div>`;
+  const txt=(id,c)=>`<div class="field"><label for="${id}">${esc(c.label)}</label>
+    <input id="${id}" type="text" autocomplete="off" placeholder="${esc(c.ph)}"></div>`;
   el.innerHTML = f.pair
     ? `<div class="bp-row">${num('addA',{...f.a,step:'1'})}${num('addB',{...f.b,step:'1'})}</div>`
-    : num('addVal', f);
+    : f.text ? txt('addVal', f) : num('addVal', f);
   const first=el.querySelector('input'); if(first) setTimeout(()=>first.focus(),40);
 }
 window.renderAddFields=renderAddFields;
@@ -2187,6 +2294,11 @@ function readAddValue(){
     if(b<f.b.min||b>f.b.max) return {error:`Alapaine ${b} vaikuttaa virheelliseltä.`};
     if(a<=b) return {error:'Yläpaineen pitää olla alapainetta suurempi.'};
     return {value:`${Math.round(a)}/${Math.round(b)}`};
+  }
+  if(f.text){
+    const raw=($('#addVal').value||'').trim();
+    if(!raw) return {error:'Kirjoita arvo.'};
+    return {value:raw};
   }
   const n=numOfField('addVal');
   if(n===null) return {error:'Kirjoita arvo.'};
