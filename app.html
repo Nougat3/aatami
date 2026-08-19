@@ -1755,7 +1755,12 @@ let RANGE = 28; // päivää
 const RANGES=[{d:7,t:'7 pv'},{d:28,t:'4 vk'},{d:84,t:'12 vk'},{d:0,t:'Kaikki'}];
 
 function measInRange(metric){
-  let arr=(ME.measurements||[]).filter(x=>x.type===metric);
+  // ts-järjestys, ei taulukon lisäysjärjestys — sama korjaus kuin latestFor()
+  // sai aiemmin. Ilman tätä sekä diff-laskenta (arr[0] vs arr[viimeinen])
+  // että Oireet-lista näyttivät väärässä järjestyksessä heti kun mittaus
+  // päätyi taulukkoon eri kohtaan kuin aikajärjestys (esim. siemennetty data).
+  let arr=(ME.measurements||[]).filter(x=>x.type===metric)
+    .sort((a,b)=>(a.ts||0)-(b.ts||0));
   if(RANGE>0 && arr.length>RANGE) arr=arr.slice(-RANGE);
   return arr;
 }
